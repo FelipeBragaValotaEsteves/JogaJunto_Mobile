@@ -50,6 +50,7 @@ export default function LoginScreen() {
       </Header>
 
       <FormContainer>
+
         <Title>Login</Title>
 
         <StyledInput
@@ -69,7 +70,9 @@ export default function LoginScreen() {
         </LoginButton>
 
         <Footer>
-          <ForgotText>esqueceu senha?</ForgotText>
+           <TouchableOpacity onPress={() => router.push("/forgotPassword")}>
+            <ForgotText>esqueceu senha?</ForgotText>
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push("./register")}>
             <RegisterText>cadastre-se</RegisterText>
           </TouchableOpacity>

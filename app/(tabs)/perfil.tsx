@@ -18,6 +18,8 @@ const BASE_URL = 'http://localhost:3000/api';
 export default function PerfilScreen() {
     const router = useRouter();
 
+    const isWeb = Platform.OS === 'web';
+
     const [usuario, setUsuario] = useState('');
     const [email, setEmail] = useState('');
     const [imagem, setImagem] = useState<string | null>(null);
@@ -26,6 +28,7 @@ export default function PerfilScreen() {
     const [open, setOpen] = useState(false);
     const [posicoes, setPosicoes] = useState<number[]>([]);
     const [items, setItems] = useState<{ label: string; value: number }[]>([]);
+    const [imageFile, setImageFile] = useState<File | null>(null);
 
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -38,6 +41,9 @@ export default function PerfilScreen() {
     };
 
     const escolherImagem = async () => {
+
+        if (isWeb) return;
+
         const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!perm.granted) {
             Alert.alert('Permissão necessária', 'Habilite o acesso à galeria.');
@@ -71,7 +77,8 @@ export default function PerfilScreen() {
                     if (!alive) return;
                     setUsuario(me?.nome ?? '');
                     setEmail(me?.email ?? '');
-                    setImgServidor(me?.img ?? null);
+                    console.log(me?.imgUrl)
+                    setImgServidor(me?.imgUrl ?? null);
                     if (Array.isArray(me?.posicoes)) {
                         setPosicoes(me.posicoes.map((p: any) => p.id));
                     }
@@ -94,19 +101,25 @@ export default function PerfilScreen() {
             form.append('name', usuario);
             form.append('email', email);
             form.append('positions', JSON.stringify(posicoes));
-            if (imagem) {
-                const filename = imagem.split('/').pop() || `avatar_${Date.now()}.jpg`;
-                const ext = filename.split('.').pop()?.toLowerCase();
-                const mime =
-                    ext === 'png' ? 'image/png' :
-                        ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' :
-                            'application/octet-stream';
-                form.append('img', {
-                    uri: Platform.OS === 'android' ? imagem : imagem.replace('file://', ''),
-                    name: filename,
-                    type: mime,
-                } as any);
+
+            if (isWeb) {
+                if (imageFile) form.append('img', imageFile);
+            } else {
+                if (imagem) {
+                    const filename = imagem.split('/').pop() || `avatar_${Date.now()}.jpg`;
+                    const ext = filename.split('.').pop()?.toLowerCase();
+                    const mime =
+                        ext === 'png' ? 'image/png' :
+                            ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' :
+                                'application/octet-stream';
+                    form.append('img', {
+                        uri: Platform.OS === 'android' ? imagem : imagem.replace('file://', ''),
+                        name: filename,
+                        type: mime,
+                    } as any);
+                }
             }
+
             const res = await fetch(`${BASE_URL}/usuarios/me`, {
                 method: 'PATCH',
                 headers: { ...headers, ...(Platform.OS === 'web' ? {} : {}) },
@@ -143,17 +156,25 @@ export default function PerfilScreen() {
                     <ActivityIndicator size="large" />
                 ) : (
                     <>
-                        <ImagemContainer onPress={escolherImagem}>
-                            {imagem ? (
-                                <Imagem source={{ uri: imagem }} />
-                            ) : imgServidor ? (
-                                <Imagem source={{ uri: imgServidor.startsWith('http') ? imgServidor : `${BASE_URL.replace('/api', '')}/uploads/${imgServidor}` }} />
-                            ) : (
-                                <PlaceholderImagem>
-                                    <Camera color="#B0BEC5" />
-                                </PlaceholderImagem>
-                            )}
-                        </ImagemContainer>
+                        {!isWeb ? (
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                            />
+                        ) : (
+                            <ImagemContainer onPress={escolherImagem}>
+                                {imagem ? (
+                                    <Imagem source={{ uri: imagem }} />
+                                ) : imgServidor ? (
+                                    <Imagem source={{ uri: imgServidor }} />
+                                ) : (
+                                    <PlaceholderImagem>
+                                        <Camera color="#B0BEC5" />
+                                    </PlaceholderImagem>
+                                )}
+                            </ImagemContainer>
+                        )}
 
                         <Input
                             placeholder="Usuário"
