@@ -1,17 +1,18 @@
-import { BackButton } from '@/components/shared/BackButton';
+import { BackButtonTab } from '@/components/shared/BackButton';
 import { ContentContainer } from '@/components/shared/ContentContainer';
 import { MainContainer } from '@/components/shared/MainContainer';
-import { TitlePage } from '@/components/shared/TitlePage';
+import { TitlePageTabs } from '@/components/shared/TitlePage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from "expo-router";
-import { Camera, CircleArrowLeft } from "lucide-react-native";
+import { Camera, CircleArrowLeft, LogOut } from "lucide-react-native";
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Platform } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
+import { ActivityIndicator, Platform, View } from 'react-native';
 import styled from 'styled-components/native';
+import { Alert } from '../../components/shared/Alert';
 import { Button, ButtonText } from '../../components/shared/Button';
 import { Input } from '../../components/shared/Input';
+import { Select } from '../../components/shared/Select';
 
 const BASE_URL = 'http://localhost:3000/api';
 
@@ -33,6 +34,24 @@ export default function PerfilScreen() {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{
+        type: string;
+        title: string;
+        message: string;
+        onConfirm?: (() => void) | undefined;
+    }>({
+        type: 'success',
+        title: '',
+        message: '',
+        onConfirm: undefined,
+    });
+
+    const showAlert = (type: string, title: string, message: string, onConfirm?: () => void) => {
+        setAlertConfig({ type, title, message, onConfirm });
+        setAlertVisible(true);
+    };
+
     const authHeaders = async () => {
         const t1 = await AsyncStorage.getItem('userToken');
         const t2 = await AsyncStorage.getItem('token');
@@ -42,11 +61,11 @@ export default function PerfilScreen() {
 
     const escolherImagem = async () => {
 
-        if (isWeb) return;
+        // if (isWeb) return;
 
         const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!perm.granted) {
-            Alert.alert('Permissão necessária', 'Habilite o acesso à galeria.');
+            showAlert('error', 'Permissão necessária', 'Habilite o acesso à galeria.');
             return;
         }
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -77,14 +96,13 @@ export default function PerfilScreen() {
                     if (!alive) return;
                     setUsuario(me?.nome ?? '');
                     setEmail(me?.email ?? '');
-                    console.log(me?.imgUrl)
                     setImgServidor(me?.imgUrl ?? null);
                     if (Array.isArray(me?.posicoes)) {
                         setPosicoes(me.posicoes.map((p: any) => p.id));
                     }
                 } catch (err: any) {
                     console.error(err);
-                    Alert.alert('Erro', err?.message || 'Não foi possível carregar os dados.');
+                    showAlert('error', 'Erro', err?.message || 'Não foi possível carregar os dados.');
                 } finally {
                     setLoading(false);
                 }
@@ -129,11 +147,10 @@ export default function PerfilScreen() {
                 const errorJson = await safeJson(res);
                 throw new Error(errorJson?.message || `Erro ${res.status}`);
             }
-            Alert.alert('Sucesso', 'Perfil atualizado!');
-            //   router.back();
+            showAlert('success', 'Sucesso', 'Perfil atualizado!');
         } catch (err: any) {
             console.error(err);
-            Alert.alert('Erro', err?.message || 'Não foi possível salvar.');
+            showAlert('error', 'Erro', err?.message || 'Não foi possível salvar.');
         } finally {
             setSaving(false);
         }
@@ -143,14 +160,24 @@ export default function PerfilScreen() {
         try { return await r.json(); } catch { return null; }
     };
 
+    const sair = async () => {
+        // await AsyncStorage.removeItem('userToken');
+        // await AsyncStorage.removeItem('token');
+        router.replace("/login");
+    };
+
     return (
         <MainContainer>
-            <BackButton onPress={() => router.back()} >
-                <CircleArrowLeft color="#2B6AE3" size={50} />
-            </BackButton>
+            <TopButtonsContainer>
+                <BackButtonTab onPress={() => router.back()} >
+                    <CircleArrowLeft color="#2B6AE3" size={50} />
+                </BackButtonTab>
+                <SairButton onPress={sair}>
+                    <LogOut color="#2B6AE3" size={50} />
+                </SairButton>
+            </TopButtonsContainer>
 
-            <TitlePage>Perfil</TitlePage>
-
+            <TitlePageTabs>Perfil</TitlePageTabs>
             <ContentContainer>
                 {loading ? (
                     <ActivityIndicator size="large" />
@@ -190,9 +217,12 @@ export default function PerfilScreen() {
                             onChangeText={setEmail}
                         />
 
-                        <PickerContainer>
-                            <DropDownPicker
+                        <View>
+                            <Select
+                                label="Posições favoritas"
+                                helperText="Escolha uma ou mais"
                                 multiple
+                                mode="BADGE"
                                 open={open}
                                 value={posicoes}
                                 items={items}
@@ -200,25 +230,10 @@ export default function PerfilScreen() {
                                 setValue={setPosicoes as any}
                                 setItems={setItems}
                                 placeholder="Posições favoritas"
-                                mode="BADGE"
-                                badgeDotColors={['#2B6AE3', '#26a69a', '#ef6c00', '#7e57c2']}
-                                style={{
-                                    borderColor: '#b0bec5',
-                                    borderRadius: 12,
-                                    minHeight: 50,
-                                    borderWidth: 2,
-                                }}
-                                dropDownContainerStyle={{
-                                    borderColor: '#b0bec5',
-                                    borderWidth: 2,
-                                    borderTopWidth: 0,
-                                    borderRadius: 12,
-                                    maxHeight: 200,
-                                    zIndex: 1000,
-                                }}
-                                placeholderStyle={{ color: '#90a4ae' }}
+                                badgeDotColors={["#2B6AE3", "#26a69a", "#ef6c00", "#7e57c2"]}
+                                zIndex={2000}
                             />
-                        </PickerContainer>
+                        </View>
 
                         <Button onPress={salvarPerfil} disabled={saving}>
                             <ButtonText>{saving ? 'SALVANDO...' : 'SALVAR'}</ButtonText>
@@ -226,6 +241,15 @@ export default function PerfilScreen() {
                     </>
                 )}
             </ContentContainer>
+
+            <Alert
+                visible={alertVisible}
+                type={alertConfig.type}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                onClose={() => setAlertVisible(false)}
+                onConfirm={alertConfig.onConfirm}
+            />
         </MainContainer>
     );
 }
@@ -248,10 +272,24 @@ const PlaceholderImagem = styled.View`
   background-color: #e2e8f0;
   justify-content: center;
   align-items: center;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
 `;
 
 const PickerContainer = styled.View`
   margin-bottom: 20px;
   z-index: 10;
+`;
+
+const TopButtonsContainer = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
+`;
+
+const SairButton = styled.TouchableOpacity`
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-left: 10px;
 `;

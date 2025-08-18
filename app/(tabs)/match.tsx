@@ -1,4 +1,4 @@
-import { BackButton } from '@/components/shared/BackButton';
+import { BackButtonTab } from '@/components/shared/BackButton';
 import { ContentContainer } from '@/components/shared/ContentContainer';
 import { MainContainer } from '@/components/shared/MainContainer';
 import { TitlePage } from '@/components/shared/TitlePage';
@@ -46,9 +46,9 @@ export default function PerfilScreen() {
     return (
 
         <MainContainer>
-            <BackButton onPress={() => router.back()} >
+            <BackButtonTab onPress={() => router.back()} >
                 <CircleArrowLeft color="#2B6AE3" size={50} />
-            </BackButton>
+            </BackButtonTab>
 
             <TitlePage>Partida</TitlePage>
 

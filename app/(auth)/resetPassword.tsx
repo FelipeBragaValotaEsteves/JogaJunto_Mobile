@@ -1,91 +1,132 @@
-import { Button, ButtonText } from '@/components/shared/Button';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { CircleArrowLeft } from 'lucide-react-native';
-import React, { useState } from 'react';
-import { ActivityIndicator, Alert } from 'react-native';
+import React, { useState } from "react";
+import { ActivityIndicator } from "react-native";
 import styled from "styled-components/native";
 import LogoJogaJunto from "../../assets/images/logo-white.svg";
+import { Alert } from "../../components/shared/Alert";
+import { BackButtonAuth } from "../../components/shared/BackButton";
+import { OutlineButton, OutlineButtonText } from "../../components/shared/Button";
+import { Input } from "../../components/shared/Input";
+import { TitlePage } from "../../components/shared/TitlePage";
 
-const BASE_URL = 'http://localhost:3000/api';
+const BASE_URL = "http://localhost:3000/api";
 
-export default function ConfirmarCodigoScreen() {
+export default function ResetPasswordScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();
   const router = useRouter();
 
-  const [codigo, setCodigo] = useState('');
-  const [novaSenha, setNovaSenha] = useState('');
-  const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [codigo, setCodigo] = useState("");
+  const [novaSenha, setNovaSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
   const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({
+    type: "error",
+    title: "",
+    message: "",
+  });
 
   const redefinirSenha = async () => {
+    if (!codigo || !novaSenha || !confirmarSenha) {
+      setAlertData({
+        type: "error",
+        title: "Erro",
+        message: "Preencha todos os campos.",
+      });
+      setAlertVisible(true);
+      return;
+    }
+
+    if (novaSenha !== confirmarSenha) {
+      setAlertData({
+        type: "error",
+        title: "Erro",
+        message: "As senhas não coincidem.",
+      });
+      setAlertVisible(true);
+      return;
+    }
+
     try {
-      if (!codigo || !novaSenha || !confirmarSenha)
-        return Alert.alert('Erro', 'Preencha todos os campos.');
-
-      if (novaSenha !== confirmarSenha)
-        return Alert.alert('Erro', 'As senhas não coincidem.');
-
       setLoading(true);
 
       const res = await fetch(`${BASE_URL}/auth/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code: codigo, newPassword: novaSenha })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code: codigo, newPassword: novaSenha }),
       });
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.message || 'Erro ao redefinir senha');
+        throw new Error(err.message || "Erro ao redefinir senha");
       }
 
-      Alert.alert('Sucesso', 'Senha redefinida com sucesso!');
-      router.replace('/login');
+      setAlertData({
+        type: "success",
+        title: "Sucesso",
+        message: "Senha redefinida com sucesso!",
+      });
+      setAlertVisible(true);
+      router.replace("/login");
     } catch (err: any) {
-      Alert.alert('Erro', err.message || 'Falha ao redefinir senha.');
+      setAlertData({
+        type: "error",
+        title: "Erro",
+        message: err.message || "Falha ao redefinir senha.",
+      });
+      setAlertVisible(true);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-
     <Container>
       <Header>
         <LogoJogaJunto width={265} />
       </Header>
 
       <FormContainer>
-        <BackButton onPress={() => router.back()}>
-          <CircleArrowLeft color="#fff" size={50} />
-        </BackButton>
+        <BackButtonAuth onPress={() => router.back()}>
+          <CircleArrowLeft size={50} />
+        </BackButtonAuth>
 
-        <Title>Redefinir Senha</Title>
+        <TitlePage>Redefinir Senha</TitlePage>
 
-        <StyledInput
+        <Input
           placeholder="Código de recuperação"
           value={codigo}
           onChangeText={setCodigo}
         />
-        <StyledInput
+        <Input
           placeholder="Nova senha"
           secureTextEntry
           value={novaSenha}
           onChangeText={setNovaSenha}
         />
-        <StyledInput
+        <Input
           placeholder="Confirmar nova senha"
           secureTextEntry
           value={confirmarSenha}
           onChangeText={setConfirmarSenha}
         />
 
-        <Button onPress={redefinirSenha} disabled={loading}>
-          <ButtonText>{loading ? <ActivityIndicator color="#fff" /> : 'REDEFINIR SENHA'}</ButtonText>
-        </Button>
-
+        <OutlineButton onPress={redefinirSenha} disabled={loading}>
+          <OutlineButtonText>
+            {loading ? <ActivityIndicator color="#22c55e" /> : "REDEFINIR SENHA"}
+          </OutlineButtonText>
+        </OutlineButton>
       </FormContainer>
-    </Container>
 
+      <Alert
+        visible={alertVisible}
+        type={alertData.type}
+        title={alertData.title}
+        message={alertData.message}
+        onClose={() => setAlertVisible(false)}
+      />
+    </Container>
   );
 }
 
@@ -106,13 +147,6 @@ const Header = styled.View`
   align-items: center;
 `;
 
-const BackButton = styled.TouchableOpacity`
-  position: absolute;
-  top: -60px;
-  left: 0px;
-  z-index: 10;
-`;
-
 const FormContainer = styled.View`
   background-color: #f5f7fa;
   margin-top: -150px;
@@ -120,33 +154,4 @@ const FormContainer = styled.View`
   width: 85%;
   border-radius: 20px;
   box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.1);
-`;
-
-const Title = styled.Text`
-  text-align: center;
-  color: #2563eb;
-  font-size: 36px;
-  font-weight: 600;
-  margin-bottom: 60px;
-`;
-
-const StyledInput = styled.TextInput`
-  background-color: white;
-  border: 2px solid #b0bec5;
-  border-radius: 16px;
-  padding: 16px 20px;
-  margin-bottom: 12px;
-`;
-
-const SendButton = styled.TouchableOpacity`
-  border: 2px solid #22c55e;
-  border-radius: 16px;
-  padding: 16px 0;
-  margin-top: 40px;
-  align-items: center;
-`;
-
-const SendButtonText = styled.Text`
-  color: #22c55e;
-  font-weight: 700;
 `;

@@ -10,11 +10,6 @@ export default function HomeScreen() {
 
   const [username, setUsername] = useState("jogador");
 
-   const entrar = () => {
-        router.navigate("/");
-        
-    };
-
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>

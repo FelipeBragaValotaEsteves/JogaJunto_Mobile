@@ -1,9 +1,13 @@
 import { useRouter } from "expo-router";
 import { CircleArrowLeft } from "lucide-react-native";
 import React, { useState } from "react";
-import { Alert } from "react-native";
 import styled from "styled-components/native";
 import LogoJogaJunto from "../../assets/images/logo-white.svg";
+import { Alert } from "../../components/shared/Alert";
+import { BackButtonAuth } from "../../components/shared/BackButton";
+import { OutlineButton, OutlineButtonText } from "../../components/shared/Button";
+import { Input } from "../../components/shared/Input";
+import { TitlePage } from "../../components/shared/TitlePage";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -12,14 +16,32 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({
+    type: "error",
+    title: "",
+    message: "",
+  });
 
   const handleRegister = async () => {
     if (!name || !email || !password || !confirmPassword) {
-      return Alert.alert("Erro", "Preencha todos os campos.");
+      setAlertData({
+        type: "error",
+        title: "Erro",
+        message: "Preencha todos os campos.",
+      });
+      setAlertVisible(true);
+      return;
     }
 
     if (password !== confirmPassword) {
-      return Alert.alert("Erro", "As senhas não coincidem.");
+      setAlertData({
+        type: "error",
+        title: "Erro",
+        message: "As senhas não coincidem.",
+      });
+      setAlertVisible(true);
+      return;
     }
 
     try {
@@ -38,14 +60,29 @@ export default function RegisterScreen() {
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert("Sucesso", "Cadastro realizado com sucesso!");
+        setAlertData({
+          type: "success",
+          title: "Sucesso",
+          message: "Cadastro realizado com sucesso!",
+        });
+        setAlertVisible(true);
         router.replace("/login");
       } else {
-        Alert.alert("Erro", data.message || "Erro ao cadastrar usuário.");
+        setAlertData({
+          type: "error",
+          title: "Erro",
+          message: data.message || "Erro ao cadastrar usuário.",
+        });
+        setAlertVisible(true);
       }
     } catch (error) {
       console.error("Erro ao cadastrar:", error);
-      Alert.alert("Erro", "Erro ao conectar com o servidor.");
+      setAlertData({
+        type: "error",
+        title: "Erro",
+        message: "Erro ao conectar com o servidor.",
+      });
+      setAlertVisible(true);
     }
   };
 
@@ -56,40 +93,49 @@ export default function RegisterScreen() {
       </Header>
 
       <FormContainer>
-        <BackButton onPress={() => router.back()}>
-          <CircleArrowLeft color="#fff" size={50} />
-        </BackButton>
+        
+        <BackButtonAuth onPress={() => router.back()}>
+          <CircleArrowLeft size={50} />
+        </BackButtonAuth>
 
-        <Title>Cadastre-se</Title>
+        <TitlePage>Cadastre-se</TitlePage>
 
-        <StyledInput
+        <Input
           placeholder="Nome"
           value={name}
           onChangeText={setName}
         />
-        <StyledInput
+        <Input
           placeholder="Email"
           keyboardType="email-address"
           value={email}
           onChangeText={setEmail}
         />
-        <StyledInput
+        <Input
           placeholder="Senha"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
-        <StyledInput
+        <Input
           placeholder="Confirma Senha"
           secureTextEntry
           value={confirmPassword}
           onChangeText={setConfirmPassword}
         />
 
-        <SubmitButton onPress={handleRegister}>
-          <SubmitButtonText>CADASTRAR</SubmitButtonText>
-        </SubmitButton>
+        <OutlineButton onPress={handleRegister}>
+          <OutlineButtonText>CADASTRAR</OutlineButtonText>
+        </OutlineButton>
       </FormContainer>
+
+      <Alert
+        visible={alertVisible}
+        type={alertData.type}
+        title={alertData.title}
+        message={alertData.message}
+        onClose={() => setAlertVisible(false)}
+      />
     </Container>
   );
 }
@@ -119,41 +165,4 @@ const FormContainer = styled.View`
   width: 85%;
   border-radius: 20px;
   box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.1);
-`;
-
-const Title = styled.Text`
-  text-align: center;
-  color: #2563eb;
-  font-size: 36px;
-  font-weight: 600;
-  margin-bottom: 60px;
-`;
-
-const StyledInput = styled.TextInput`
-  background-color: white;
-  border: 2px solid #b0bec5;
-  border-radius: 16px;
-  padding: 16px 20px;
-  margin-bottom: 12px;
-`;
-
-const BackButton = styled.TouchableOpacity`
-  position: absolute;
-  top: -60px;
-  left: 0px;
-  z-index: 10;
-`;
-
-const SubmitButton = styled.TouchableOpacity`
-  border: 2px solid #22c55e;
-  border-radius: 16px;
-  padding: 16px 0;
-  margin-top: 12px;
-  align-items: center;
-  margin-bottom: 40px;
-`;
-
-const SubmitButtonText = styled.Text`
-  color: #22c55e;
-  font-weight: 700;
 `;

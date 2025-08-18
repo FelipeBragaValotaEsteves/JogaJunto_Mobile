@@ -1,6 +1,7 @@
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { useFonts } from "expo-font";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
@@ -16,7 +17,7 @@ function AuthGate() {
     const inAuthGroup = segments[0] === "(auth)";
 
     if (!userToken && !inAuthGroup) {
-      router.replace("/login"); 
+      router.replace("/login");
       return;
     }
 
@@ -37,6 +38,12 @@ function AuthGate() {
 }
 
 export default function RootLayout() {
+  useFonts({
+    "Poppins-Medium": require("../assets/fonts/Poppins-Medium.ttf"),
+    "Roboto-Regular": require("../assets/fonts/Roboto-Regular.ttf"),
+  });
+
+
   const colorScheme = useColorScheme();
 
   return (
