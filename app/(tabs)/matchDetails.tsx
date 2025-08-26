@@ -1,0 +1,168 @@
+import { BackButtonTab } from '@/components/shared/BackButton';
+import GameCard from '@/components/shared/GameCard';
+import { MainContainer } from '@/components/shared/MainContainer';
+import { TitlePageTabs } from '@/components/shared/TitlePage';
+import typography from '@/constants/typography';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { CircleArrowLeft, CirclePlus } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import styled from 'styled-components/native';
+import { ContentContainer } from '../../components/shared/ContentContainer';
+import BASE_URL from '../../constants/config';
+import { authHeaders } from '../../utils/authHeaders';
+
+function formatDateTime(dateTime: string): { time: string; formattedDate: string } {
+    const dateObj = new Date(dateTime);
+    const time = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    let dayOfWeek = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
+    dayOfWeek = dayOfWeek.replace('-feira', '');
+    dayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+    const day = dateObj.getDate();
+    const month = dateObj.toLocaleDateString('pt-BR', { month: 'long' });
+    return { time, formattedDate: `${dayOfWeek}, ${day} de ${month}` };
+}
+
+const mockGames = [
+    {
+        id: 1,
+        titulo: 'Primeiro jogo',
+        time1: 'Vermelho',
+        time2: 'Verde',
+        placar1: 1,
+        placar2: 1,
+        eventos: [
+            { type: 'goal', player: 'Raphael', team: 'Verde' },
+            { type: 'goal', player: 'Gomes', team: 'Vermelho' },
+            { type: 'card', player: 'Raphael', team: 'Verde' },
+            { type: 'assist', player: 'Felipe', team: 'Verde' },
+        ],
+    },
+];
+
+export default function MatchDetailsScreen() {
+    const router = useRouter();
+    const { id } = useLocalSearchParams();
+    const [matchDetails, setMatchDetails] = useState<any>(null);
+
+    useEffect(() => {
+        if (!id) {
+            console.error('ID da partida não foi fornecido.');
+            return;
+        }
+
+        async function fetchMatchDetails() {
+            try {
+                const headers = await authHeaders();
+                const response = await fetch(`${BASE_URL}/partidas/${id}`, { headers });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao buscar detalhes da partida');
+                }
+
+                const data = await response.json();
+                setMatchDetails(data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        fetchMatchDetails();
+    }, [id]);
+
+    if (!matchDetails || Object.keys(matchDetails).length === 0) {
+        return (
+            <MainContainer>
+                <TitlePageTabs>Erro ao carregar os detalhes da partida.</TitlePageTabs>
+            </MainContainer>
+        );
+    }
+
+    const { time, formattedDate } = formatDateTime(matchDetails.datahora_inicio);
+
+    return (
+        <MainContainer>
+            <TopButtonsContainer>
+                <BackButtonTab onPress={() => router.back()}>
+                    <CircleArrowLeft color="#2B6AE3" size={50} />
+                </BackButtonTab>
+            </TopButtonsContainer>
+
+            <TitlePageTabs style={{ marginBottom: 8 }}>{matchDetails.local}</TitlePageTabs>
+            <Divider />
+            <SubTitleContainer>
+                <SubTitleText>{time} {formattedDate}</SubTitleText>
+                <SubTitleText>{matchDetails.tipo_partida_nome}</SubTitleText>
+            </SubTitleContainer>
+
+            {/* {matchDetails.jogos.map((jogo: any, index: number) => (
+        <GameCard
+          key={index}
+          title={jogo.titulo}
+          team1={jogo.time1}
+          team2={jogo.time2}
+          score1={jogo.placar1}
+          score2={jogo.placar2}
+          events={jogo.eventos}
+          onViewPress={() => console.log(`Visualizar jogo ${jogo.id}`)}
+        />
+      ))} */}
+
+            {mockGames.map((jogo, index) => (
+                <GameCard
+                    key={index}
+                    title={jogo.titulo}
+                    team1={jogo.time1}
+                    team2={jogo.time2}
+                    score1={jogo.placar1}
+                    score2={jogo.placar2}
+                    events={jogo.eventos}
+                    onViewPress={() => console.log(`Visualizar jogo ${jogo.id}`)}
+                />
+            ))}
+
+            <ContentContainer>
+                <AddGameButton onPress={() => console.log('Adicionar novo jogo')}>
+                    <CirclePlus color="#B0BEC5" size={64} />
+                </AddGameButton>
+            </ContentContainer>
+        </MainContainer>
+    );
+}
+
+const TopButtonsContainer = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
+`;
+
+
+const SubTitleContainer = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  margin-bottom: 20px;
+
+`;
+
+const SubTitleText = styled.Text`
+  font-size: ${typography["txt-2"].fontSize}px;
+  line-height: ${typography["txt-2"].lineHeight}px;
+  font-family: ${typography["txt-2"].fontFamily};
+  color: #2C2C2C;
+`;
+
+const Divider = styled.View`
+  height: 2px;
+  background-color: #d6dde0ff;
+`;
+
+const AddGameButton = styled.TouchableOpacity`
+  justify-content: center;
+  align-items: center;
+  margin: 30px 0;
+`;
+
+

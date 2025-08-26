@@ -46,7 +46,7 @@ export default function LoginScreen() {
       const data = await response.json();
 
       if (response.ok) {
-        await login(data.token);
+        await login(data.token, data.user.id);
         router.replace("../tabs/index");
       } else {
         setAlertData({

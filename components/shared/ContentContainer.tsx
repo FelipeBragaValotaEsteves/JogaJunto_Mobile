@@ -1,6 +1,6 @@
 import styled from "styled-components/native";
 
-export const ContentContainer = styled.ScrollView`
+export const ContentContainer = styled.View`
   padding: 20px;
   border-radius: 32px;
   background-color: #F5F7FA;

@@ -80,6 +80,11 @@ export default function TabsLayout() {
         options={{ title: "Notificações", href: null }}
       />
 
+      <Tabs.Screen
+        name="matchDetails"
+        options={{ title: "Detalhes da Partida", href: null }}
+      />
+
     </Tabs>
   );
 }

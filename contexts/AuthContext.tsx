@@ -5,7 +5,7 @@ import { Alert } from "react-native";
 type AuthContextType = {
   userToken: string | null;
   loading: boolean;
-  login: (token: string) => Promise<void>;
+  login: (token: string, userId: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -31,8 +31,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     })();
   }, []);
 
-  const login = async (token: string) => {
+  const login = async (token: string, userId: string) => {
     await AsyncStorage.setItem("userToken", token);
+    await AsyncStorage.setItem("userId", userId);
     setUserToken(token);
   };
 

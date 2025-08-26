@@ -14,8 +14,7 @@ import { Button, ButtonText } from '../../components/shared/Button';
 import { Input } from '../../components/shared/Input';
 import { Select } from '../../components/shared/Select';
 import BASE_URL from "../../constants/config";
-
-const USER_PROFILE_URL = `${BASE_URL}/users`;
+import { authHeaders } from '../../utils/authHeaders';
 
 export default function PerfilScreen() {
     const router = useRouter();
@@ -51,13 +50,6 @@ export default function PerfilScreen() {
     const showAlert = (type: string, title: string, message: string, onConfirm?: () => void) => {
         setAlertConfig({ type, title, message, onConfirm });
         setAlertVisible(true);
-    };
-
-    const authHeaders = async () => {
-        const t1 = await AsyncStorage.getItem('userToken');
-        const t2 = await AsyncStorage.getItem('token');
-        const token = t1 || t2 || '';
-        return { Authorization: token ? `Bearer ${token}` : '' };
     };
 
     const escolherImagem = async () => {

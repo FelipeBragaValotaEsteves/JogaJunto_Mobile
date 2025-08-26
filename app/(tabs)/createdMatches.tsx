@@ -9,22 +9,25 @@ import { NoResults } from "@/components/shared/NoResults";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components/native";
 import BASE_URL from "../../constants/config";
+import { authHeaders, getUserId } from '../../utils/authHeaders';
 
 type Match = {
-  date: string;
-  hour: string;
-  location: string;
+  id: string;
+  datahora_inicio: string;
+  local: string;
 };
 
 export default function CreatedMatchesScreen() {
   const router = useRouter();
-  const [createdMatches, setCreatedMatches] = useState<Match[]>([]); 
-
-  const userId = "YOUR_USER_ID_HERE"; 
+  const [createdMatches, setCreatedMatches] = useState<Match[]>([]);
 
   useEffect(() => {
     async function loadData() {
       try {
+        const userId = await getUserId();
+        if (!userId) {
+          throw new Error('ID do usuário não encontrado');
+        }
         const matches = await fetchCreatedMatches(userId);
         setCreatedMatches(matches);
       } catch (error) {
@@ -36,7 +39,10 @@ export default function CreatedMatchesScreen() {
   }, []);
 
   async function fetchCreatedMatches(userId: string) {
-    const response = await fetch(`${BASE_URL}/matches/created?userId=${userId}`);
+    const headers = await authHeaders();
+    const response = await fetch(`${BASE_URL}/partidas/criada/${userId}`, {
+      headers,
+    });
 
     if (!response.ok) {
       throw new Error("Erro ao buscar partidas criadas");
@@ -58,16 +64,19 @@ export default function CreatedMatchesScreen() {
       {createdMatches.length === 0 ? (
         <NoResults message="Nenhuma partida criada encontrada." />
       ) : (
-        createdMatches.map((match, index) => (
-          <MatchCard
-            key={index}
-            date={match.date}
-            hour={match.hour}
-            location={match.location}
-            buttonLabel="VISUALIZAR"
-            onPress={() => console.log(`Ver detalhes da partida em ${match.location}`)}
-          />
-        ))
+        createdMatches.map((match, index) => {
+          const time = match.datahora_inicio.split('T')[1].split(':');
+          return (
+            <MatchCard
+              key={index}
+              date={match.datahora_inicio}
+              hour={`${time[0]}:${time[1]}`}
+              location={match.local}
+              buttonLabel="VISUALIZAR"
+              onPress={() => router.push({ pathname: '/(tabs)/matchDetails', params: { id: match.id } })} 
+            />
+          );
+        })
       )}
     </MainContainer>
   );
