@@ -1,7 +1,10 @@
+import { MainContainer } from "@/components/shared/MainContainer";
+import { MatchCard } from "@/components/shared/MatchCard";
+import { TitlePageIndex } from "@/components/shared/TitlePage";
+import typography from "@/constants/typography";
 import { useRouter } from "expo-router";
-import { MapPin } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import styled from "styled-components/native";
 
 export default function HomeScreen() {
@@ -19,137 +22,94 @@ export default function HomeScreen() {
   }
 
   return (
-    <Container>
-      <Header>
-        <WelcomeText>Bem vindo jogador, {username}!</WelcomeText>
-      </Header>
+    <MainContainer>
+      <TitlePageIndex>
+        Bem vindo jogador, {username}!
+      </TitlePageIndex>
 
-      <Content>
-        <SectionTitle>Histórico</SectionTitle>
+      <TitlePageIndex>Histórico</TitlePageIndex>
 
-        <HistoryContainer>
-          <HistoryBox>
-            <HistoryImage source={require("../../assets/images/jogadas.png")} />
-            <HistoryLabel>Partidas Jogadas</HistoryLabel>
-          </HistoryBox>
-          <HistoryBox>
-            <HistoryImage source={require("../../assets/images/criadas.png")} />
-            <HistoryLabel>Partidas Criadas</HistoryLabel>
-          </HistoryBox>
-        </HistoryContainer>
+      <HistoryGrid>
+        <HistoryTouchable onPress={() => router.push("/(tabs)/playedMatches")}>
+          <HistoryCard>
+            <HistoryImage
+              source={require("../../assets/images/jogadas.jpg")}
+              resizeMode="cover"
+            />
+            <HistoryLabel style={typography["txt-1"]}>
+              Partidas{"\n"}Jogadas
+            </HistoryLabel>
+          </HistoryCard>
+        </HistoryTouchable>
 
-        <SectionTitle>Jogos próximos a você</SectionTitle>
+        <HistoryTouchable onPress={() => router.push("/(tabs)/createdMatches")}>
+          <HistoryCard>
+            <HistoryImage
+              source={require("../../assets/images/criadas.jpg")}
+              resizeMode="cover"
+            />
+            <HistoryLabel style={typography["txt-1"]}>
+              Partidas{"\n"}Criadas
+            </HistoryLabel>
+          </HistoryCard>
+        </HistoryTouchable>
+      </HistoryGrid>
 
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <GameCard>
-            <GameDate>Segunda, 26 Maio</GameDate>
-            <GameHour>18:00</GameHour>
-            <GameLocation>
-              <MapPin size={16} color="#6B7280" />
-              <GameLocationText>Campo do ABC</GameLocationText>
-            </GameLocation>
-            <ParticipateButton>
-              <ParticipateText>PARTICIPAR</ParticipateText>
-            </ParticipateButton>
-          </GameCard>
+      <TitlePageIndex>
+        Jogos próximos a você
+      </TitlePageIndex>
 
-          <GameCard>
-            <GameDate>Quarta, 28 Maio</GameDate>
-          </GameCard>
-        </ScrollView>
-      </Content>
-    </Container>
+      <MatchCard
+        date="Segunda, 26 Maio"
+        hour="18:00"
+        location="Campo do ABC"
+        buttonLabel="PARTICIPAR"
+        onPress={() => console.log("Participar no Campo do ABC")}
+      />
+
+      <MatchCard
+        date="Quarta, 28 Maio"
+        hour="20:00"
+        location="Quadra do XYZ"
+        buttonLabel="PARTICIPAR"
+        onPress={() => console.log("Participar na Quadra do XYZ")}
+      />
+    </MainContainer>
   );
 }
 
-const Container = styled.View`
-  flex: 1;
-  background-color: white;
-`;
-
-const Header = styled.View`
-  background-color: #3b82f6;
-  padding: 60px 20px 20px;
-`;
-
-const WelcomeText = styled.Text`
-  color: white;
-  font-size: 20px;
-  font-weight: bold;
-`;
-
-const Content = styled.View`
-  padding: 20px;
-`;
-
-const SectionTitle = styled.Text`
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 12px;
-`;
-
-const HistoryContainer = styled.View`
+const HistoryGrid = styled.View`
+  display: flex;
   flex-direction: row;
   justify-content: space-between;
+  gap: 16px;
+`;
+
+const HistoryTouchable = styled.TouchableOpacity`
+  width: 48%;
+`;
+
+const HistoryCard = styled.ImageBackground`
+  width: 100%;
+  height: 170px;
+  border-radius: 32px;
+  overflow: hidden;
+  position: relative;
   margin-bottom: 20px;
 `;
 
-const HistoryBox = styled.TouchableOpacity`
-  width: 48%;
-  background-color: #f3f4f6;
-  border-radius: 12px;
-  overflow: hidden;
+const HistoryLabel = styled.Text`
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  color: #fff;
+  text-align: left;
+  text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.35);
 `;
 
 const HistoryImage = styled.Image`
   width: 100%;
-  height: 100px;
-`;
-
-const HistoryLabel = styled.Text`
-  text-align: center;
-  padding: 8px;
-  font-weight: bold;
-`;
-
-const GameCard = styled.View`
-  background-color: #f9fafb;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-`;
-
-const GameDate = styled.Text`
-  font-size: 16px;
-  font-weight: bold;
-`;
-
-const GameHour = styled.Text`
-  font-size: 14px;
-  margin-top: 4px;
-`;
-
-const GameLocation = styled.View`
-  flex-direction: row;
-  align-items: center;
-  margin-top: 4px;
-`;
-
-const GameLocationText = styled.Text`
-  margin-left: 6px;
-  color: #6b7280;
-`;
-
-const ParticipateButton = styled.TouchableOpacity`
-  background-color: #22c55e;
-  padding: 10px;
-  border-radius: 12px;
-  margin-top: 10px;
-  align-items: center;
-`;
-
-const ParticipateText = styled.Text`
-  color: white;
-  font-weight: bold;
+  height: 100%;
 `;
 

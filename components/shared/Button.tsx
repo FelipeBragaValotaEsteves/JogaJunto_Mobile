@@ -3,10 +3,10 @@ import typography from '../../constants/typography';
 
 export const Button = styled.TouchableOpacity`
   background-color: #22c55e;
-  padding: 12px 48px;
+  padding: 10px 20px;
   border-radius: 16px;
   align-items: center;
-  align-self: flex-end; /* substitui margin-left: auto */
+  align-self: flex-end; 
 `;
 
 export const ButtonText = styled.Text`
@@ -19,7 +19,7 @@ export const ButtonText = styled.Text`
 export const OutlineButton = styled.TouchableOpacity`
   border: 2px solid #22c55e;
   border-radius: 16px;
-  padding: 12px 48px;
+  padding: 10px 20px;
   align-items: center;
   margin-top: 40px;
 `;

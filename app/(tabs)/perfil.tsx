@@ -13,8 +13,9 @@ import { Alert } from '../../components/shared/Alert';
 import { Button, ButtonText } from '../../components/shared/Button';
 import { Input } from '../../components/shared/Input';
 import { Select } from '../../components/shared/Select';
+import BASE_URL from "../../constants/config";
 
-const BASE_URL = 'http://localhost:3000/api';
+const USER_PROFILE_URL = `${BASE_URL}/users`;
 
 export default function PerfilScreen() {
     const router = useRouter();
@@ -161,8 +162,8 @@ export default function PerfilScreen() {
     };
 
     const sair = async () => {
-        // await AsyncStorage.removeItem('userToken');
-        // await AsyncStorage.removeItem('token');
+        await AsyncStorage.removeItem('userToken');
+        await AsyncStorage.removeItem('token');
         router.replace("/login");
     };
 
@@ -173,7 +174,7 @@ export default function PerfilScreen() {
                     <CircleArrowLeft color="#2B6AE3" size={50} />
                 </BackButtonTab>
                 <SairButton onPress={sair}>
-                    <LogOut color="#2B6AE3" size={50} />
+                    <LogOut color="#2B6AE3" size={30} />
                 </SairButton>
             </TopButtonsContainer>
 

@@ -9,8 +9,7 @@ import { BackButtonAuth } from "../../components/shared/BackButton";
 import { OutlineButton, OutlineButtonText } from "../../components/shared/Button";
 import { Input } from "../../components/shared/Input";
 import { TitlePage } from "../../components/shared/TitlePage";
-
-const BASE_URL = "http://localhost:3000/api";
+import BASE_URL from "../../constants/config";
 
 export default function ResetPasswordScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();

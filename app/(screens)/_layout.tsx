@@ -1,5 +1,5 @@
 import { BottomTabBar } from "@react-navigation/bottom-tabs";
-import { Tabs, useRouter } from "expo-router";
+import { Tabs } from "expo-router";
 import { Bell, CircleEqualIcon, Home, User } from "lucide-react-native";
 import { View } from "react-native";
 
@@ -13,6 +13,7 @@ export default function TabsLayout() {
         header: () => <CustomHeader />,
         tabBarShowLabel: false,
         tabBarActiveTintColor: "#111",
+        tabBarInactiveTintColor: "#2B2B2B",
         tabBarStyle: {
           height: 100,
           backgroundColor: "transparent",
@@ -65,28 +66,11 @@ export default function TabsLayout() {
           ),
         }}
       />
-
-      <Tabs.Screen
-        name="playedMatches"
-        options={{ title: "Partidas Jogadas", href: null }}
-      />
-      <Tabs.Screen
-        name="createdMatches"
-        options={{ title: "Partidas Criadas", href: null }}
-      />
-
-      <Tabs.Screen
-        name="notifications"
-        options={{ title: "Notificações", href: null }}
-      />
-
     </Tabs>
   );
 }
 
 function CustomHeader() {
-  const router = useRouter();
-
   return (
     <View
       style={{
@@ -102,11 +86,7 @@ function CustomHeader() {
       <LogoJogaJunto height={56} />
 
       <View style={{ flexDirection: "row", gap: 20 }}>
-        <Bell
-          color="white"
-          size={28}
-          onPress={() => router.push("/(tabs)/notifications")}
-        />
+        <Bell color="white" size={28} />
         <CircleEqualIcon color="white" size={28} />
       </View>
     </View>

@@ -70,7 +70,7 @@ export function Select({
                         borderColor,
                         borderWidth: 2,
                         borderRadius: 16,
-                        minHeight: 50,
+                        minHeight: 55,
                         paddingHorizontal: 20,
                     },
                     style,

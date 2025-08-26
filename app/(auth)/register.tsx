@@ -8,6 +8,7 @@ import { BackButtonAuth } from "../../components/shared/BackButton";
 import { OutlineButton, OutlineButtonText } from "../../components/shared/Button";
 import { Input } from "../../components/shared/Input";
 import { TitlePage } from "../../components/shared/TitlePage";
+import BASE_URL from "../../constants/config";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -45,7 +46,7 @@ export default function RegisterScreen() {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/api/auth/register", {
+      const response = await fetch(`${BASE_URL}/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

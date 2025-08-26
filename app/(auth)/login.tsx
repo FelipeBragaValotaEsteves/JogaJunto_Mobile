@@ -7,6 +7,7 @@ import { Alert } from "../../components/shared/Alert";
 import { OutlineButton, OutlineButtonText } from "../../components/shared/Button";
 import { Input } from "../../components/shared/Input";
 import { TitlePage } from "../../components/shared/TitlePage";
+import BASE_URL from "../../constants/config";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function LoginScreen() {
@@ -34,9 +35,11 @@ export default function LoginScreen() {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/api/auth/login", {
+      const response = await fetch(`${BASE_URL}/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email, password }),
       });
 

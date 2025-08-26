@@ -19,3 +19,12 @@ export const TitlePageTabs = styled.Text`
   color: #2C2C2C;
 `;
 
+export const TitlePageIndex = styled.Text`
+  font-size: ${typography["sub-2"].fontSize}px;
+  line-height: ${typography["sub-2"].lineHeight}px;
+  font-family: ${typography["sub-2"].fontFamily};
+  margin-bottom: 12px;
+  text-align: start;
+  color: #2C2C2C;
+`;
+
