@@ -23,10 +23,6 @@ export default function HomeScreen() {
 
   return (
     <MainContainer>
-      <TitlePageIndex>
-        Bem vindo jogador, {username}!
-      </TitlePageIndex>
-
       <TitlePageIndex>Histórico</TitlePageIndex>
 
       <HistoryGrid>
@@ -60,7 +56,7 @@ export default function HomeScreen() {
       </TitlePageIndex>
 
       <MatchCard
-        date="Segunda, 26 Maio"
+        date="2025-08-27T00:00:00.000Z"
         hour="18:00"
         location="Campo do ABC"
         buttonLabel="PARTICIPAR"
@@ -68,12 +64,13 @@ export default function HomeScreen() {
       />
 
       <MatchCard
-        date="Quarta, 28 Maio"
-        hour="20:00"
-        location="Quadra do XYZ"
+        date="2025-08-27T00:00:00.000Z"
+        hour="18:00"
+        location="Campo do ABC"
         buttonLabel="PARTICIPAR"
-        onPress={() => console.log("Participar na Quadra do XYZ")}
+        onPress={() => console.log("Participar no Campo do ABC")}
       />
+
     </MainContainer>
   );
 }

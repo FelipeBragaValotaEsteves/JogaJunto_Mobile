@@ -4,7 +4,7 @@ import { MainContainer } from '@/components/shared/MainContainer';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
 import typography from '@/constants/typography';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CircleArrowLeft, CirclePlus } from 'lucide-react-native';
+import { CircleArrowLeft, CirclePlus, Edit } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components/native';
 import { ContentContainer } from '../../components/shared/ContentContainer';
@@ -41,12 +41,14 @@ const mockGames = [
 
 export default function MatchDetailsScreen() {
     const router = useRouter();
-    const { id } = useLocalSearchParams();
+    const { id, source } = useLocalSearchParams(); // Obtém o parâmetro `source`
     const [matchDetails, setMatchDetails] = useState<any>(null);
+
+    const showEditButton = source === 'createdMatches'; // Exibe o botão de edição apenas se vier de `createdMatches`
 
     useEffect(() => {
         if (!id) {
-            console.error('ID da partida não foi fornecido.');
+            console.error("ID da partida não foi fornecido.");
             return;
         }
 
@@ -56,7 +58,7 @@ export default function MatchDetailsScreen() {
                 const response = await fetch(`${BASE_URL}/partidas/${id}`, { headers });
 
                 if (!response.ok) {
-                    throw new Error('Erro ao buscar detalhes da partida');
+                    throw new Error("Erro ao buscar detalhes da partida");
                 }
 
                 const data = await response.json();
@@ -68,6 +70,27 @@ export default function MatchDetailsScreen() {
 
         fetchMatchDetails();
     }, [id]);
+
+    const handleEdit = () => {
+        if (!matchDetails) return;
+
+        router.push({
+            pathname: "/(tabs)/match",
+            params: {
+                id: matchDetails.id,
+                local: matchDetails.local,
+                datahora_inicio: matchDetails.datahora_inicio,
+                datahora_fim: matchDetails.datahora_fim,
+                rua: matchDetails.rua || "",
+                bairro: matchDetails.bairro || "",
+                numero: matchDetails.numero || "",
+                estado_id: matchDetails.estado_id || "",
+                cidade_id: matchDetails.cidade_id || "",
+                tipo_partida_id: matchDetails.tipo_partida_id || "",
+                aberto: matchDetails.aberto || false,
+            },
+        });
+    };
 
     if (!matchDetails || Object.keys(matchDetails).length === 0) {
         return (
@@ -85,27 +108,21 @@ export default function MatchDetailsScreen() {
                 <BackButtonTab onPress={() => router.back()}>
                     <CircleArrowLeft color="#2B6AE3" size={50} />
                 </BackButtonTab>
+                {showEditButton && (
+                    <EditButton onPress={handleEdit}>
+                        <Edit color="#2B6AE3" size={30} />
+                    </EditButton>
+                )}
             </TopButtonsContainer>
 
             <TitlePageTabs style={{ marginBottom: 8 }}>{matchDetails.local}</TitlePageTabs>
             <Divider />
             <SubTitleContainer>
-                <SubTitleText>{time} {formattedDate}</SubTitleText>
+                <SubTitleText>
+                    {time} {formattedDate}
+                </SubTitleText>
                 <SubTitleText>{matchDetails.tipo_partida_nome}</SubTitleText>
             </SubTitleContainer>
-
-            {/* {matchDetails.jogos.map((jogo: any, index: number) => (
-        <GameCard
-          key={index}
-          title={jogo.titulo}
-          team1={jogo.time1}
-          team2={jogo.time2}
-          score1={jogo.placar1}
-          score2={jogo.placar2}
-          events={jogo.eventos}
-          onViewPress={() => console.log(`Visualizar jogo ${jogo.id}`)}
-        />
-      ))} */}
 
             {mockGames.map((jogo, index) => (
                 <GameCard
@@ -121,7 +138,7 @@ export default function MatchDetailsScreen() {
             ))}
 
             <ContentContainer>
-                <AddGameButton onPress={() => console.log('Adicionar novo jogo')}>
+                <AddGameButton onPress={() => console.log("Adicionar novo jogo")}>
                     <CirclePlus color="#B0BEC5" size={64} />
                 </AddGameButton>
             </ContentContainer>
@@ -163,6 +180,12 @@ const AddGameButton = styled.TouchableOpacity`
   justify-content: center;
   align-items: center;
   margin: 30px 0;
+`;
+
+const EditButton = styled.TouchableOpacity`
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-left: 10px;
 `;
 
 

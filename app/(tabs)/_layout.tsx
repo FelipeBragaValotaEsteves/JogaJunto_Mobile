@@ -1,5 +1,5 @@
 import { BottomTabBar } from "@react-navigation/bottom-tabs";
-import { Tabs, useRouter } from "expo-router";
+import { Tabs, useRouter, useSegments } from "expo-router";
 import { Bell, CircleEqualIcon, Home, User } from "lucide-react-native";
 import { View } from "react-native";
 
@@ -7,10 +7,14 @@ import LogoJogaJunto from "../../assets/images/logo-white-small.svg";
 import FabButton from "../../components/FabButton";
 
 export default function TabsLayout() {
+  const segments = useSegments();
+
+  const isIndex = String(segments[segments.length - 1]) === "index";
+
   return (
     <Tabs
       screenOptions={{
-        header: () => <CustomHeader />,
+        header: () => (isIndex ? <CustomHeaderIndex /> : <CustomHeader />),
         tabBarShowLabel: false,
         tabBarActiveTintColor: "#111",
         tabBarStyle: {
@@ -84,7 +88,6 @@ export default function TabsLayout() {
         name="matchDetails"
         options={{ title: "Detalhes da Partida", href: null }}
       />
-
     </Tabs>
   );
 }
@@ -114,6 +117,24 @@ function CustomHeader() {
         />
         <CircleEqualIcon color="white" size={28} />
       </View>
+    </View>
+  );
+}
+
+function CustomHeaderIndex() {
+  return (
+    <View
+      style={{
+        height: 200,
+        paddingHorizontal: 20,
+        paddingTop: 40,
+        backgroundColor: "#eff5ffff",
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <LogoJogaJunto height={56} />
     </View>
   );
 }

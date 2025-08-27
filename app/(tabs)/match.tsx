@@ -3,7 +3,7 @@ import { Checkbox } from '@/components/shared/Checkbox';
 import { ContentContainer } from '@/components/shared/ContentContainer';
 import { MainContainer } from '@/components/shared/MainContainer';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { CircleArrowLeft } from "lucide-react-native";
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components/native';
@@ -16,7 +16,10 @@ import BASE_URL from "../../constants/config";
 import { authHeaders } from '../../utils/authHeaders';
 
 async function fetchMatchDetails(matchId: string) {
-    const response = await fetch(`${BASE_URL}/partidas/${matchId}`);
+    const headers = await authHeaders(); 
+    const response = await fetch(`${BASE_URL}/partidas/${matchId}`, {
+        headers,
+    });
 
     if (!response.ok) {
         throw new Error("Erro ao buscar detalhes da partida");
@@ -27,7 +30,9 @@ async function fetchMatchDetails(matchId: string) {
 
 export default function MatchScreen() {
     const router = useRouter();
+    const { id } = useLocalSearchParams(); 
 
+    
     const [currentPhase, setCurrentPhase] = useState(1);
     const [nome, setNome] = useState('');
     const [dataHoraInicial, setDataHoraInicial] = useState('');
@@ -36,14 +41,14 @@ export default function MatchScreen() {
     const [rua, setRua] = useState('');
     const [bairro, setBairro] = useState('');
     const [numero, setNumero] = useState('');
-    const [estado, setEstado] = useState(null);
-    const [estados, setEstados] = useState<any[]>([]); 
+    const [estado, setEstado] = useState<number | null>(null);
+    const [estados, setEstados] = useState<any[]>([]);
     const [openEstado, setOpenEstado] = useState(false);
     const [cidades, setCidades] = useState<any[]>([]);
-    const [cidade, setCidade] = useState(null);
+    const [cidade, setCidade] = useState<number | null>(null);
     const [openCidade, setOpenCidade] = useState(false);
     const [itemsTipo, setItemsTipo] = useState<{ label: string; value: string | number }[]>([]);
-    const [tipo, setTipo] = useState(null);
+    const [tipo, setTipo] = useState<number | null>(null);
     const [openTipo, setOpenTipo] = useState(false);
     const [aceitaJogadoresDeFora, setAceitaJogadoresDeFora] = useState(false);
 
@@ -65,6 +70,46 @@ export default function MatchScreen() {
         setAlertVisible(true);
     };
 
+    const resetForm = () => {
+        setCurrentPhase(1);
+        setNome('');
+        setDataHoraInicial('');
+        setDataHoraFinal('');
+        setValor('');
+        setRua('');
+        setBairro('');
+        setNumero('');
+        setEstado(null);
+        setCidade(null);
+        setTipo(null);
+        setAceitaJogadoresDeFora(false);
+    };
+
+    useEffect(() => {
+        resetForm(); 
+
+        if (id) {
+            const matchId = Array.isArray(id) ? id[0] : id;
+            fetchMatchDetails(matchId).then((data) => {
+                setNome(data.local || '');
+                setDataHoraInicial(data.datahora_inicio || '');
+                setDataHoraFinal(data.datahora_fim || '');
+                setValor(data.valor || '');
+                setRua(data.rua || '');
+                setBairro(data.bairro || '');
+                setNumero(data.numero ? String(data.numero) : '');
+                setEstado(data.estado_id || null);
+                setCidade(data.cidade_id || null);
+                setTipo(data.tipo_partida_id || null);
+                setAceitaJogadoresDeFora(data.aberto || false);
+            }).catch((error) => {
+                console.error(error);
+                showAlert('error', 'Erro', 'Não foi possível carregar os detalhes da partida.');
+            });
+        }
+    }, [id]);
+
+    // Carrega os estados
     useEffect(() => {
         const fetchEstados = async () => {
             try {
@@ -84,27 +129,29 @@ export default function MatchScreen() {
         fetchEstados();
     }, []);
 
+    // Carrega as cidades com base no estado selecionado
     useEffect(() => {
-        const fetchCidades = async () => {
-            if (!estado) return;
-
-            try {
-                const headers = await authHeaders();
-                const response = await fetch(`${BASE_URL}/cidades/${estado}`, { headers });
-                if (!response.ok) {
-                    throw new Error('Erro ao buscar cidades');
+        if (estado) {
+            const fetchCidades = async () => {
+                try {
+                    const headers = await authHeaders();
+                    const response = await fetch(`${BASE_URL}/cidades/${estado}`, { headers });
+                    if (!response.ok) {
+                        throw new Error('Erro ao buscar cidades');
+                    }
+                    const data = await response.json();
+                    setCidades(data.map((cidade: any) => ({ label: cidade.nome, value: cidade.id })));
+                } catch (error) {
+                    console.error(error);
+                    showAlert('error', 'Erro', 'Não foi possível carregar as cidades.');
                 }
-                const data = await response.json();
-                setCidades(data.map((cidade: any) => ({ label: cidade.nome, value: cidade.id })));
-            } catch (error) {
-                console.error(error);
-                showAlert('error', 'Erro', 'Não foi possível carregar as cidades.');
-            }
-        };
+            };
 
-        fetchCidades();
+            fetchCidades();
+        }
     }, [estado]);
 
+    // Carrega os tipos de partida
     useEffect(() => {
         const fetchTiposPartida = async () => {
             try {
@@ -138,16 +185,21 @@ export default function MatchScreen() {
                 rua,
                 bairro,
                 numero: numero ? parseInt(numero, 10) : undefined,
-                cidade_id: cidade ? parseInt(cidade, 10) : null, 
+                cidade_id: cidade ?? null,
                 aberto: aceitaJogadoresDeFora,
                 datahora_inicio: dataHoraInicial || undefined,
                 datahora_fim: dataHoraFinal || undefined,
-                tipo_partida_id: tipo ? parseInt(tipo, 10) : null, 
+                tipo_partida_id: tipo ?? null,
                 status: 'ativo',
             };
 
-            const response = await fetch(`${BASE_URL}/partidas`, {
-                method: 'POST',
+            const method = id ? 'PUT' : 'POST';
+            const url = id
+                ? `${BASE_URL}/partidas/${id}`
+                : `${BASE_URL}/partidas`;
+
+            const response = await fetch(url, {
+                method,
                 headers: {
                     'Content-Type': 'application/json',
                     ...headers,
@@ -160,20 +212,14 @@ export default function MatchScreen() {
                 throw new Error(errorData.message || 'Erro ao salvar a partida');
             }
 
-            showAlert('success', 'Sucesso', 'Partida cadastrada com sucesso!');
+            showAlert(
+                'success',
+                'Sucesso',
+                id ? 'Partida atualizada com sucesso!' : 'Partida cadastrada com sucesso!'
+            );
 
-            setNome('');
-            setValor('');
-            setRua('');
-            setBairro('');
-            setNumero('');
-            setEstado(null);
-            setCidade(null);
-            setTipo(null);
-            setAceitaJogadoresDeFora(false);
-            setDataHoraInicial('');
-            setDataHoraFinal('');
-            setCurrentPhase(1);
+            resetForm(); 
+            router.back(); 
         } catch (error) {
             showAlert('error', 'Erro', error instanceof Error ? error.message : 'Erro ao salvar a partida');
         }

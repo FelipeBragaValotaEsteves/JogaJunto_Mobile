@@ -2,11 +2,11 @@ import { BackButtonTab } from '@/components/shared/BackButton';
 import { MainContainer } from "@/components/shared/MainContainer";
 import { MatchCard } from "@/components/shared/MatchCard";
 import { TitlePageTabs } from "@/components/shared/TitlePage";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { CircleArrowLeft } from "lucide-react-native";
 
 import { NoResults } from "@/components/shared/NoResults";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import styled from "styled-components/native";
 import BASE_URL from "../../constants/config";
 import { authHeaders, getUserId } from '../../utils/authHeaders';
@@ -21,22 +21,24 @@ export default function CreatedMatchesScreen() {
   const router = useRouter();
   const [createdMatches, setCreatedMatches] = useState<Match[]>([]);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const userId = await getUserId();
-        if (!userId) {
-          throw new Error('ID do usuário não encontrado');
-        }
-        const matches = await fetchCreatedMatches(userId);
-        setCreatedMatches(matches);
-      } catch (error) {
-        console.error(error);
+  const loadData = useCallback(async () => {
+    try {
+      const userId = await getUserId();
+      if (!userId) {
+        throw new Error('ID do usuário não encontrado');
       }
+      const matches = await fetchCreatedMatches(userId);
+      setCreatedMatches(matches);
+    } catch (error) {
+      console.error("Erro ao carregar partidas criadas:", error);
     }
-
-    loadData();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   async function fetchCreatedMatches(userId: string) {
     const headers = await authHeaders();
@@ -73,7 +75,7 @@ export default function CreatedMatchesScreen() {
               hour={`${time[0]}:${time[1]}`}
               location={match.local}
               buttonLabel="VISUALIZAR"
-              onPress={() => router.push({ pathname: '/(tabs)/matchDetails', params: { id: match.id } })} 
+              onPress={() => router.push({ pathname: '/(tabs)/matchDetails', params: { id: match.id, source: 'createdMatches' } })} 
             />
           );
         })

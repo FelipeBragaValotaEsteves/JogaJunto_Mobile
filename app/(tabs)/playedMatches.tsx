@@ -2,40 +2,49 @@ import { BackButtonTab } from '@/components/shared/BackButton';
 import { MainContainer } from "@/components/shared/MainContainer";
 import { MatchCard } from "@/components/shared/MatchCard";
 import { TitlePageTabs } from "@/components/shared/TitlePage";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { CircleArrowLeft } from "lucide-react-native";
 
 import { NoResults } from "@/components/shared/NoResults";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import styled from "styled-components/native";
 import BASE_URL from "../../constants/config";
+import { authHeaders, getUserId } from '../../utils/authHeaders';
 
-type PlayedMatch = {
-  date: string;
-  hour: string;
-  location: string;
+type Match = {
+  id: string;
+  datahora_inicio: string;
+  local: string;
 };
 
 export default function PlayedMatchesScreen() {
   const router = useRouter();
-  const [playedMatches, setPlayedMatches] = useState<PlayedMatch[]>([]);
-  const userId = "123";
+  const [playedMatches, setPlayedMatches] = useState<Match[]>([]);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const matches = await fetchPlayedMatches(userId);
-        setPlayedMatches(matches);
-      } catch (error) {
-        console.error(error);
+  const loadData = useCallback(async () => {
+    try {
+      const userId = await getUserId();
+      if (!userId) {
+        throw new Error('ID do usuário não encontrado');
       }
+      const matches = await fetchPlayedMatches(userId);
+      setPlayedMatches(matches);
+    } catch (error) {
+      console.error("Erro ao carregar partidas jogadas:", error);
     }
-
-    loadData();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
+
   async function fetchPlayedMatches(userId: string) {
-    const response = await fetch(`${BASE_URL}/matches/played?userId=${userId}`);
+    const headers = await authHeaders();
+    const response = await fetch(`${BASE_URL}/partidas/jogada/${userId}`, {
+      headers,
+    });
 
     if (!response.ok) {
       throw new Error("Erro ao buscar partidas jogadas");
@@ -57,16 +66,19 @@ export default function PlayedMatchesScreen() {
       {playedMatches.length === 0 ? (
         <NoResults message="Nenhuma partida jogada encontrada." />
       ) : (
-        playedMatches.map((match, index) => (
-          <MatchCard
-            key={index}
-            date={match.date}
-            hour={match.hour}
-            location={match.location}
-            buttonLabel="VISUALIZAR"
-            onPress={() => console.log(`Ver detalhes da partida em ${match.location}`)}
-          />
-        ))
+        playedMatches.map((match, index) => {
+          const time = match.datahora_inicio.split('T')[1].split(':');
+          return (
+            <MatchCard
+              key={index}
+              date={match.datahora_inicio}
+              hour={`${time[0]}:${time[1]}`}
+              location={match.local}
+              buttonLabel="VISUALIZAR"
+              onPress={() => router.push({ pathname: '/(tabs)/matchDetails', params: { id: match.id, source: 'playedMatches' } })} 
+            />
+          );
+        })
       )}
     </MainContainer>
   );
