@@ -41,10 +41,10 @@ const mockGames = [
 
 export default function MatchDetailsScreen() {
     const router = useRouter();
-    const { id, source } = useLocalSearchParams(); // Obtém o parâmetro `source`
+    const { id, source } = useLocalSearchParams(); 
     const [matchDetails, setMatchDetails] = useState<any>(null);
 
-    const showEditButton = source === 'createdMatches'; // Exibe o botão de edição apenas se vier de `createdMatches`
+    const showEditButton = source === 'createdMatches'; 
 
     useEffect(() => {
         if (!id) {
