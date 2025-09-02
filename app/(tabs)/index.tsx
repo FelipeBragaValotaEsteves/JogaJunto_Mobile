@@ -79,7 +79,7 @@ const HistoryGrid = styled.View`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  gap: 16;
+  gap: 16px;
 `;
 
 const HistoryTouchable = styled.TouchableOpacity`
@@ -88,21 +88,21 @@ const HistoryTouchable = styled.TouchableOpacity`
 
 const HistoryCard = styled.ImageBackground`
   width: 100%;
-  height: 170;
-  border-radius: 32;
+  height: 170px;
+  border-radius: 32px;
   overflow: hidden;
   position: relative;
-  margin-bottom: 20;
+  margin-bottom: 20px;
 `;
 
 const HistoryLabel = styled.Text`
   position: absolute;
-  bottom: 14;
-  left: 14;
-  right: 14;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
   color: #fff;
   text-align: left;
-  text-shadow: 0 1 2 rgba(0, 0, 0, 0.35);
+  text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.35);
 `;
 
 const HistoryImage = styled.Image`

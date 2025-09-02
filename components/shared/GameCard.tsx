@@ -53,17 +53,17 @@ const GameCard: React.FC<GameCardProps> = ({
 };
 
 const Title = styled.Text`
-  font-size: ${typography["txt-1"].fontSize};
-  line-height: ${typography["txt-1"].lineHeight};
+  font-size: ${typography["txt-1"].fontSize}px;
+  line-height: ${typography["txt-1"].lineHeight}px;
   font-family: ${typography["txt-1"].fontFamily};
-  margin-bottom: 8;
+  margin-bottom: 8px;
 `;
 
 const ScoreContainer = styled.View`
   flex-direction: row;
   align-items: start;
-  margin-bottom: 8;
-  gap: 10;
+  margin-bottom: 8px;
+  gap: 10px;
 `;
 
 const TeamContainer = styled.View`
@@ -71,32 +71,32 @@ const TeamContainer = styled.View`
 `;
 
 const Team = styled.Text`
-  font-size: ${typography["txt-1"].fontSize};
-  line-height: ${typography["txt-1"].lineHeight};
+  font-size: ${typography["txt-1"].fontSize}px;
+  line-height: ${typography["txt-1"].lineHeight}px;
   font-family: ${typography["txt-1"].fontFamily};
-  margin-bottom: 8;
+  margin-bottom: 8px;
   text-align: start;
 `;
 
 const Score = styled.Text`
-  font-size: ${typography["txt-1"].fontSize};
-  line-height: ${typography["txt-1"].lineHeight};
+  font-size: ${typography["txt-1"].fontSize}px;
+  line-height: ${typography["txt-1"].lineHeight}px;
   font-family: ${typography["txt-1"].fontFamily};
 `;
 
 const EventIcon = styled.View`
-  margin-right: 8;
+  margin-right: 8px;
 `;
 
 const EventContainer = styled.View`
   flex-direction: row;
   align-items: center;
-  margin-bottom: 8;
+  margin-bottom: 8px;
 `;
 
 const EventText = styled.Text`
-  font-size: ${typography["txt-2"].fontSize};
-  line-height: ${typography["txt-2"].lineHeight};
+  font-size: ${typography["txt-2"].fontSize}px;
+  line-height: ${typography["txt-2"].lineHeight}px;
   font-family: ${typography["txt-2"].fontFamily};
 `;
 

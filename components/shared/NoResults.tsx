@@ -16,12 +16,12 @@ const Container = styled(View)`
   flex: 1;
   justify-content: center;
   align-items: center;
-  margin-top: 20;
+  margin-top: 20px;
 `;
 
 const Message = styled(Text)`
-  margin-top: 10;
-  font-size: 16;
+  margin-top: 10px;
+  font-size: 16px;
   color: #A0AEC0;
   text-align: center;
 `;

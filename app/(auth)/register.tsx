@@ -151,19 +151,19 @@ const Header = styled.View`
   width: 100%;
   background: #3b82f6;
   min-height: 50%;
-  padding-top: 100;
-  border-bottom-left-radius: 40;
-  border-bottom-right-radius: 40;
+  padding-top: 100px;
+  border-bottom-left-radius: 40px;
+  border-bottom-right-radius: 40px;
   justify-content: start;
   align-items: center;
 `;
 
 const FormContainer = styled.View`
   background-color: #f5f7fa;
-  margin-top: -150;
+  margin-top: -150px;
   position: relative;
-  padding: 24;
+  padding: 24px;
   width: 85%;
-  border-radius: 20;
-  box-shadow: 0 20 40 rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.1);
 `;

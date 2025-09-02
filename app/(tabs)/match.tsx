@@ -377,34 +377,28 @@ const TopButtonsContainer = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-top: 10;
-  margin-bottom: 10;
+  margin-top: 10px;
+  margin-bottom: 10px;
 `;
 
 const ProgressContainer = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-top: 10;
-  margin-bottom: 10;
-  margin-right: 10;
-  margin-left: 10;
+  margin: 10px 0;
 `;
 
 const ProgressStep = styled.View<{ active: boolean }>`
   flex: 1;
-  height: 5;
+  height: 5px;
   background-color: ${({ active }) => (active ? '#2B6AE3' : '#E0E0E0')};
-  margin-top: 0;
-  margin-bottom: 0;
-  margin-right: 5;
-  margin-left: 5;
+  margin: 0 5px;
 `;
 
 const ButtonRow = styled.View`
   flex-direction: row;
   justify-content: space-between;
-  margin-top: 20;
+  margin-top: 20px;
   justify-content: flex-end; /* Garante que o botão PRÓXIMO fique sempre à direita */
 `;
 

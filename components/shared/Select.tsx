@@ -10,22 +10,22 @@ const PLACEHOLDER = "#B0BEC5";
 const TEXT = "#111";
 
 const Wrapper = styled.View<{ zIndex?: number }>`
-  margin-bottom: 20;
+  margin-bottom: 20px;
   ${({ zIndex }) => (zIndex ? `z-index: ${zIndex};` : "z-index: 1000;")}
 `;
 
 const Label = styled.Text`
-  margin-bottom: 8;
+  margin-bottom: 8px;
   color: ${TEXT};
-  font-size: ${typography["txt-2"].fontSize};
-  line-height: ${typography["txt-2"].lineHeight};
+  font-size: ${typography["txt-2"].fontSize}px;
+  line-height: ${typography["txt-2"].lineHeight}px;
   font-family: ${typography["txt-2"].fontFamily};
 `;
 
 const HelperText = styled.Text`
-  margin-top: 6;
+  margin-top: 6px;
   color: #607d8b;
-  font-size: 12;
+  font-size: 12px;
 `;
 type SelectType = React.ComponentProps<typeof DropDownPicker> & {
     label?: string;
