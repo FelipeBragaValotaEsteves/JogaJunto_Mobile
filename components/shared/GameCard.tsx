@@ -54,7 +54,6 @@ const GameCard: React.FC<GameCardProps> = ({
 
 const Title = styled.Text`
   font-size: ${typography["txt-1"].fontSize}px;
-  line-height: ${typography["txt-1"].lineHeight}px;
   font-family: ${typography["txt-1"].fontFamily};
   margin-bottom: 8px;
 `;
@@ -72,7 +71,6 @@ const TeamContainer = styled.View`
 
 const Team = styled.Text`
   font-size: ${typography["txt-1"].fontSize}px;
-  line-height: ${typography["txt-1"].lineHeight}px;
   font-family: ${typography["txt-1"].fontFamily};
   margin-bottom: 8px;
   text-align: start;
@@ -80,7 +78,6 @@ const Team = styled.Text`
 
 const Score = styled.Text`
   font-size: ${typography["txt-1"].fontSize}px;
-  line-height: ${typography["txt-1"].lineHeight}px;
   font-family: ${typography["txt-1"].fontFamily};
 `;
 
@@ -96,7 +93,6 @@ const EventContainer = styled.View`
 
 const EventText = styled.Text`
   font-size: ${typography["txt-2"].fontSize}px;
-  line-height: ${typography["txt-2"].lineHeight}px;
   font-family: ${typography["txt-2"].fontFamily};
 `;
 

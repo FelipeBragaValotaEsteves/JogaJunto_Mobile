@@ -166,7 +166,6 @@ const SubTitleContainer = styled.View`
 
 const SubTitleText = styled.Text`
   font-size: ${typography["txt-2"].fontSize}px;
-  line-height: ${typography["txt-2"].lineHeight}px;
   font-family: ${typography["txt-2"].fontFamily};
   color: #2C2C2C;
 `;

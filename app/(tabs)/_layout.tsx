@@ -35,7 +35,7 @@ export default function TabsLayout() {
               style={{
                 marginTop: 60,
                 padding: 20,
-                borderRadius: 1000,
+                borderRadius: 50,
                 backgroundColor: focused ? "#b0bec52e" : "transparent",
               }}
             >

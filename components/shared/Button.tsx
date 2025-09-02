@@ -12,7 +12,6 @@ export const Button = styled.TouchableOpacity`
 export const ButtonText = styled.Text`
   color: white;
   font-size: ${typography['btn-2'].fontSize}px;
-  line-height: ${typography['btn-2'].lineHeight}px;
   font-family: ${typography['btn-2'].fontFamily};
 `;
 
@@ -27,6 +26,5 @@ export const OutlineButton = styled.TouchableOpacity`
 export const OutlineButtonText = styled.Text`
   color: #22c55e;
   font-size: ${typography["btn-2"].fontSize}px;
-  line-height: ${typography["btn-2"].lineHeight}px;
   font-family: ${typography["btn-2"].fontFamily};
 `;

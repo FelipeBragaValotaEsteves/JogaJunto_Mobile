@@ -18,7 +18,6 @@ const Label = styled.Text`
   margin-bottom: 8px;
   color: ${TEXT};
   font-size: ${typography["txt-2"].fontSize}px;
-  line-height: ${typography["txt-2"].lineHeight}px;
   font-family: ${typography["txt-2"].fontFamily};
 `;
 

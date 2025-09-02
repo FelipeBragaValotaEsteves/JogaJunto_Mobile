@@ -11,7 +11,6 @@ export const Input = styled.TextInput.attrs({
   margin-bottom: 20px;
 
   font-size: ${typography["txt-2"].fontSize}px;
-  line-height: ${typography["txt-2"].lineHeight}px;
   font-family: ${typography["txt-2"].fontFamily};
   color: #111;
 `;
