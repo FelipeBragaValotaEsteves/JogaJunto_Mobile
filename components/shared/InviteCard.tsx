@@ -45,17 +45,17 @@ const MatchDate = styled.Text`
 `;
 
 const MatchHour = styled.Text`
-  margin-top: 4px;
+  margin-top: 4;
 `;
 
 const MatchLocation = styled.View`
   flex-direction: row;
   align-items: center;
-  margin-top: 4px;
+  margin-top: 4;
 `;
 
 const MatchLocationText = styled.Text`
-  margin-left: 6px;
+  margin-left: 6;
 `;
 
 const LocationButtonContainer = styled.View`
@@ -67,5 +67,5 @@ const LocationButtonContainer = styled.View`
 const ButtonContainer = styled.View`
   flex-direction: column;
   width: 100%;
-  margin-top: 10px;
+  margin-top: 10;
 `;

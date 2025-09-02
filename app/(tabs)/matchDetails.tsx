@@ -150,8 +150,8 @@ const TopButtonsContainer = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin-top: 10;
+  margin-bottom: 10;
 `;
 
 
@@ -159,33 +159,39 @@ const SubTitleContainer = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-top: 8px;
-  margin-bottom: 20px;
+  margin-top: 8;
+  margin-bottom: 20;
 
 `;
 
 const SubTitleText = styled.Text`
-  font-size: ${typography["txt-2"].fontSize}px;
-  line-height: ${typography["txt-2"].lineHeight}px;
+  font-size: ${typography["txt-2"].fontSize};
+  line-height: ${typography["txt-2"].lineHeight};
   font-family: ${typography["txt-2"].fontFamily};
   color: #2C2C2C;
 `;
 
 const Divider = styled.View`
-  height: 2px;
+  height: 2;
   background-color: #d6dde0ff;
 `;
 
 const AddGameButton = styled.TouchableOpacity`
   justify-content: center;
   align-items: center;
-  margin: 30px 0;
+  margin-top: 30;
+  margin-bottom: 30;
+  margin-right: 0;
+  margin-left: 0;
 `;
 
 const EditButton = styled.TouchableOpacity`
-  padding: 8px 12px;
-  border-radius: 8px;
-  margin-left: 10px;
+  padding-top: 8;
+  padding-bottom: 8;
+  padding-right: 12;
+  padding-left: 12;
+  border-radius: 8;
+  margin-left: 10;
 `;
 
 

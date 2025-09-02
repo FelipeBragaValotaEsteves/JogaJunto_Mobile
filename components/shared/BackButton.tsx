@@ -3,8 +3,8 @@ import styled from 'styled-components/native';
 export const BackButtonAuth = styled.TouchableOpacity`
   color: #F5F7FA;
   position: absolute;
-  top: -60px;
-  left: 0px;
+  top: -60;
+  left: 0;
   z-index: 10;
 `;
 

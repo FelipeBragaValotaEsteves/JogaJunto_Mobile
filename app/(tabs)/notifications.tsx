@@ -68,6 +68,6 @@ const TopButtonsContainer = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin-top: 10;
+  margin-bottom: 10;
 `;

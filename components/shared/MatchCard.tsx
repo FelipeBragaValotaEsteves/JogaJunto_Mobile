@@ -47,17 +47,17 @@ const MatchDate = styled.Text`
 `;
 
 const MatchHour = styled.Text`
-  margin-top: 4px;
+  margin-top: 4;
 `;
 
 const MatchLocation = styled.View`
   flex-direction: row;
   align-items: center;
-  margin-top: 4px;
+  margin-top: 4;
 `;
 
 const MatchLocationText = styled.Text`
-  margin-left: 6px;
+  margin-left: 6;
 `;
 
 const LocationButtonContainer = styled.View`

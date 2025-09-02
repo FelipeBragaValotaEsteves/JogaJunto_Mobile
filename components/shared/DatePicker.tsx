@@ -31,13 +31,16 @@ export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeho
           placeholder={placeholder}
           style={{
             backgroundColor: 'white',
-            border: '2px solid #b0bec5',
-            borderRadius: '16px',
-            padding: '16px 20px',
-            marginBottom: '20px',
+            border: '2 solid #b0bec5',
+            borderRadius: 16,
+            paddingTop: 16,
+            paddingBottom: 16,
+            paddingRight: 20,
+            paddingLeft: 20,
+            marginBottom: 20,
 
-            fontSize: '16px',
-            lineHeight: '24px',
+            fontSize: 16,
+            lineHeight: 24,
             fontFamily: 'Roboto, sans-serif',
             color: '#111',
           }}

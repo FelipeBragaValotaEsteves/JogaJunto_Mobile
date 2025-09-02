@@ -18,11 +18,11 @@ export const Checkbox: React.FC<CheckboxProps> = ({ label, ...props }) => {
 const Container = styled.View`
   flex-direction: row;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 20;
 `;
 
 const Label = styled.Text`
-  margin-left: 8px;
-  font-size: 16px;
+  margin-left: 8;
+  font-size: 16;
   color: #111;
 `;

@@ -249,27 +249,27 @@ export default function PerfilScreen() {
 
 const ImagemContainer = styled.TouchableOpacity`
   align-self: center;
-  margin-bottom: 20px;
+  margin-bottom: 20;
 `;
 
 const Imagem = styled.Image`
-  width: 200px;
-  height: 200px;
-  border-radius: 100px;
+  width: 200;
+  height: 200;
+  border-radius: 100;
 `;
 
 const PlaceholderImagem = styled.View`
-  width: 150px;
-  height: 150px;
-  border-radius: 75px;
+  width: 150;
+  height: 150;
+  border-radius: 75;
   background-color: #e2e8f0;
   justify-content: center;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 20;
 `;
 
 const PickerContainer = styled.View`
-  margin-bottom: 20px;
+  margin-bottom: 20;
   z-index: 10;
 `;
 
@@ -277,12 +277,15 @@ const TopButtonsContainer = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin-top: 10;
+  margin-bottom: 10;
 `;
 
 const SairButton = styled.TouchableOpacity`
-  padding: 8px 12px;
-  border-radius: 8px;
-  margin-left: 10px;
+    padding-top: 8;
+  padding-bottom: 8;
+  padding-right: 12;
+  padding-left: 12;
+  border-radius: 8;
+  margin-left: 10;
 `;
