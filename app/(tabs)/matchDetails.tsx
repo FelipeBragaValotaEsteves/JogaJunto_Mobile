@@ -4,16 +4,24 @@ import { MainContainer } from '@/components/shared/MainContainer';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
 import typography from '@/constants/typography';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CircleArrowLeft, CirclePlus, Edit } from 'lucide-react-native';
+import { CircleArrowLeft, CirclePlus, Edit, X } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components/native';
+import { Alert } from '../../components/shared/Alert';
 import { ContentContainer } from '../../components/shared/ContentContainer';
 import BASE_URL from '../../constants/config';
 import { authHeaders } from '../../utils/authHeaders';
 
-function formatDateTime(dateTime: string): { time: string; formattedDate: string } {
-    const dateObj = new Date(dateTime);
-    const time = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+function formatDateTime(data: string, hora: string): { time: string; formattedDate: string } {
+    let dateObj: Date;
+    if (data.includes('-')) {
+        const [year, month, day] = data.split('-').map(Number);
+        dateObj = new Date(year, month - 1, day);
+    } else {
+        dateObj = new Date(parseInt(data));
+    }
+    
+    const time = hora.slice(0, 5); 
     let dayOfWeek = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
     dayOfWeek = dayOfWeek.replace('-feira', '');
     dayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
@@ -45,6 +53,24 @@ export default function MatchDetailsScreen() {
     const [matchDetails, setMatchDetails] = useState<any>(null);
 
     const showEditButton = source === 'createdMatches'; 
+
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{
+        type: string;
+        title: string;
+        message: string;
+        onConfirm?: (() => void) | undefined;
+    }>({
+        type: 'success',
+        title: '',
+        message: '',
+        onConfirm: undefined,
+    });
+
+    const showAlert = (type: string, title: string, message: string, onConfirm?: () => void) => {
+        setAlertConfig({ type, title, message, onConfirm });
+        setAlertVisible(true);
+    }; 
 
     useEffect(() => {
         if (!id) {
@@ -79,8 +105,9 @@ export default function MatchDetailsScreen() {
             params: {
                 id: matchDetails.id,
                 local: matchDetails.local,
-                datahora_inicio: matchDetails.datahora_inicio,
-                datahora_fim: matchDetails.datahora_fim,
+                data: matchDetails.data,
+                hora_inicio: matchDetails.hora_inicio,
+                hora_fim: matchDetails.hora_fim,
                 rua: matchDetails.rua || "",
                 bairro: matchDetails.bairro || "",
                 numero: matchDetails.numero || "",
@@ -92,6 +119,45 @@ export default function MatchDetailsScreen() {
         });
     };
 
+    const handleCancelMatch = async () => {
+        if (!matchDetails) return;
+
+        showAlert(
+            'warning',
+            'Confirmar Cancelamento',
+            'Tem certeza que deseja cancelar esta partida? Esta ação não pode ser desfeita.',
+            async () => {
+                try {
+                    const headers = await authHeaders();
+                    const response = await fetch(`${BASE_URL}/partidas/cancelar/${matchDetails.id}`, {
+                        method: 'POST',
+                        headers,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Erro ao cancelar a partida");
+                    }
+
+                    showAlert(
+                        'success',
+                        'Partida Cancelada',
+                        'A partida foi cancelada com sucesso.',
+                        () => {
+                            router.back();
+                        }
+                    );
+                } catch (error) {
+                    console.error("Erro ao cancelar partida:", error);
+                    showAlert(
+                        'error',
+                        'Erro',
+                        'Não foi possível cancelar a partida. Tente novamente.'
+                    );
+                }
+            }
+        );
+    };
+
     if (!matchDetails || Object.keys(matchDetails).length === 0) {
         return (
             <MainContainer>
@@ -100,7 +166,7 @@ export default function MatchDetailsScreen() {
         );
     }
 
-    const { time, formattedDate } = formatDateTime(matchDetails.datahora_inicio);
+    const { time, formattedDate } = formatDateTime(matchDetails.data, matchDetails.hora_inicio);
 
     return (
         <MainContainer>
@@ -109,9 +175,14 @@ export default function MatchDetailsScreen() {
                     <CircleArrowLeft color="#2B6AE3" size={50} />
                 </BackButtonTab>
                 {showEditButton && (
-                    <EditButton onPress={handleEdit}>
-                        <Edit color="#2B6AE3" size={30} />
-                    </EditButton>
+                    <ButtonsContainer>
+                        <CancelButton onPress={handleCancelMatch}>
+                            <X color="#E53E3E" size={30} />
+                        </CancelButton>
+                        <EditButton onPress={handleEdit}>
+                            <Edit color="#2B6AE3" size={30} />
+                        </EditButton>
+                    </ButtonsContainer>
                 )}
             </TopButtonsContainer>
 
@@ -119,7 +190,7 @@ export default function MatchDetailsScreen() {
             <Divider />
             <SubTitleContainer>
                 <SubTitleText>
-                    {time} {formattedDate}
+                    {formattedDate} às {time}
                 </SubTitleText>
                 <SubTitleText>{matchDetails.tipo_partida_nome}</SubTitleText>
             </SubTitleContainer>
@@ -142,6 +213,15 @@ export default function MatchDetailsScreen() {
                     <CirclePlus color="#B0BEC5" size={64} />
                 </AddGameButton>
             </ContentContainer>
+
+            <Alert
+                visible={alertVisible}
+                type={alertConfig.type}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                onClose={() => setAlertVisible(false)}
+                onConfirm={alertConfig.onConfirm}
+            />
         </MainContainer>
     );
 }
@@ -185,6 +265,17 @@ const EditButton = styled.TouchableOpacity`
   padding: 8px 12px;
   border-radius: 8px;
   margin-left: 10px;
+`;
+
+const CancelButton = styled.TouchableOpacity`
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-left: 10px;
+`;
+
+const ButtonsContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
 `;
 
 

@@ -1,6 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import React from 'react';
-import { Platform, TouchableOpacity, View } from 'react-native';
+import { Platform, TouchableOpacity } from 'react-native';
+import styled from 'styled-components/native';
 import { Input } from './Input';
 
 type DatePickerProps = {
@@ -11,47 +12,48 @@ type DatePickerProps = {
 
 export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 'Selecione a data' }) => {
   const [showPicker, setShowPicker] = React.useState(false);
-
-  const handleDateChange = (_event: any, selectedDate?: Date) => {
-    if (Platform.OS !== 'ios') {
-      setShowPicker(false);
+  
+  const [selectedDate, setSelectedDate] = React.useState(() => {
+    if (value) {
+      const [year, month, day] = value.split('-').map(Number);
+      return new Date(year, month - 1, day);
     }
-    if (selectedDate) {
-      onChange(selectedDate.toISOString().split('T')[0]);
+    return new Date();
+  });
+
+  const handleConfirm = (event: any, date?: Date) => {
+    setShowPicker(false);
+
+    if (date) {
+      setSelectedDate(date);
+
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+      onChange(formattedDate);
     }
   };
 
-  if (Platform.OS === 'web') {
-    return (
-      <View>
-        <input
-          type="date"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          style={{
-            backgroundColor: 'white',
-            border: '2px solid #b0bec5',
-            borderRadius: '16px',
-            padding: '16px 20px',
-            marginBottom: '20px',
+  const handleInputPress = () => {
+    setShowPicker(true);
+  };
 
-            fontSize: '16px',
-            lineHeight: '24px',
-            fontFamily: 'Roboto, sans-serif',
-            color: '#111',
-          }}
-        />
-      </View>
-    );
-  }
+  const formatDate = (date: string) => {
+    if (!date) return '';
+    
+    const [year, month, day] = date.split('-').map(Number);
+    const dateObj = new Date(year, month - 1, day);
+    
+    return dateObj.toLocaleDateString('pt-BR');
+  };
 
   return (
-    <View>
-      <TouchableOpacity onPress={() => setShowPicker(true)}>
+    <Container>
+      <TouchableOpacity onPress={handleInputPress}>
         <Input
           placeholder={placeholder}
-          value={value}
+          value={formatDate(value)}
           editable={false}
           pointerEvents="none"
         />
@@ -59,12 +61,19 @@ export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeho
 
       {showPicker && (
         <DateTimePicker
+          value={selectedDate}
           mode="date"
-          value={value ? new Date(value) : new Date()}
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={handleDateChange}
+          themeVariant="light"
+          onChange={handleConfirm}
+          maximumDate={new Date(2030, 11, 31)}
+          minimumDate={new Date(1900, 0, 1)}
         />
       )}
-    </View>
+    </Container>
   );
 };
+
+const Container = styled.View`
+  position: relative;
+`;

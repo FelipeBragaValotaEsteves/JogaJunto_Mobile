@@ -1,6 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { Alert } from "react-native";
 
 type AuthContextType = {
   userToken: string | null;
@@ -31,16 +30,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     })();
   }, []);
 
-  const login = async (token: string, userId: string) => {
-    await AsyncStorage.setItem("userToken", token);
-    await AsyncStorage.setItem("userId", userId);
-    setUserToken(token);
+  const login = async (token: string, userId: string | number) => {
+    try {
+      console.log("AuthContext: Iniciando login...");
+      await AsyncStorage.setItem("userToken", token);
+      await AsyncStorage.setItem("userId", String(userId)); 
+      setUserToken(token);
+      console.log("AuthContext: Login concluído com sucesso");
+    } catch (error) {
+      console.error("AuthContext: Erro no login:", error);
+      throw error;
+    }
   };
 
   const logout = async () => {
     await AsyncStorage.removeItem("userToken");
+    await AsyncStorage.removeItem("userId");
     setUserToken(null);
-    Alert.alert("Sessão finalizada");
   };
 
   return (

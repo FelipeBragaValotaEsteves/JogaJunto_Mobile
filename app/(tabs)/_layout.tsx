@@ -33,10 +33,9 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View
               style={{
-                marginTop: 60,
+                marginTop: 40,
                 padding: 20,
                 borderRadius: 50,
-                backgroundColor: focused ? "#b0bec52e" : "transparent",
               }}
             >
               <Home color={color} size={35} />
@@ -58,10 +57,9 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View
               style={{
-                marginTop: 60,
+                marginTop: 40,
                 padding: 20,
                 borderRadius: 1000,
-                backgroundColor: focused ? "#b0bec52e" : "transparent",
               }}
             >
               <User color={color} size={35} />

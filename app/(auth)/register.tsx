@@ -96,7 +96,7 @@ export default function RegisterScreen() {
       <FormContainer>
         
         <BackButtonAuth onPress={() => router.back()}>
-          <CircleArrowLeft size={50} />
+          <CircleArrowLeft color="#f5f7fa" size={50} />
         </BackButtonAuth>
 
         <TitlePage>Cadastre-se</TitlePage>
@@ -114,13 +114,11 @@ export default function RegisterScreen() {
         />
         <Input
           placeholder="Senha"
-          secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
         <Input
           placeholder="Confirma Senha"
-          secureTextEntry
           value={confirmPassword}
           onChangeText={setConfirmPassword}
         />

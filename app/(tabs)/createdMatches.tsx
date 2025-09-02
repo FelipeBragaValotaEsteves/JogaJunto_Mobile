@@ -13,8 +13,10 @@ import { authHeaders, getUserId } from '../../utils/authHeaders';
 
 type Match = {
   id: string;
-  datahora_inicio: string;
+  hora_inicio: string;
+  data: string;
   local: string;
+  status: string;
 };
 
 export default function CreatedMatchesScreen() {
@@ -67,15 +69,18 @@ export default function CreatedMatchesScreen() {
         <NoResults message="Nenhuma partida criada encontrada." />
       ) : (
         createdMatches.map((match, index) => {
-          const time = match.datahora_inicio.split('T')[1].split(':');
+          const [date] = match.data.split('T');
+          const isCanceled = match.status === 'cancelada';
+          
           return (
             <MatchCard
               key={index}
-              date={match.datahora_inicio}
-              hour={`${time[0]}:${time[1]}`}
+              date={date}
+              hour={match.hora_inicio.slice(0, 5)}
               location={match.local}
-              buttonLabel="VISUALIZAR"
-              onPress={() => router.push({ pathname: '/(tabs)/matchDetails', params: { id: match.id, source: 'createdMatches' } })} 
+              buttonLabel={isCanceled ? "CANCELADA" : "VISUALIZAR"}
+              onPress={isCanceled ? undefined : () => router.push({ pathname: '/(tabs)/matchDetails', params: { id: match.id, source: 'createdMatches' } })}
+              isCanceled={isCanceled}
             />
           );
         })

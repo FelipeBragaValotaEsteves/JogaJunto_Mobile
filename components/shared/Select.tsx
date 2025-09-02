@@ -61,6 +61,7 @@ export function Select({
 
     return (
         <Wrapper zIndex={zIndex}>
+            {!!label && <Label>{label}</Label>}
             <DropDownPicker
                 open={open}
                 style={[

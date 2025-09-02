@@ -2,12 +2,12 @@ import { BackButtonTab } from '@/components/shared/BackButton';
 import { ContentContainer } from '@/components/shared/ContentContainer';
 import { MainContainer } from '@/components/shared/MainContainer';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@/contexts/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from "expo-router";
 import { Camera, CircleArrowLeft, LogOut } from "lucide-react-native";
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Platform, View } from 'react-native';
+import { ActivityIndicator, Platform, Text, View } from 'react-native';
 import styled from 'styled-components/native';
 import { Alert } from '../../components/shared/Alert';
 import { Button, ButtonText } from '../../components/shared/Button';
@@ -18,6 +18,7 @@ import { authHeaders } from '../../utils/authHeaders';
 
 export default function PerfilScreen() {
     const router = useRouter();
+    const { logout } = useAuth();
 
     const isWeb = Platform.OS === 'web';
 
@@ -62,7 +63,7 @@ export default function PerfilScreen() {
             return;
         }
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: 'images',
             allowsEditing: true,
             quality: 0.9,
         });
@@ -89,7 +90,9 @@ export default function PerfilScreen() {
                     if (!alive) return;
                     setUsuario(me?.nome ?? '');
                     setEmail(me?.email ?? '');
-                    setImgServidor(me?.imgUrl ?? null);
+                    const imageUrl = me?.imgUrl;
+                    console.log('URL da imagem recebida:', imageUrl);
+                    setImgServidor(imageUrl ?? null);
                     if (Array.isArray(me?.posicoes)) {
                         setPosicoes(me.posicoes.map((p: any) => p.id));
                     }
@@ -154,9 +157,7 @@ export default function PerfilScreen() {
     };
 
     const sair = async () => {
-        await AsyncStorage.removeItem('userToken');
-        await AsyncStorage.removeItem('token');
-        router.replace("/login");
+        await logout();
     };
 
     return (
@@ -177,20 +178,42 @@ export default function PerfilScreen() {
                 ) : (
                     <>
                         {!isWeb ? (
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                            />
+                            <ImagemContainer onPress={escolherImagem}>
+                                {imagem ? (
+                                    <Imagem source={{ uri: imagem }} />
+                                ) : imgServidor ? (
+                                    <Imagem 
+                                        source={{ 
+                                            uri: imgServidor.startsWith('http') ? imgServidor : `${BASE_URL}${imgServidor}` 
+                                        }} 
+                                        onError={(e) => {
+                                            console.log('Erro ao carregar imagem:', e.nativeEvent.error);
+                                            setImgServidor(null);
+                                        }}
+                                    />
+                                ) : (
+                                    <PlaceholderImagem>
+                                        <Text style={{ color: '#B0BEC5', textAlign: 'center' }}>Escolher imagem</Text>
+                                    </PlaceholderImagem>
+                                )}
+                            </ImagemContainer>
                         ) : (
                             <ImagemContainer onPress={escolherImagem}>
                                 {imagem ? (
                                     <Imagem source={{ uri: imagem }} />
                                 ) : imgServidor ? (
-                                    <Imagem source={{ uri: imgServidor }} />
+                                    <Imagem 
+                                        source={{ 
+                                            uri: imgServidor.startsWith('http') ? imgServidor : `${BASE_URL}${imgServidor}` 
+                                        }}
+                                        onError={(e) => {
+                                            console.log('Erro ao carregar imagem:', e.nativeEvent.error);
+                                            setImgServidor(null);
+                                        }}
+                                    />
                                 ) : (
                                     <PlaceholderImagem>
-                                        <Camera color="#B0BEC5" />
+                                        <Camera color="#B0BEC5" size={50} />
                                     </PlaceholderImagem>
                                 )}
                             </ImagemContainer>
@@ -212,8 +235,6 @@ export default function PerfilScreen() {
 
                         <View>
                             <Select
-                                label="Posições favoritas"
-                                helperText="Escolha uma ou mais"
                                 multiple
                                 mode="BADGE"
                                 open={open}
@@ -266,11 +287,6 @@ const PlaceholderImagem = styled.View`
   justify-content: center;
   align-items: center;
   margin-bottom: 20px;
-`;
-
-const PickerContainer = styled.View`
-  margin-bottom: 20px;
-  z-index: 10;
 `;
 
 const TopButtonsContainer = styled.View`

@@ -46,8 +46,17 @@ export default function LoginScreen() {
       const data = await response.json();
 
       if (response.ok) {
-        await login(data.token, data.user.id);
-        router.replace("../tabs/index");
+        try {
+          await login(data.token, data.user.id);
+        } catch (loginError) {
+          console.error("Erro ao processar login:", loginError);
+          setAlertData({
+            type: "error",
+            title: "Erro",
+            message: "Erro ao processar login.",
+          });
+          setAlertVisible(true);
+        }
       } else {
         setAlertData({
           type: "error",
@@ -83,7 +92,6 @@ export default function LoginScreen() {
         />
         <Input
           placeholder="Senha"
-          secureTextEntry
           value={password}
           onChangeText={setPassword}
         />

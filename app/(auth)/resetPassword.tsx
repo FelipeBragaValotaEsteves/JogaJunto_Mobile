@@ -88,7 +88,7 @@ export default function ResetPasswordScreen() {
 
       <FormContainer>
         <BackButtonAuth onPress={() => router.back()}>
-          <CircleArrowLeft size={50} />
+          <CircleArrowLeft color="#f5f7fa" size={50} />
         </BackButtonAuth>
 
         <TitlePage>Redefinir Senha</TitlePage>
@@ -100,13 +100,11 @@ export default function ResetPasswordScreen() {
         />
         <Input
           placeholder="Nova senha"
-          secureTextEntry
           value={novaSenha}
           onChangeText={setNovaSenha}
         />
         <Input
           placeholder="Confirmar nova senha"
-          secureTextEntry
           value={confirmarSenha}
           onChangeText={setConfirmarSenha}
         />

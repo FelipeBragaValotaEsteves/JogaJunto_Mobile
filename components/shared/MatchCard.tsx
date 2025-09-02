@@ -11,10 +11,21 @@ interface MatchCardProps {
   location: string;
   buttonLabel: string;
   onPress?: () => void;
+  isCanceled?: boolean;
 }
 
 function formatDate(dateString: string): string {
-  const dateObj = new Date(dateString);
+  // Se data for uma string de data (YYYY-MM-DD), parse corretamente
+  let dateObj: Date;
+  if (dateString.includes('-')) {
+    // Se for formato YYYY-MM-DD, criar data local
+    const [year, month, day] = dateString.split('-').map(Number);
+    dateObj = new Date(year, month - 1, day);
+  } else {
+    // Se for timestamp, usar parseInt
+    dateObj = new Date(parseInt(dateString));
+  }
+
   let dayOfWeek = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
   dayOfWeek = dayOfWeek.replace('-feira', '');
   dayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
@@ -23,7 +34,7 @@ function formatDate(dateString: string): string {
   return `${dayOfWeek}, ${day} de ${month}`;
 }
 
-export const MatchCard: React.FC<MatchCardProps> = ({ date, hour, location, buttonLabel, onPress }) => {
+export const MatchCard: React.FC<MatchCardProps> = ({ date, hour, location, buttonLabel, onPress, isCanceled = false }) => {
   return (
     <ContentContainer style={{ marginBottom: 20 }}>
       <MatchDate style={typography["txt-1"]}>{formatDate(date)}</MatchDate>
@@ -33,9 +44,15 @@ export const MatchCard: React.FC<MatchCardProps> = ({ date, hour, location, butt
           <MapPin size={32} color="#2B6AE3" />
           <MatchLocationText style={typography["txt-2"]}>{location}</MatchLocationText>
         </MatchLocation>
-        <Button onPress={onPress}>
-          <ButtonText style={typography["btn-2"]}>{buttonLabel}</ButtonText>
-        </Button>
+        {isCanceled ? (
+          <CanceledButton>
+            <CanceledButtonText style={typography["btn-2"]}>{buttonLabel}</CanceledButtonText>
+          </CanceledButton>
+        ) : (
+          <Button onPress={onPress}>
+            <ButtonText style={typography["btn-2"]}>{buttonLabel}</ButtonText>
+          </Button>
+        )}
       </LocationButtonContainer>
 
     </ContentContainer>
@@ -64,4 +81,18 @@ const LocationButtonContainer = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: end;
+`;
+
+const CanceledButton = styled.View`
+  background-color: #E53E3E;
+  padding: 10px 20px;
+  border-radius: 16px;
+  align-items: center;
+  align-self: flex-end;
+`;
+
+const CanceledButtonText = styled.Text`
+  color: white;
+  font-size: ${typography['btn-2'].fontSize}px;
+  font-family: ${typography['btn-2'].fontFamily};
 `;

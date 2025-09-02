@@ -13,7 +13,8 @@ import { authHeaders, getUserId } from '../../utils/authHeaders';
 
 type Match = {
   id: string;
-  datahora_inicio: string;
+  data: string;
+  hora_inicio: string;
   local: string;
 };
 
@@ -67,15 +68,15 @@ export default function PlayedMatchesScreen() {
         <NoResults message="Nenhuma partida jogada encontrada." />
       ) : (
         playedMatches.map((match, index) => {
-          const time = match.datahora_inicio.split('T')[1].split(':');
+          const [data] = match.data.split('T')[1].split(':');
           return (
             <MatchCard
               key={index}
-              date={match.datahora_inicio}
-              hour={`${time[0]}:${time[1]}`}
+              date={data}
+              hour={match.hora_inicio.slice(0, 5)}
               location={match.local}
               buttonLabel="VISUALIZAR"
-              onPress={() => router.push({ pathname: '/(tabs)/matchDetails', params: { id: match.id, source: 'playedMatches' } })} 
+              onPress={() => router.push({ pathname: '/(tabs)/matchDetails', params: { id: match.id, source: 'playedMatches' } })}
             />
           );
         })

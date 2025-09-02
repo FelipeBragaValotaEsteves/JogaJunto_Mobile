@@ -12,6 +12,7 @@ import { Button, ButtonText } from '../../components/shared/Button';
 import { DatePicker } from '../../components/shared/DatePicker';
 import { Input } from '../../components/shared/Input';
 import { Select } from '../../components/shared/Select';
+import { TimePicker } from '../../components/shared/TimePicker';
 import BASE_URL from "../../constants/config";
 import { authHeaders } from '../../utils/authHeaders';
 
@@ -34,8 +35,9 @@ export default function MatchScreen() {
 
     const [currentPhase, setCurrentPhase] = useState(1);
     const [nome, setNome] = useState('');
-    const [dataHoraInicial, setDataHoraInicial] = useState('');
-    const [dataHoraFinal, setDataHoraFinal] = useState('');
+    const [data, setData] = useState('');
+    const [horaInicial, setHoraInicial] = useState('');
+    const [horaFinal, setHoraFinal] = useState('');
     const [valor, setValor] = useState('');
     const [rua, setRua] = useState('');
     const [bairro, setBairro] = useState('');
@@ -72,8 +74,9 @@ export default function MatchScreen() {
     const resetForm = () => {
         setCurrentPhase(1);
         setNome('');
-        setDataHoraInicial('');
-        setDataHoraFinal('');
+        setData('');
+        setHoraInicial('');
+        setHoraFinal('');
         setValor('');
         setRua('');
         setBairro('');
@@ -92,8 +95,9 @@ export default function MatchScreen() {
                 const matchId = Array.isArray(id) ? id[0] : id;
                 fetchMatchDetails(matchId).then((data) => {
                     setNome(data.local || '');
-                    setDataHoraInicial(data.datahora_inicio ? data.datahora_inicio.split('T')[0] : '');
-                    setDataHoraFinal(data.datahora_fim ? data.datahora_fim.split('T')[0] : '');
+                    setData(data.data ? data.data : '');
+                    setHoraInicial(data.hora_inicio ? data.hora_inicio.slice(0, 5) : '');
+                    setHoraFinal(data.hora_fim ? data.hora_fim.slice(0, 5) : '');
                     setValor(data.valor || '');
                     setRua(data.rua || '');
                     setBairro(data.bairro || '');
@@ -169,6 +173,19 @@ export default function MatchScreen() {
         fetchTiposPartida();
     }, []);
 
+    function formatCurrency(value: string): string {
+        const numericValue = value.replace(/\D/g, ""); 
+        const formattedValue = (Number(numericValue) / 100).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+        });
+        return formattedValue;
+    }
+
+    function parseCurrency(value: string): number {
+        return Number(value.replace(/[^0-9,-]+/g, "").replace(",", ".")); 
+    }
+
     const salvarPartida = async () => {
         try {
             const headers = await authHeaders();
@@ -185,10 +202,11 @@ export default function MatchScreen() {
                 numero: numero ? parseInt(numero, 10) : undefined,
                 cidade_id: cidade ?? null,
                 aberto: aceitaJogadoresDeFora,
-                datahora_inicio: dataHoraInicial || undefined,
-                datahora_fim: dataHoraFinal || undefined,
+                data: data || undefined,
+                hora_inicio: horaInicial || undefined,
+                hora_fim: horaFinal || undefined,
                 tipo_partida_id: tipo ?? null,
-                valor: valor ? parseFloat(valor) : undefined,
+                valor: valor ? parseCurrency(valor) : undefined, 
             };
 
             console.log(partida);
@@ -251,19 +269,24 @@ export default function MatchScreen() {
                         />
 
                         <DatePicker
-                            placeholder="Data e Hora Inicial"
-                            value={dataHoraInicial}
-                            onChange={setDataHoraInicial}
+                            placeholder="Data"
+                            value={data}
+                            onChange={setData}
                         />
 
-                        <DatePicker
-                            placeholder="Data e Hora Final"
-                            value={dataHoraFinal}
-                            onChange={setDataHoraFinal}
+                        <TimePicker
+                            placeholder="Horário Inicial"
+                            value={horaInicial}
+                            onChange={setHoraInicial}
+                        />
+
+                        <TimePicker
+                            placeholder="Horário Final"
+                            value={horaFinal}
+                            onChange={setHoraFinal}
                         />
 
                         <Select
-                            label="Tipo de Partida"
                             open={openTipo}
                             value={tipo}
                             items={itemsTipo}
@@ -298,7 +321,6 @@ export default function MatchScreen() {
                         />
 
                         <Select
-                            label="Estado"
                             open={openEstado}
                             value={estado}
                             items={estados}
@@ -310,7 +332,6 @@ export default function MatchScreen() {
                         />
 
                         <Select
-                            label="Cidade"
                             open={openCidade}
                             value={cidade}
                             items={cidades}
@@ -334,7 +355,7 @@ export default function MatchScreen() {
                         <Input
                             placeholder="Valor"
                             value={valor}
-                            onChangeText={setValor}
+                            onChangeText={(text) => setValor(formatCurrency(text))}
                             keyboardType="numeric"
                         />
                     </>

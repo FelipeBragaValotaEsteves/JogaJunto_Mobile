@@ -74,7 +74,7 @@ export default function ForgotPasswordScreen() {
 
       <FormContainer>
         <BackButtonAuth onPress={() => router.back()}>
-          <CircleArrowLeft size={50} />
+          <CircleArrowLeft color="#f5f7fa" size={50} />
         </BackButtonAuth>
         <TitlePage>Recuperação</TitlePage>
 
