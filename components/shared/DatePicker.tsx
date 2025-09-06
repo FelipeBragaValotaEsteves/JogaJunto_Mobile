@@ -2,6 +2,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import React from 'react';
 import { Platform, TouchableOpacity } from 'react-native';
 import styled from 'styled-components/native';
+import typography from '../../constants/typography';
 import { Input } from './Input';
 
 type DatePickerProps = {
@@ -12,7 +13,8 @@ type DatePickerProps = {
 
 export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 'Selecione a data' }) => {
   const [showPicker, setShowPicker] = React.useState(false);
-  
+  const [tempDate, setTempDate] = React.useState<Date | null>(null);
+
   const [selectedDate, setSelectedDate] = React.useState(() => {
     if (value) {
       const [year, month, day] = value.split('-').map(Number);
@@ -21,21 +23,35 @@ export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeho
     return new Date();
   });
 
-  const handleConfirm = (event: any, date?: Date) => {
-    setShowPicker(false);
+  const handleConfirm = () => {
+    if (tempDate) {
+      setSelectedDate(tempDate);
 
-    if (date) {
-      setSelectedDate(date);
-
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
+      const year = tempDate.getFullYear();
+      const month = String(tempDate.getMonth() + 1).padStart(2, '0');
+      const day = String(tempDate.getDate()).padStart(2, '0');
       const formattedDate = `${year}-${month}-${day}`;
       onChange(formattedDate);
+    }
+    setShowPicker(false);
+  };
+
+  const handleCancel = () => {
+    setTempDate(null);
+    setShowPicker(false);
+  };
+
+  const handleDateChange = (event: any, date?: Date) => {
+    if (date) {
+      setTempDate(date);
+    }
+    if (Platform.OS !== 'ios') {
+      setShowPicker(false);
     }
   };
 
   const handleInputPress = () => {
+    setTempDate(selectedDate);
     setShowPicker(true);
   };
 
@@ -60,15 +76,27 @@ export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeho
       </TouchableOpacity>
 
       {showPicker && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          themeVariant="light"
-          onChange={handleConfirm}
-          maximumDate={new Date(2030, 11, 31)}
-          minimumDate={new Date(1900, 0, 1)}
-        />
+        <>
+          <DateTimePicker
+            value={tempDate || selectedDate}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            themeVariant="light"
+            onChange={handleDateChange}
+            maximumDate={new Date(2030, 11, 31)}
+            minimumDate={new Date(1900, 0, 1)}
+          />
+          {Platform.OS === 'ios' && (
+            <IOSActions>
+              <ActionButton outline onPress={handleCancel}>
+                <ActionText outline>Cancelar</ActionText>
+              </ActionButton>
+              <ActionButton onPress={handleConfirm}>
+                <ActionText>Confirmar</ActionText>
+              </ActionButton>
+            </IOSActions>
+          )}
+        </>
       )}
     </Container>
   );
@@ -76,4 +104,22 @@ export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeho
 
 const Container = styled.View`
   position: relative;
+`;
+
+const IOSActions = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  margin-top: 10px;
+`;
+
+const ActionButton = styled.TouchableOpacity<{ outline?: boolean }>`
+  padding: 10px 20px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+`;
+
+const ActionText = styled.Text<{ outline?: boolean }>`
+  color: ${({ outline }) => (outline ? '#949494' : '#007bff')};
+  font-size: ${typography['btn-2'].fontSize}px;
+  font-family: ${typography['btn-2'].fontFamily};
 `;

@@ -1,15 +1,16 @@
 import { BottomTabBar } from "@react-navigation/bottom-tabs";
 import { Tabs, useRouter, useSegments } from "expo-router";
 import { Bell, CircleEqualIcon, Home, User } from "lucide-react-native";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 
 import LogoJogaJunto from "../../assets/images/logo-white-small.svg";
 import FabButton from "../../components/FabButton";
+import typography from "../../constants/typography";
 
 export default function TabsLayout() {
   const segments = useSegments();
 
-  const isIndex = String(segments[segments.length - 1]) === "index";
+  const isIndex = segments.length === 1 && segments[0] === "(tabs)";
 
   return (
     <Tabs
@@ -33,7 +34,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View
               style={{
-                marginTop: 40,
+                marginTop: 30,
                 padding: 20,
                 borderRadius: 50,
               }}
@@ -57,7 +58,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View
               style={{
-                marginTop: 40,
+                marginTop: 30,
                 padding: 20,
                 borderRadius: 1000,
               }}
@@ -120,19 +121,54 @@ function CustomHeader() {
 }
 
 function CustomHeaderIndex() {
+  const router = useRouter();
+
   return (
-    <View
-      style={{
-        height: 200,
-        paddingHorizontal: 20,
-        paddingTop: 40,
-        backgroundColor: "#eff5ffff",
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <LogoJogaJunto height={56} />
+    <View style={{ position: "relative" }}> 
+      <View
+        style={{
+          height: 200,
+          backgroundColor: "#3b82f6",
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: -1, 
+        }}
+      />
+      <View
+        style={{
+          height: 110,
+          paddingHorizontal: 20,
+          paddingTop: 40,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <LogoJogaJunto height={56} />
+
+        <View style={{ flexDirection: "row", gap: 20 }}>
+          <Bell
+            color="white"
+            size={28}
+            onPress={() => router.push("/(tabs)/notifications")}
+          />
+          <CircleEqualIcon color="white" size={28} />
+        </View>
+      </View>
+
+      <Text
+        style={{
+          ...typography["txt-1"], 
+          position: "absolute",
+          top: 150, 
+          left: 20,
+          color: "#e2e8f0",
+        }}
+      >
+        Seja bem-vindo, jogador!
+      </Text>
     </View>
   );
 }

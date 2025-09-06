@@ -74,7 +74,7 @@ export const Input: React.FC<InputProps> = ({ label, secureTextEntry, ...props }
           style={[
             props.style,
             isPasswordField ? { paddingRight: 50 } : {},
-            { backgroundColor: 'white' } // Força fundo branco
+            { backgroundColor: 'white' } 
           ]}
         />
         {isPasswordField && (

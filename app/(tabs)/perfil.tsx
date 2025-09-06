@@ -91,7 +91,6 @@ export default function PerfilScreen() {
                     setUsuario(me?.nome ?? '');
                     setEmail(me?.email ?? '');
                     const imageUrl = me?.imgUrl;
-                    console.log('URL da imagem recebida:', imageUrl);
                     setImgServidor(imageUrl ?? null);
                     if (Array.isArray(me?.posicoes)) {
                         setPosicoes(me.posicoes.map((p: any) => p.id));

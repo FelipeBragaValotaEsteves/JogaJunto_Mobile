@@ -63,7 +63,7 @@ export default function CreatedMatchesScreen() {
         </BackButtonTab>
       </TopButtonsContainer>
 
-      <TitlePageTabs>Partidas Criadas</TitlePageTabs>
+      <TitlePageTabs>Horários Criados</TitlePageTabs>
 
       {createdMatches.length === 0 ? (
         <NoResults message="Nenhuma partida criada encontrada." />

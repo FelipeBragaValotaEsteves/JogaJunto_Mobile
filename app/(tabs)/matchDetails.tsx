@@ -14,20 +14,16 @@ import { authHeaders } from '../../utils/authHeaders';
 
 function formatDateTime(data: string, hora: string): { time: string; formattedDate: string } {
     let dateObj: Date;
-    if (data.includes('-')) {
-        const [year, month, day] = data.split('-').map(Number);
-        dateObj = new Date(year, month - 1, day);
-    } else {
-        dateObj = new Date(parseInt(data));
-    }
-    
-    const time = hora.slice(0, 5); 
+    const  onlyDate = data.split('T')[0];
+    const [year, month, day] = onlyDate.split('-').map(Number);
+    dateObj = new Date(year, month - 1, day);
+
+    const time = hora.slice(0, 5);
     let dayOfWeek = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
     dayOfWeek = dayOfWeek.replace('-feira', '');
     dayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
-    const day = dateObj.getDate();
-    const month = dateObj.toLocaleDateString('pt-BR', { month: 'long' });
-    return { time, formattedDate: `${dayOfWeek}, ${day} de ${month}` };
+    const monthExtenso = dateObj.toLocaleDateString('pt-BR', { month: 'long' });
+    return { time, formattedDate: `${dayOfWeek}, ${day} de ${monthExtenso}` };
 }
 
 const mockGames = [
@@ -49,10 +45,10 @@ const mockGames = [
 
 export default function MatchDetailsScreen() {
     const router = useRouter();
-    const { id, source } = useLocalSearchParams(); 
+    const { id, source } = useLocalSearchParams();
     const [matchDetails, setMatchDetails] = useState<any>(null);
 
-    const showEditButton = source === 'createdMatches'; 
+    const showEditButton = source === 'createdMatches';
 
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertConfig, setAlertConfig] = useState<{
@@ -70,7 +66,7 @@ export default function MatchDetailsScreen() {
     const showAlert = (type: string, title: string, message: string, onConfirm?: () => void) => {
         setAlertConfig({ type, title, message, onConfirm });
         setAlertVisible(true);
-    }; 
+    };
 
     useEffect(() => {
         if (!id) {
@@ -88,6 +84,8 @@ export default function MatchDetailsScreen() {
                 }
 
                 const data = await response.json();
+                console.log(data);
+                
                 setMatchDetails(data);
             } catch (error) {
                 console.error(error);

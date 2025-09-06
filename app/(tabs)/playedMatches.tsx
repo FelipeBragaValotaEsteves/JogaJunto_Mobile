@@ -13,7 +13,7 @@ import { authHeaders, getUserId } from '../../utils/authHeaders';
 
 type Match = {
   id: string;
-  data: string;
+  data: string; 
   hora_inicio: string;
   local: string;
 };
@@ -62,7 +62,7 @@ export default function PlayedMatchesScreen() {
         </BackButtonTab>
       </TopButtonsContainer>
 
-      <TitlePageTabs>Partidas Jogadas</TitlePageTabs>
+      <TitlePageTabs>Horários Jogados</TitlePageTabs>
 
       {playedMatches.length === 0 ? (
         <NoResults message="Nenhuma partida jogada encontrada." />

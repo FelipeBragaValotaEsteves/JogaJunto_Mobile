@@ -15,14 +15,11 @@ interface MatchCardProps {
 }
 
 function formatDate(dateString: string): string {
-  // Se data for uma string de data (YYYY-MM-DD), parse corretamente
   let dateObj: Date;
   if (dateString.includes('-')) {
-    // Se for formato YYYY-MM-DD, criar data local
     const [year, month, day] = dateString.split('-').map(Number);
     dateObj = new Date(year, month - 1, day);
   } else {
-    // Se for timestamp, usar parseInt
     dateObj = new Date(parseInt(dateString));
   }
 

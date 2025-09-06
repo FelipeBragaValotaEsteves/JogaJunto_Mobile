@@ -191,7 +191,7 @@ export default function MatchScreen() {
             const headers = await authHeaders();
 
             if (!tipo) {
-                showAlert('error', 'Erro', 'Tipo de partida é obrigatório.');
+                showAlert('error', 'Erro', 'Tipo é obrigatório.');
                 return;
             }
 
@@ -208,8 +208,6 @@ export default function MatchScreen() {
                 tipo_partida_id: tipo ?? null,
                 valor: valor ? parseCurrency(valor) : undefined, 
             };
-
-            console.log(partida);
 
             const method = id ? 'PUT' : 'POST';
             const url = id
@@ -251,7 +249,7 @@ export default function MatchScreen() {
                 </BackButtonTab>
             </TopButtonsContainer>
 
-            <TitlePageTabs>Partida</TitlePageTabs>
+            <TitlePageTabs>Horário</TitlePageTabs>
 
             <ProgressContainer>
                 <ProgressStep active={currentPhase >= 1} />
