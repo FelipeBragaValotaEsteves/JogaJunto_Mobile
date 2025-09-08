@@ -31,6 +31,11 @@ const typography = {
         fontSize: 16,
     } as TextStyle,
 
+    "txt-2-bold": {
+        fontFamily: "Poppins-Medium",
+        fontSize: 16,
+    } as TextStyle,
+
     "txt-3": {
         fontFamily: "Roboto-Regular",
         fontSize: 12,

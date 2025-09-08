@@ -418,9 +418,9 @@ const ButtonRow = styled.View`
   flex-direction: row;
   justify-content: space-between;
   margin-top: 20px;
-  justify-content: flex-end; /* Garante que o botão PRÓXIMO fique sempre à direita */
+  justify-content: flex-end;
 `;
 
 const BackButtonWrapper = styled.View`
-  margin-right: auto; /* Garante que o botão VOLTAR fique à esquerda */
+  margin-right: auto; 
 `;

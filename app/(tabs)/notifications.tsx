@@ -4,8 +4,8 @@ import { TitlePageTabs } from "@/components/shared/TitlePage";
 import { useRouter } from "expo-router";
 import { CircleArrowLeft } from "lucide-react-native";
 
-import { InviteCard } from "@/components/shared/InviteCard";
 import { NoResults } from "@/components/shared/NoResults";
+import { NotificationCard } from "@/components/shared/NotificationCard";
 import React, { useState } from "react";
 import styled from "styled-components/native";
 
@@ -24,13 +24,13 @@ export default function NotificationsScreen() {
       title: "Campo do ABC",
       date: "Segunda, 26 Maio",
       hour: "18:00",
-      description: "Campo do ABC",
+      description: "Você foi convidado para jogar no Campo do ABC às 18:00.",
     },
     {
-      title: "Campo do ABC",
-      date: "Segunda, 26 Maio",
-      hour: "18:00",
-      description: "Campo do ABC",
+      title: "Treino no Parque",
+      date: "Terça, 27 Maio",
+      hour: "19:00",
+      description: "Participe do treino no Parque às 19:00.",
     },
   ]);
 
@@ -42,21 +42,16 @@ export default function NotificationsScreen() {
         </BackButtonTab>
       </TopButtonsContainer>
 
-      <TitlePageTabs>Convites</TitlePageTabs>
+      <TitlePageTabs>Notificações</TitlePageTabs>
 
       {notifications.length === 0 ? (
         <NoResults message="Nenhuma notificação encontrada." />
       ) : (
         notifications.map((notification, index) => (
-          <InviteCard
+          <NotificationCard
             key={index}
-            date={notification.date}
-            hour={notification.hour}
-            location={notification.title}
-            acceptLabel="ACEITAR"
-            rejectLabel="RECUSAR"
-            onAccept={() => console.log(`Convite aceito: ${notification.title}`)}
-            onReject={() => console.log(`Convite recusado: ${notification.title}`)}
+            message={notification.description}
+            onPress={() => console.log(`Ir para: ${notification.title}`)}
           />
         ))
       )}

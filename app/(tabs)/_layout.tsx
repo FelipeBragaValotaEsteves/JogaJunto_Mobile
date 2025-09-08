@@ -1,6 +1,6 @@
 import { BottomTabBar } from "@react-navigation/bottom-tabs";
 import { Tabs, useRouter, useSegments } from "expo-router";
-import { Bell, CircleEqualIcon, Home, User } from "lucide-react-native";
+import { Bell, Home, Mail, User } from "lucide-react-native";
 import { Text, View } from "react-native";
 
 import LogoJogaJunto from "../../assets/images/logo-white-small.svg";
@@ -87,6 +87,26 @@ export default function TabsLayout() {
         name="matchDetails"
         options={{ title: "Detalhes da Partida", href: null }}
       />
+
+      <Tabs.Screen
+        name="matchPlayers"
+        options={{ title: "Jogadores da Partida", href: null }}
+      />
+
+      <Tabs.Screen
+        name="matchPlayersAdd"
+        options={{ title: "Adicionar Jogador", href: null }}
+      />
+
+      <Tabs.Screen
+        name="invites"
+        options={{ title: "Convites", href: null }}
+      />
+
+      <Tabs.Screen
+        name="gameDetails"
+        options={{ title: "Detalhes do Jogo", href: null }}
+      />
     </Tabs>
   );
 }
@@ -114,7 +134,11 @@ function CustomHeader() {
           size={28}
           onPress={() => router.push("/(tabs)/notifications")}
         />
-        <CircleEqualIcon color="white" size={28} />
+        <Mail
+          color="white"
+          size={28}
+          onPress={() => router.push("/(tabs)/invites")}
+        />
       </View>
     </View>
   );
@@ -124,7 +148,7 @@ function CustomHeaderIndex() {
   const router = useRouter();
 
   return (
-    <View style={{ position: "relative" }}> 
+    <View style={{ position: "relative" }}>
       <View
         style={{
           height: 200,
@@ -133,7 +157,7 @@ function CustomHeaderIndex() {
           top: 0,
           left: 0,
           right: 0,
-          zIndex: -1, 
+          zIndex: -1,
         }}
       />
       <View
@@ -154,15 +178,19 @@ function CustomHeaderIndex() {
             size={28}
             onPress={() => router.push("/(tabs)/notifications")}
           />
-          <CircleEqualIcon color="white" size={28} />
+          <Mail
+            color="white"
+            size={28}
+            onPress={() => router.push("/(tabs)/invites")}
+          />
         </View>
       </View>
 
       <Text
         style={{
-          ...typography["txt-1"], 
+          ...typography["txt-1"],
           position: "absolute",
-          top: 150, 
+          top: 150,
           left: 20,
           color: "#e2e8f0",
         }}

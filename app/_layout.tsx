@@ -5,6 +5,7 @@ import { useFonts } from "expo-font";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 function AuthGate() {
   const { userToken, loading } = useAuth();
@@ -43,13 +44,14 @@ export default function RootLayout() {
     "Roboto-Regular": require("../assets/fonts/Roboto-Regular.ttf"),
   });
 
-
   const colorScheme = useColorScheme();
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <AuthProvider>
-        <AuthGate />
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <AuthGate />
+        </GestureHandlerRootView>
       </AuthProvider>
     </ThemeProvider>
   );

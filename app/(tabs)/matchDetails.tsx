@@ -4,7 +4,7 @@ import { MainContainer } from '@/components/shared/MainContainer';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
 import typography from '@/constants/typography';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CircleArrowLeft, CirclePlus, Edit, X } from 'lucide-react-native';
+import { CircleArrowLeft, CirclePlus, CircleX, Edit, Users } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components/native';
 import { Alert } from '../../components/shared/Alert';
@@ -14,7 +14,7 @@ import { authHeaders } from '../../utils/authHeaders';
 
 function formatDateTime(data: string, hora: string): { time: string; formattedDate: string } {
     let dateObj: Date;
-    const  onlyDate = data.split('T')[0];
+    const onlyDate = data.split('T')[0];
     const [year, month, day] = onlyDate.split('-').map(Number);
     dateObj = new Date(year, month - 1, day);
 
@@ -26,27 +26,11 @@ function formatDateTime(data: string, hora: string): { time: string; formattedDa
     return { time, formattedDate: `${dayOfWeek}, ${day} de ${monthExtenso}` };
 }
 
-const mockGames = [
-    {
-        id: 1,
-        titulo: 'Primeiro jogo',
-        time1: 'Vermelho',
-        time2: 'Verde',
-        placar1: 1,
-        placar2: 1,
-        eventos: [
-            { type: 'goal', player: 'Raphael', team: 'Verde' },
-            { type: 'goal', player: 'Gomes', team: 'Vermelho' },
-            { type: 'card', player: 'Raphael', team: 'Verde' },
-            { type: 'assist', player: 'Felipe', team: 'Verde' },
-        ],
-    },
-];
-
 export default function MatchDetailsScreen() {
     const router = useRouter();
     const { id, source } = useLocalSearchParams();
     const [matchDetails, setMatchDetails] = useState<any>(null);
+    const [games, setGames] = useState<any[]>([]);
 
     const showEditButton = source === 'createdMatches';
 
@@ -84,8 +68,7 @@ export default function MatchDetailsScreen() {
                 }
 
                 const data = await response.json();
-                console.log(data);
-                
+
                 setMatchDetails(data);
             } catch (error) {
                 console.error(error);
@@ -93,6 +76,65 @@ export default function MatchDetailsScreen() {
         }
 
         fetchMatchDetails();
+    }, [id]);
+
+    useEffect(() => {
+        async function fetchGames() {
+            try {
+                const headers = await authHeaders();
+                const response = await fetch(`${BASE_URL}/partidas/resumo/${id}`, { headers });
+
+                if (!response.ok) {
+                    throw new Error("Erro ao buscar jogos");
+                }
+
+                const data = await response.json();
+
+                const formattedGames = data.map((jogo: any) => {
+                    const time1 = jogo.times[0];
+                    const time2 = jogo.times[1];
+
+                    return {
+                        id: jogo.jogoId,
+                        titulo: `Jogo ${jogo.jogoId}`,
+                        time1: time1?.nome || "",
+                        time2: time2?.nome || "",
+                        placar1: time1?.totais?.gols || 0,
+                        placar2: time2?.totais?.gols || 0,
+                        eventos: [
+                            ...(time1?.jogadores?.flatMap((jogador: any) => 
+                                Object.entries(jogador.eventos || {})
+                                    .filter(([evento, valor]) => Number(valor) > 0)
+                                    .map(([evento, valor]) => ({
+                                        type: evento,
+                                        player: jogador.nome,
+                                        team: time1.nome,
+                                        value: valor,
+                                    }))
+                            ) || []),
+                            ...(time2?.jogadores?.flatMap((jogador: any) => 
+                                Object.entries(jogador.eventos || {})
+                                    .filter(([evento, valor]) => Number(valor) > 0)
+                                    .map(([evento, valor]) => ({
+                                        type: evento,
+                                        player: jogador.nome,
+                                        team: time2.nome,
+                                        value: valor,
+                                    }))
+                            ) || [])
+                        ],
+                    };
+                });
+
+                setGames(formattedGames);
+            } catch (error) {
+                console.error("Erro ao buscar jogos:", error);
+            }
+        }
+
+        if (id) {
+            fetchGames();
+        }
     }, [id]);
 
     const handleEdit = () => {
@@ -156,6 +198,18 @@ export default function MatchDetailsScreen() {
         );
     };
 
+    const handleViewPlayers = () => {
+        if (!matchDetails) return;
+
+        router.push({
+            pathname: "/(tabs)/matchPlayers",
+            params: {
+                matchId: matchDetails.id,
+                showEditButton: showEditButton ? 'true' : 'false',
+            },
+        });
+    };
+
     if (!matchDetails || Object.keys(matchDetails).length === 0) {
         return (
             <MainContainer>
@@ -172,16 +226,23 @@ export default function MatchDetailsScreen() {
                 <BackButtonTab onPress={() => router.back()}>
                     <CircleArrowLeft color="#2B6AE3" size={50} />
                 </BackButtonTab>
-                {showEditButton && (
-                    <ButtonsContainer>
-                        <CancelButton onPress={handleCancelMatch}>
-                            <X color="#E53E3E" size={30} />
-                        </CancelButton>
-                        <EditButton onPress={handleEdit}>
-                            <Edit color="#2B6AE3" size={30} />
-                        </EditButton>
-                    </ButtonsContainer>
-                )}
+                <ButtonsContainer>
+                    {showEditButton && (
+                        <>
+                            <CancelButton onPress={handleCancelMatch}>
+                                <CircleX color="#E53E3E" size={30} />
+                            </CancelButton>
+                            <EditButton onPress={handleEdit}>
+                                <Edit color="#2B6AE3" size={30} />
+                            </EditButton>
+                        </>
+                    )}
+
+                    <PlayersButton onPress={handleViewPlayers}>
+                        <Users color="#2B6AE3" size={30} />
+                    </PlayersButton>
+                </ButtonsContainer>
+
             </TopButtonsContainer>
 
             <TitlePageTabs style={{ marginBottom: 8 }}>{matchDetails.local}</TitlePageTabs>
@@ -193,7 +254,7 @@ export default function MatchDetailsScreen() {
                 <SubTitleText>{matchDetails.tipo_partida_nome}</SubTitleText>
             </SubTitleContainer>
 
-            {mockGames.map((jogo, index) => (
+            {games.map((jogo, index) => (
                 <GameCard
                     key={index}
                     title={jogo.titulo}
@@ -202,7 +263,14 @@ export default function MatchDetailsScreen() {
                     score1={jogo.placar1}
                     score2={jogo.placar2}
                     events={jogo.eventos}
-                    onViewPress={() => console.log(`Visualizar jogo ${jogo.id}`)}
+                    onViewPress={() => {
+                        router.push({
+                            pathname: "/(tabs)/gameDetails",
+                            params: {
+                                id: jogo.id,
+                            },
+                        });
+                    }}
                 />
             ))}
 
@@ -266,6 +334,12 @@ const EditButton = styled.TouchableOpacity`
 `;
 
 const CancelButton = styled.TouchableOpacity`
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-left: 10px;
+`;
+
+const PlayersButton = styled.TouchableOpacity`
   padding: 8px 12px;
   border-radius: 8px;
   margin-left: 10px;

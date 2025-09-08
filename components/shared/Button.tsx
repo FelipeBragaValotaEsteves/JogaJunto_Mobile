@@ -8,6 +8,20 @@ export const Button = styled.TouchableOpacity`
   align-items: center;
   align-self: flex-end; 
 `;
+export const ButtonDanger = styled.TouchableOpacity`
+  background-color: #FF4848;
+  padding: 10px 20px;
+  border-radius: 16px;
+  align-items: center;
+  align-self: flex-end; 
+`;
+
+export const ButtonSpace = styled.TouchableOpacity`
+  padding: 10px 20px;
+  border-radius: 16px;
+  align-items: center;
+  align-self: flex-end; 
+`;
 
 export const ButtonText = styled.Text`
   color: white;

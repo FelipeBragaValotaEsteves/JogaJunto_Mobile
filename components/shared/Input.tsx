@@ -17,7 +17,6 @@ const StyledInput = styled.TextInput.attrs({
   font-family: ${typography["txt-2"].fontFamily};
   color: #111;
   
-  /* Força o fundo branco mesmo com autofill */
   &:-webkit-autofill {
     -webkit-box-shadow: 0 0 0 1000px white inset !important;
     -webkit-text-fill-color: #111 !important;
