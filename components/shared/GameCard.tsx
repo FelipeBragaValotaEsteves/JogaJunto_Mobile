@@ -27,8 +27,6 @@ const GameCard: React.FC<GameCardProps> = ({
   const team1Events = events.filter(event => event.team === team1);
   const team2Events = events.filter(event => event.team === team2);
 
-  console.log(team1Events);
-
   return (
     <ContentContainer style={{ marginBottom: 20 }}>
       <Title>{title}</Title>

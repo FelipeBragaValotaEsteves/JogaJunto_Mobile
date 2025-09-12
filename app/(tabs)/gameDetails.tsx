@@ -1,3 +1,4 @@
+import { Alert } from '@/components/shared/Alert';
 import { BackButtonTab } from '@/components/shared/BackButton';
 import { Button, ButtonText } from '@/components/shared/Button';
 import { ContentContainer } from '@/components/shared/ContentContainer';
@@ -8,9 +9,9 @@ import { Select } from '@/components/shared/Select';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
 import typography from '@/constants/typography';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleArrowLeft, Plus } from 'lucide-react-native';
-import { DiamondIcon, SneakerMoveIcon, SoccerBallIcon } from 'phosphor-react-native';
+import { SneakerMoveIcon, SoccerBallIcon, SquareIcon } from 'phosphor-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -18,6 +19,20 @@ import { Float } from 'react-native/Libraries/Types/CodegenTypes';
 import styled from 'styled-components/native';
 import BASE_URL from '../../constants/config';
 import { authHeaders } from '../../utils/authHeaders';
+
+function formatDateTime(data: string, hora: string): { time: string; formattedDate: string } {
+    let dateObj: Date;
+    const onlyDate = data.split('T')[0];
+    const [year, month, day] = onlyDate.split('-').map(Number);
+    dateObj = new Date(year, month - 1, day);
+
+    const time = hora.slice(0, 5);
+    let dayOfWeek = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
+    dayOfWeek = dayOfWeek.replace('-feira', '');
+    dayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+    const monthExtenso = dateObj.toLocaleDateString('pt-BR', { month: 'long' });
+    return { time, formattedDate: `${dayOfWeek}, ${day} de ${monthExtenso}` };
+}
 
 interface GamePlayer {
     id: number;
@@ -27,9 +42,14 @@ interface GamePlayer {
     gols: number;
     assistencias: number;
     cartoes: number;
+    cartoesAmarelos: number;
+    cartoesVermelhos: number;
+    defesas: number;
     rating: Float;
     foto?: string;
     posicoes?: string[];
+    timeParticipanteId?: number;
+    jogadorId?: number;
 }
 
 interface AvailablePlayer {
@@ -37,6 +57,51 @@ interface AvailablePlayer {
     nome: string;
     foto: string;
     posicoes: string[];
+}
+
+interface BackendPlayerEventos {
+    gol: number;
+    assistencia: number;
+    defesa: number;
+    cartaoAmarelo: number;
+    cartaoVermelho: number;
+}
+
+interface BackendPlayer {
+    timeParticipanteId: number;
+    jogadorId: number;
+    nome: string;
+    eventos: BackendPlayerEventos;
+}
+
+interface BackendTeamTotais {
+    gols: number;
+    assistencias: number;
+    cartoesAmarelos: number;
+    cartoesVermelhos: number;
+}
+
+interface BackendTeam {
+    timeId: number;
+    nome: string;
+    totais: BackendTeamTotais;
+    jogadores: BackendPlayer[];
+}
+
+interface BackendGameResponse {
+    jogoId: number;
+    times: BackendTeam[];
+}
+
+interface MatchDetails {
+    id: number;
+    titulo: string;
+    descricao: string;
+    data: string;
+    hora_inicio: string;
+    local: string;
+    tipo_partida_nome: string;
+    status: string;
 }
 
 interface GameDetails {
@@ -53,25 +118,42 @@ interface GameDetails {
     jogadores: GamePlayer[];
 }
 
-const POSICOES = ['GK', 'LD', 'ZAG', 'LE', 'VOL', 'MC', 'PE', 'PD', 'CA'];
+interface Position {
+    id: number;
+    nome: string;
+}
 
 export default function GameDetailsScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams();
     const [gameDetails, setGameDetails] = useState<GameDetails | null>(null);
+    const [matchDetails, setMatchDetails] = useState<MatchDetails | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [showEditButton, setShowEditButton] = useState(true);
     const [editingTeam, setEditingTeam] = useState<string | null>(null);
     const [selectedPlayer, setSelectedPlayer] = useState<GamePlayer | null>(null);
-    const [editablePlayer, setEditablePlayer] = useState({ gols: 0, assistencias: 0, cartoes: 0, rating: 0.0, posicao: '' });
+    const [editablePlayer, setEditablePlayer] = useState({
+        gols: 0,
+        assistencias: 0,
+        cartoes: 0,
+        cartoesAmarelos: 0,
+        cartoesVermelhos: 0,
+        defesas: 0,
+        rating: 0.0,
+        posicao: '',
+        posicaoId: 0
+    });
     const [availablePlayers, setAvailablePlayers] = useState<AvailablePlayer[]>([]);
+    const [savingStats, setSavingStats] = useState(false);
+    const [positions, setPositions] = useState<Position[]>([]);
 
     const [positionPickerOpen, setPositionPickerOpen] = useState(false);
-    const [positionItems, setPositionItems] = useState(POSICOES.map(p => ({ label: p, value: p })));
+    const [positionItems, setPositionItems] = useState<{ label: string; value: string }[]>([]);
 
     const bottomSheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['100%'], []);
     const handleSheetChanges = useCallback((index: number) => {
-        console.log('handleSheetChanges', index);
         if (index === -1) {
             setEditingTeam(null);
             setSelectedPlayer(null);
@@ -87,12 +169,20 @@ export default function GameDetailsScreen() {
 
     const handlePlayerPress = (player: GamePlayer) => {
         setSelectedPlayer(player);
+
+
+        const currentPosition = positions.find(pos => pos.nome === player.posicao);
+
         setEditablePlayer({
             gols: player.gols,
             assistencias: player.assistencias,
             cartoes: player.cartoes,
+            cartoesAmarelos: player.cartoesAmarelos,
+            cartoesVermelhos: player.cartoesVermelhos,
+            defesas: player.defesas,
             rating: player.rating,
-            posicao: player.posicao
+            posicao: player.posicao,
+            posicaoId: currentPosition?.id || 0
         });
         setEditingTeam(null);
         bottomSheetRef.current?.expand();
@@ -105,19 +195,125 @@ export default function GameDetailsScreen() {
             if (stat === 'rating') {
                 return { ...prev, [stat]: Math.max(0, parseFloat(newValue.toFixed(1))) };
             }
-            return { ...prev, [stat]: Math.max(0, newValue) };
+
+            const updatedPlayer = { ...prev, [stat]: Math.max(0, newValue) };
+
+
+            if (stat === 'cartoesAmarelos' || stat === 'cartoesVermelhos') {
+                updatedPlayer.cartoes = updatedPlayer.cartoesAmarelos + updatedPlayer.cartoesVermelhos;
+            }
+
+            return updatedPlayer;
         });
     };
 
-    const handleSaveChanges = () => {
-        if (!selectedPlayer || !gameDetails) return;
+    const fetchPositions = async () => {
+        try {
 
-        const updatedJogadores = gameDetails.jogadores.map(p =>
-            p.id === selectedPlayer.id ? { ...p, ...editablePlayer } : p
-        );
 
-        setGameDetails({ ...gameDetails, jogadores: updatedJogadores });
-        bottomSheetRef.current?.close();
+            const headers = await authHeaders();
+            const response = await fetch(`${BASE_URL}/posicao/list`, { headers });
+
+
+            if (!response.ok) {
+                throw new Error(`Erro ao buscar posições: ${response.status} ${response.statusText}`);
+            }
+
+            const data: Position[] = await response.json();
+
+
+            setPositions(data);
+            setPositionItems(data.map(pos => ({ label: pos.nome, value: pos.id.toString() })));
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao buscar posições';
+            console.error("Erro ao buscar posições:", errorMessage);
+            setPositions([]);
+            setPositionItems([]);
+        }
+    };
+
+    const handleSaveChanges = async () => {
+        if (!selectedPlayer || !gameDetails || savingStats) return;
+
+        if (!selectedPlayer.jogadorId || !selectedPlayer.timeParticipanteId) {
+            showAlert(
+                'error',
+                'Erro',
+                'Dados insuficientes para salvar. IDs do jogador ou time não encontrados.'
+            );
+            return;
+        }
+
+        try {
+            setSavingStats(true);
+
+            const playerStats: any = {
+                jogadorId: selectedPlayer.jogadorId,
+                timeParticipanteId: selectedPlayer.timeParticipanteId,
+                jogoId: gameDetails.id
+            };
+
+
+            if (editablePlayer.gols > 0) playerStats.gol = editablePlayer.gols;
+            if (editablePlayer.assistencias > 0) playerStats.assistencia = editablePlayer.assistencias;
+            if (editablePlayer.defesas > 0) playerStats.defesa = editablePlayer.defesas;
+            if (editablePlayer.cartoesAmarelos > 0) playerStats.cartaoAmarelo = editablePlayer.cartoesAmarelos;
+            if (editablePlayer.cartoesVermelhos > 0) playerStats.cartaoVermelho = editablePlayer.cartoesVermelhos;
+            if (editablePlayer.posicaoId > 0) playerStats.posicaoId = editablePlayer.posicaoId;
+
+
+            const headers = await authHeaders();
+            const response = await fetch(`${BASE_URL}/time-participantes/${selectedPlayer.jogadorId}`, {
+                method: 'PUT',
+                headers: {
+                    ...headers,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(playerStats)
+            });
+
+
+
+            if (!response.ok) {
+                const errorData = await response.text();
+                console.error("Erro na resposta:", errorData);
+                throw new Error(`Erro ao salvar estatísticas: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+
+
+
+            const updatedJogadores = gameDetails.jogadores.map(p =>
+                p.id === selectedPlayer.id ? {
+                    ...p,
+                    ...editablePlayer,
+                    cartoes: editablePlayer.cartoesAmarelos + editablePlayer.cartoesVermelhos
+                } : p
+            );
+
+            setGameDetails({ ...gameDetails, jogadores: updatedJogadores });
+
+            showAlert(
+                'success',
+                'Sucesso',
+                'Estatísticas do jogador salvas com sucesso!'
+            );
+
+            bottomSheetRef.current?.close();
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+            console.error("Erro ao salvar estatísticas:", errorMessage);
+
+            showAlert(
+                'error',
+                'Erro',
+                `Não foi possível salvar as estatísticas: ${errorMessage}`
+            );
+        } finally {
+            setSavingStats(false);
+        }
     };
 
     const handleAddPlayerToTeam = (player: AvailablePlayer) => {
@@ -131,6 +327,9 @@ export default function GameDetailsScreen() {
             gols: 0,
             assistencias: 0,
             cartoes: 0,
+            cartoesAmarelos: 0,
+            cartoesVermelhos: 0,
+            defesas: 0,
             rating: 5.0,
         };
 
@@ -140,77 +339,155 @@ export default function GameDetailsScreen() {
         bottomSheetRef.current?.close();
     };
 
+    const fetchMatchDetails = async () => {
+        try {
+
+
+            const headers = await authHeaders();
+            const response = await fetch(`${BASE_URL}/partidas/${id}`, { headers });
+
+
+            if (!response.ok) {
+                throw new Error(`Erro ao buscar detalhes da partida: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            setMatchDetails(data);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao buscar detalhes da partida';
+            console.error("Erro ao buscar detalhes da partida:", errorMessage);
+        }
+    };
+
+    const fetchGameDetails = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const headers = await authHeaders();
+            const response = await fetch(`${BASE_URL}/partidas/resumo/${id}`, { headers });
+            if (!response.ok) {
+                throw new Error(`Erro ${response.status}: ${response.statusText}`);
+            }
+
+            const data: BackendGameResponse[] = await response.json();
+
+            if (!Array.isArray(data) || data.length === 0) {
+                throw new Error("Nenhum dado encontrado para o jogo.");
+            }
+
+            const gameData = data[0];
+
+            if (!gameData.jogoId) {
+                throw new Error("ID do jogo não encontrado nos dados retornados.");
+            }
+
+            const team1 = gameData.times?.[0] || null;
+            const team2 = gameData.times?.[1] || null;
+
+            const parsedData: GameDetails = {
+                id: gameData.jogoId,
+                titulo: `Jogo ${gameData.jogoId}`,
+                time1: team1?.nome || "Time 1",
+                time2: team2?.nome || "Time 2",
+                placar1: team1?.totais?.gols || 0,
+                placar2: team2?.totais?.gols || 0,
+                data: matchDetails?.data || "",
+                hora_inicio: matchDetails?.hora_inicio || "",
+                local: matchDetails?.local || "",
+                tipo_partida_nome: matchDetails?.tipo_partida_nome || "",
+                jogadores: [
+                    ...(team1?.jogadores?.map((jogador: BackendPlayer) => ({
+                        id: jogador.jogadorId || Math.random(),
+                        nome: jogador.nome || "Jogador sem nome",
+                        time: team1.nome,
+                        posicao: "",
+                        gols: jogador.eventos?.gol || 0,
+                        assistencias: jogador.eventos?.assistencia || 0,
+                        cartoes: (jogador.eventos?.cartaoAmarelo || 0) + (jogador.eventos?.cartaoVermelho || 0),
+                        cartoesAmarelos: jogador.eventos?.cartaoAmarelo || 0,
+                        cartoesVermelhos: jogador.eventos?.cartaoVermelho || 0,
+                        defesas: jogador.eventos?.defesa || 0,
+                        rating: 0,
+                        timeParticipanteId: jogador.timeParticipanteId,
+                        jogadorId: jogador.jogadorId,
+                    })) || []),
+                    ...(team2?.jogadores?.map((jogador: BackendPlayer) => ({
+                        id: jogador.jogadorId || Math.random(),
+                        nome: jogador.nome || "Jogador sem nome",
+                        time: team2.nome,
+                        posicao: "",
+                        gols: jogador.eventos?.gol || 0,
+                        assistencias: jogador.eventos?.assistencia || 0,
+                        cartoes: (jogador.eventos?.cartaoAmarelo || 0) + (jogador.eventos?.cartaoVermelho || 0),
+                        cartoesAmarelos: jogador.eventos?.cartaoAmarelo || 0,
+                        cartoesVermelhos: jogador.eventos?.cartaoVermelho || 0,
+                        defesas: jogador.eventos?.defesa || 0,
+                        rating: 0,
+                        timeParticipanteId: jogador.timeParticipanteId,
+                        jogadorId: jogador.jogadorId,
+                    })) || []),
+                ],
+            };
+
+            setGameDetails(parsedData);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+            console.error("Erro ao buscar detalhes do jogo:", errorMessage);
+            setError(errorMessage);
+            showAlert(
+                'error',
+                'Erro',
+                errorMessage || 'Não foi possível carregar os detalhes do jogo. Tente novamente mais tarde.'
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (!id) {
             console.error("ID do jogo não foi fornecido.");
+            setError("ID do jogo não foi fornecido.");
+            setLoading(false);
             return;
         }
-
-        async function fetchGameDetails() {
-            try {
-                const headers = await authHeaders();
-                const response = await fetch(`${BASE_URL}/jogos/${id}`, { headers });
-
-                if (!response.ok) {
-                    throw new Error("Erro ao buscar detalhes do jogo");
-                }
-
-                const data = await response.json();
-                setGameDetails(data);
-            } catch (error) {
-
-                setGameDetails({
-                    id: Number(id),
-                    titulo: 'Primeiro jogo',
-                    time1: 'Vermelho',
-                    time2: 'Verde',
-                    placar1: 1,
-                    placar2: 1,
-                    data: '2025-09-07',
-                    hora_inicio: '15:00',
-                    local: 'Estádio Municipal',
-                    tipo_partida_nome: 'Campo',
-                    jogadores: [
-
-                        { id: 1, nome: 'Raphael Silva', time: 'Vermelho', posicao: 'GK', gols: 0, assistencias: 0, cartoes: 0, rating: 7.5, foto: 'https://i.pravatar.cc/150?img=1' },
-                        { id: 2, nome: 'Carlos Lima', time: 'Vermelho', posicao: 'LD', gols: 0, assistencias: 1, cartoes: 0, rating: 6.8, foto: 'https://i.pravatar.cc/150?img=2' },
-                        { id: 3, nome: 'Gomes Santos', time: 'Vermelho', posicao: 'ZAG', gols: 1, assistencias: 0, cartoes: 0, rating: 7.2, foto: 'https://i.pravatar.cc/150?img=3' },
-                        { id: 4, nome: 'Ricardo Costa', time: 'Vermelho', posicao: 'ZAG', gols: 0, assistencias: 0, cartoes: 1, rating: 6.5, foto: 'https://i.pravatar.cc/150?img=4' },
-                        { id: 5, nome: 'Felipe Rocha', time: 'Vermelho', posicao: 'LE', gols: 0, assistencias: 0, cartoes: 0, rating: 6.0, foto: 'https://i.pravatar.cc/150?img=5' },
-                        { id: 6, nome: 'João Pedro', time: 'Vermelho', posicao: 'VOL', gols: 0, assistencias: 0, cartoes: 0, rating: 6.8, foto: 'https://i.pravatar.cc/150?img=6' },
-                        { id: 7, nome: 'Miguel Souza', time: 'Vermelho', posicao: 'MC', gols: 0, assistencias: 1, cartoes: 0, rating: 7.0, foto: 'https://i.pravatar.cc/150?img=7' },
-                        { id: 8, nome: 'Lucas Mendes', time: 'Vermelho', posicao: 'VOL', gols: 0, assistencias: 0, cartoes: 0, rating: 6.5, foto: 'https://i.pravatar.cc/150?img=8' },
-                        { id: 9, nome: 'Diego Alves', time: 'Vermelho', posicao: 'PE', gols: 1, assistencias: 0, cartoes: 0, rating: 7.8, foto: 'https://i.pravatar.cc/150?img=9' },
-                        { id: 10, nome: 'Bruno Ferreira', time: 'Vermelho', posicao: 'CA', gols: 2, assistencias: 0, cartoes: 0, rating: 8.5, foto: 'https://i.pravatar.cc/150?img=10' },
-                        { id: 11, nome: 'André Oliveira', time: 'Vermelho', posicao: 'PD', gols: 0, assistencias: 1, cartoes: 0, rating: 7.0, foto: 'https://i.pravatar.cc/150?img=11' },
-
-
-                        { id: 12, nome: 'Marcos Silva', time: 'Verde', posicao: 'GK', gols: 0, assistencias: 0, cartoes: 0, rating: 7.0, foto: 'https://i.pravatar.cc/150?img=12' },
-                        { id: 13, nome: 'Gabriel Santos', time: 'Verde', posicao: 'LD', gols: 0, assistencias: 0, cartoes: 0, rating: 6.5, foto: 'https://i.pravatar.cc/150?img=13' },
-                        { id: 14, nome: 'Rafael Mendes', time: 'Verde', posicao: 'ZAG', gols: 0, assistencias: 0, cartoes: 0, rating: 6.8, foto: 'https://i.pravatar.cc/150?img=14' },
-                        { id: 15, nome: 'Thiago Lima', time: 'Verde', posicao: 'ZAG', gols: 0, assistencias: 0, cartoes: 0, rating: 6.5, foto: 'https://i.pravatar.cc/150?img=15' },
-                        { id: 16, nome: 'Eduardo Rocha', time: 'Verde', posicao: 'LE', gols: 0, assistencias: 0, cartoes: 0, rating: 6.0, foto: 'https://i.pravatar.cc/150?img=16' },
-                        { id: 17, nome: 'Fernando Oliveira', time: 'Verde', posicao: 'VOL', gols: 0, assistencias: 0, cartoes: 0, rating: 6.8, foto: 'https://i.pravatar.cc/150?img=17' },
-                        { id: 18, nome: 'Rodrigo Silva', time: 'Verde', posicao: 'MC', gols: 0, assistencias: 1, cartoes: 0, rating: 7.0, foto: 'https://i.pravatar.cc/150?img=18' },
-                        { id: 19, nome: 'Alex Ferreira', time: 'Verde', posicao: 'VOL', gols: 0, assistencias: 0, cartoes: 0, rating: 6.5, foto: 'https://i.pravatar.cc/150?img=19' },
-                        { id: 20, nome: 'Vítor Alves', time: 'Verde', posicao: 'PE', gols: 1, assistencias: 0, cartoes: 0, rating: 7.8, foto: 'https://i.pravatar.cc/150?img=20' },
-                        { id: 21, nome: 'Raphael Silva', time: 'Verde', posicao: 'CA', gols: 2, assistencias: 0, cartoes: 0, rating: 9.4, foto: 'https://i.pravatar.cc/150?img=21' },
-                        { id: 22, nome: 'Felipe Costa', time: 'Verde', posicao: 'PD', gols: 0, assistencias: 1, cartoes: 0, rating: 7.0, foto: 'https://i.pravatar.cc/150?img=22' },
-                    ],
-                });
-
-                setAvailablePlayers([
-                    { id: 101, nome: 'Jorge Jesus', foto: 'https://i.pravatar.cc/150?img=51', posicoes: ['ZAG', 'VOL'] },
-                    { id: 102, nome: 'Abel Ferreira', foto: 'https://i.pravatar.cc/150?img=52', posicoes: ['MC'] },
-                    { id: 103, nome: 'Renato Gaúcho', foto: 'https://i.pravatar.cc/150?img=53', posicoes: ['CA', 'PE'] },
-                ]);
-            }
-        }
-
-        fetchGameDetails();
     }, [id]);
 
-    if (!gameDetails) {
+
+    useFocusEffect(
+        useCallback(() => {
+            if (id) {
+                const fetchData = async () => {
+                    await fetchPositions();
+                    await fetchMatchDetails();
+                    await fetchGameDetails();
+                };
+                fetchData();
+            }
+        }, [id])
+    );
+
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{
+        type: string;
+        title: string;
+        message: string;
+        onConfirm?: (() => void) | undefined;
+    }>({
+        type: 'success',
+        title: '',
+        message: '',
+        onConfirm: undefined,
+    });
+
+    const showAlert = (type: string, title: string, message: string, onConfirm?: () => void) => {
+        setAlertConfig({ type, title, message, onConfirm });
+        setAlertVisible(true);
+    };
+
+    if (loading) {
         return (
             <MainContainer>
                 <TitlePageTabs>Carregando detalhes do jogo...</TitlePageTabs>
@@ -218,8 +495,39 @@ export default function GameDetailsScreen() {
         );
     }
 
-    const team1Players = gameDetails.jogadores.filter(player => player.time === gameDetails.time1);
-    const team2Players = gameDetails.jogadores.filter(player => player.time === gameDetails.time2);
+    if (error || !gameDetails) {
+        return (
+            <MainContainer>
+                <TitlePageTabs>Erro ao carregar jogo</TitlePageTabs>
+                <ContentContainer>
+                    <Text>{error || 'Erro desconhecido'}</Text>
+                    <Button onPress={async () => {
+                        setError(null);
+                        await fetchMatchDetails();
+                        await fetchGameDetails();
+                    }}>
+                        <ButtonText>Tentar novamente</ButtonText>
+                    </Button>
+                </ContentContainer>
+            </MainContainer>
+        );
+    }
+
+    const team1Players = gameDetails?.jogadores?.filter(player => player.time === gameDetails.time1) || [];
+    const team2Players = gameDetails?.jogadores?.filter(player => player.time === gameDetails.time2) || [];
+
+    const team1Name = gameDetails?.time1 || "Time 1";
+    const team2Name = gameDetails?.time2 || "Time 2";
+
+    const matchInfo = matchDetails && gameDetails ? (() => {
+        const { time, formattedDate } = formatDateTime(matchDetails.data, matchDetails.hora_inicio);
+        return {
+            formattedDate,
+            time,
+            local: matchDetails.local,
+            tipo: matchDetails.tipo_partida_nome
+        };
+    })() : null;
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
@@ -230,22 +538,29 @@ export default function GameDetailsScreen() {
                     </BackButtonTab>
                 </TopButtonsContainer>
 
-                <TitlePageTabs style={{ marginBottom: 8 }}>{gameDetails.local}</TitlePageTabs>
+                <TitlePageTabs style={{ marginBottom: 8 }}>
+                    {matchInfo?.local || gameDetails?.local || "Local não informado"}
+                </TitlePageTabs>
                 <Divider />
                 <SubTitleContainer>
                     <SubTitleText>
-                        {gameDetails.data} às {gameDetails.hora_inicio}
+                        {matchInfo ? `${matchInfo.formattedDate} às ${matchInfo.time}` :
+                            gameDetails?.data && gameDetails?.hora_inicio ?
+                                `${gameDetails.data} às ${gameDetails.hora_inicio}` :
+                                "Data não informada"}
                     </SubTitleText>
-                    <SubTitleText>{gameDetails.tipo_partida_nome}</SubTitleText>
+                    <SubTitleText>
+                        {matchInfo?.tipo || gameDetails?.tipo_partida_nome || ""}
+                    </SubTitleText>
                 </SubTitleContainer>
 
                 <ContentContainer>
                     <GameCard>
                         <GameTitle>{gameDetails.titulo}</GameTitle>
                         <ScoreSection>
-                            <TeamName>{gameDetails.time1}</TeamName>
+                            <TeamName>{team1Name}</TeamName>
                             <Score>{gameDetails.placar1} x {gameDetails.placar2}</Score>
-                            <TeamNameRight>{gameDetails.time2}</TeamNameRight>
+                            <TeamNameRight>{team2Name}</TeamNameRight>
                         </ScoreSection>
                     </GameCard>
 
@@ -256,7 +571,7 @@ export default function GameDetailsScreen() {
                                     <PlayerCardTeam>
                                         <PlayerNameSection>
                                             <PlayerName>{player.nome}</PlayerName>
-                                            {player.posicao && <PlayerPosition>{player.posicao}</PlayerPosition>}
+                                            {player.posicao && player.posicao.trim() && <PlayerPosition>{player.posicao}</PlayerPosition>}
                                         </PlayerNameSection>
                                         <PlayerDetailsSection>
                                             <StatsSection>
@@ -280,18 +595,28 @@ export default function GameDetailsScreen() {
                                                         )}
                                                     </StatIcon>
                                                 )}
-                                                {player.cartoes > 0 && (
+                                                {player.cartoesAmarelos > 0 && (
                                                     <StatIcon>
-                                                        <DiamondIcon color="#ff4d4d" size={18} />
-                                                        {player.cartoes > 1 && (
+                                                        <SquareIcon color="#FFC107" size={18} />
+                                                        {player.cartoesAmarelos > 1 && (
                                                             <Badge>
-                                                                <BadgeText>{player.cartoes}</BadgeText>
+                                                                <BadgeText>{player.cartoesAmarelos}</BadgeText>
+                                                            </Badge>
+                                                        )}
+                                                    </StatIcon>
+                                                )}
+                                                {player.cartoesVermelhos > 0 && (
+                                                    <StatIcon>
+                                                        <SquareIcon color="#ff4d4d" size={18} />
+                                                        {player.cartoesVermelhos > 1 && (
+                                                            <Badge>
+                                                                <BadgeText>{player.cartoesVermelhos}</BadgeText>
                                                             </Badge>
                                                         )}
                                                     </StatIcon>
                                                 )}
                                             </StatsSection>
-                                            {player.rating && (
+                                            {player.rating > 0 && (
                                                 <RatingSection>
                                                     <Rating rating={player.rating}>{player.rating.toFixed(1)}</Rating>
                                                 </RatingSection>
@@ -300,7 +625,7 @@ export default function GameDetailsScreen() {
                                     </PlayerCardTeam>
                                 </TouchableOpacity>
                             ))}
-                            <AddPlayerButton onPress={() => handleAddPlayer(gameDetails.time1)}>
+                            <AddPlayerButton onPress={() => handleAddPlayer(team1Name)}>
                                 <Plus color="#2B6AE3" size={20} />
                                 <AddPlayerText>Adicionar</AddPlayerText>
                             </AddPlayerButton>
@@ -312,7 +637,7 @@ export default function GameDetailsScreen() {
                                     <PlayerCardTeam>
                                         <PlayerNameSection>
                                             <PlayerName>{player.nome}</PlayerName>
-                                            {player.posicao && <PlayerPosition>{player.posicao}</PlayerPosition>}
+                                            {player.posicao && player.posicao.trim() && <PlayerPosition>{player.posicao}</PlayerPosition>}
                                         </PlayerNameSection>
                                         <PlayerDetailsSection>
                                             <StatsSection>
@@ -336,18 +661,28 @@ export default function GameDetailsScreen() {
                                                         )}
                                                     </StatIcon>
                                                 )}
-                                                {player.cartoes > 0 && (
+                                                {player.cartoesAmarelos > 0 && (
                                                     <StatIcon>
-                                                        <DiamondIcon color="#ff4d4d" size={18} />
-                                                        {player.cartoes > 1 && (
+                                                        <SquareIcon color="#FFC107" size={18} />
+                                                        {player.cartoesAmarelos > 1 && (
                                                             <Badge>
-                                                                <BadgeText>{player.cartoes}</BadgeText>
+                                                                <BadgeText>{player.cartoesAmarelos}</BadgeText>
+                                                            </Badge>
+                                                        )}
+                                                    </StatIcon>
+                                                )}
+                                                {player.cartoesVermelhos > 0 && (
+                                                    <StatIcon>
+                                                        <SquareIcon color="#ff4d4d" size={18} />
+                                                        {player.cartoesVermelhos > 1 && (
+                                                            <Badge>
+                                                                <BadgeText>{player.cartoesVermelhos}</BadgeText>
                                                             </Badge>
                                                         )}
                                                     </StatIcon>
                                                 )}
                                             </StatsSection>
-                                            {player.rating && (
+                                            {player.rating > 0 && (
                                                 <RatingSection>
                                                     <Rating rating={player.rating}>{player.rating.toFixed(1)}</Rating>
                                                 </RatingSection>
@@ -356,7 +691,7 @@ export default function GameDetailsScreen() {
                                     </PlayerCardTeam>
                                 </TouchableOpacity>
                             ))}
-                            <AddPlayerButton onPress={() => handleAddPlayer(gameDetails.time2)}>
+                            <AddPlayerButton onPress={() => handleAddPlayer(team2Name)}>
                                 <Plus color="#2B6AE3" size={20} />
                                 <AddPlayerText>Adicionar</AddPlayerText>
                             </AddPlayerButton>
@@ -382,12 +717,17 @@ export default function GameDetailsScreen() {
                                         <CompactSelectContainer>
                                             <Select
                                                 open={positionPickerOpen}
-                                                value={editablePlayer.posicao}
+                                                value={editablePlayer.posicaoId.toString()}
                                                 items={positionItems}
                                                 setOpen={setPositionPickerOpen}
                                                 setValue={(callback) => {
-                                                    const newPosition = callback(editablePlayer.posicao);
-                                                    setEditablePlayer(prev => ({ ...prev, posicao: newPosition }));
+                                                    const newPositionId = callback(editablePlayer.posicaoId.toString());
+                                                    const selectedPosition = positions.find(pos => pos.id.toString() === newPositionId);
+                                                    setEditablePlayer(prev => ({
+                                                        ...prev,
+                                                        posicaoId: parseInt(newPositionId),
+                                                        posicao: selectedPosition?.nome || ''
+                                                    }));
                                                 }}
                                                 setItems={setPositionItems}
                                                 placeholder="Selecione a posição"
@@ -427,16 +767,44 @@ export default function GameDetailsScreen() {
                                     )}
                                 </StatEditRow>
                                 <StatEditRow>
-                                    <StatLabel>Cartões</StatLabel>
+                                    <StatLabel>Defesas</StatLabel>
                                     {showEditButton ? (
                                         <NumberInput
-                                            value={editablePlayer.cartoes}
-                                            onDecrease={() => handleStatChange('cartoes', -1)}
-                                            onIncrease={() => handleStatChange('cartoes', 1)}
+                                            value={editablePlayer.defesas}
+                                            onDecrease={() => handleStatChange('defesas', -1)}
+                                            onIncrease={() => handleStatChange('defesas', 1)}
                                         />
                                     ) : (
-                                        <StatValue>{selectedPlayer.cartoes}</StatValue>
+                                        <StatValue>{selectedPlayer.defesas}</StatValue>
                                     )}
+                                </StatEditRow>
+                                <StatEditRow>
+                                    <StatLabel>Cartões Amarelos</StatLabel>
+                                    {showEditButton ? (
+                                        <NumberInput
+                                            value={editablePlayer.cartoesAmarelos}
+                                            onDecrease={() => handleStatChange('cartoesAmarelos', -1)}
+                                            onIncrease={() => handleStatChange('cartoesAmarelos', 1)}
+                                        />
+                                    ) : (
+                                        <StatValue>{selectedPlayer.cartoesAmarelos}</StatValue>
+                                    )}
+                                </StatEditRow>
+                                <StatEditRow>
+                                    <StatLabel>Cartões Vermelhos</StatLabel>
+                                    {showEditButton ? (
+                                        <NumberInput
+                                            value={editablePlayer.cartoesVermelhos}
+                                            onDecrease={() => handleStatChange('cartoesVermelhos', -1)}
+                                            onIncrease={() => handleStatChange('cartoesVermelhos', 1)}
+                                        />
+                                    ) : (
+                                        <StatValue>{selectedPlayer.cartoesVermelhos}</StatValue>
+                                    )}
+                                </StatEditRow>
+                                <StatEditRow>
+                                    <StatLabel>Total Cartões</StatLabel>
+                                    <StatValue>{showEditButton ? editablePlayer.cartoes : selectedPlayer.cartoes}</StatValue>
                                 </StatEditRow>
                                 <StatEditRow>
                                     <StatLabel>Nota</StatLabel>
@@ -454,8 +822,10 @@ export default function GameDetailsScreen() {
                             </StatsFormContainer>
 
                             {showEditButton && (
-                                <Button onPress={handleSaveChanges}>
-                                    <ButtonText>SALVAR ALTERAÇÕES</ButtonText>
+                                <Button onPress={handleSaveChanges} disabled={savingStats}>
+                                    <ButtonText>
+                                        {savingStats ? "SALVANDO..." : "SALVAR ALTERAÇÕES"}
+                                    </ButtonText>
                                 </Button>
                             )}
                         </PlayerDetailsContainer>
@@ -479,6 +849,15 @@ export default function GameDetailsScreen() {
                     )}
                 </BottomSheetView>
             </BottomSheet>
+
+            <Alert
+                visible={alertVisible}
+                type={alertConfig.type}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                onClose={() => setAlertVisible(false)}
+                onConfirm={alertConfig.onConfirm}
+            />
         </GestureHandlerRootView>
     );
 }
@@ -691,8 +1070,7 @@ const PlayerPositionSheet = styled.Text`
 `;
 
 const CompactSelectContainer = styled.View`
-    width: 120px;
-    max-width: 120px;
+    width: 80%;
 `;
 
 const StatsFormContainer = styled.View`

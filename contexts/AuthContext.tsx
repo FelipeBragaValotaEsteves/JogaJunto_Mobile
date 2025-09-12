@@ -32,11 +32,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const login = async (token: string, userId: string | number) => {
     try {
-      console.log("AuthContext: Iniciando login...");
       await AsyncStorage.setItem("userToken", token);
       await AsyncStorage.setItem("userId", String(userId)); 
       setUserToken(token);
-      console.log("AuthContext: Login concluído com sucesso");
     } catch (error) {
       console.error("AuthContext: Erro no login:", error);
       throw error;

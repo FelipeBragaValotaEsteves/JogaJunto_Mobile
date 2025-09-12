@@ -68,10 +68,13 @@ export default function MatchDetailsScreen() {
                 }
 
                 const data = await response.json();
-
                 setMatchDetails(data);
             } catch (error) {
-                console.error(error);
+                showAlert(
+                    'error',
+                    'Erro',
+                    'Não foi possível carregar os detalhes da partida. Tente novamente mais tarde.'
+                );
             }
         }
 
@@ -125,6 +128,9 @@ export default function MatchDetailsScreen() {
                         ],
                     };
                 });
+
+                console.log(formattedGames);
+                
 
                 setGames(formattedGames);
             } catch (error) {
@@ -209,6 +215,34 @@ export default function MatchDetailsScreen() {
             },
         });
     };
+    const addGame = async (homeTeam: string, visitorTeam: string) => {
+        try {
+            const headers = await authHeaders();
+            const response = await fetch(`${BASE_URL}/jogos`, {
+                method: 'POST',
+                headers: {
+                    ...headers,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    partidaId: matchDetails.id
+                }),
+            });
+            console.log(response);
+            console.log(matchDetails.id);
+
+            
+            if (!response.ok) {
+                throw new Error('Erro ao adicionar o jogo');
+            }
+
+            const data = await response.json();
+            showAlert('success', 'Sucesso', 'Jogo adicionado com sucesso!');
+            return data;
+        } catch (error) {
+            showAlert('error', 'Erro', 'Não foi possível adicionar o jogo. Tente novamente.');
+        }
+    };
 
     if (!matchDetails || Object.keys(matchDetails).length === 0) {
         return (
@@ -267,7 +301,7 @@ export default function MatchDetailsScreen() {
                         router.push({
                             pathname: "/(tabs)/gameDetails",
                             params: {
-                                id: jogo.id,
+                                id: matchDetails.id,
                             },
                         });
                     }}
@@ -275,7 +309,18 @@ export default function MatchDetailsScreen() {
             ))}
 
             <ContentContainer>
-                <AddGameButton onPress={() => console.log("Adicionar novo jogo")}>
+                <AddGameButton
+                    onPress={async () => {
+                        try {
+                            const newGame = await addGame('Time Casa', 'Time Visitante'); 
+                            router.push({
+                                pathname: '/(tabs)/gameDetails',
+                                params: { id: newGame.id },
+                            });
+                        } catch (error) {
+                        }
+                    }}
+                >
                     <CirclePlus color="#B0BEC5" size={64} />
                 </AddGameButton>
             </ContentContainer>

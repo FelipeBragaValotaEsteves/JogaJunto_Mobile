@@ -1,6 +1,6 @@
 import { MainContainer } from "@/components/shared/MainContainer";
 import { MatchCard } from "@/components/shared/MatchCard";
-import { NoResults } from "@/components/shared/NoResults"; // Import NoResults component
+import { NoResults } from "@/components/shared/NoResults";
 import { TitlePageIndex } from "@/components/shared/TitlePage";
 import BASE_URL from "@/constants/config";
 import typography from "@/constants/typography";
