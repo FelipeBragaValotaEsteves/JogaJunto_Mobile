@@ -125,12 +125,12 @@ interface Position {
 
 export default function GameDetailsScreen() {
     const router = useRouter();
-    const { id } = useLocalSearchParams();
+    const { id, idGame } = useLocalSearchParams();
     const [gameDetails, setGameDetails] = useState<GameDetails | null>(null);
     const [matchDetails, setMatchDetails] = useState<MatchDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [showEditButton, setShowEditButton] = useState(true);
+    const [showEditButton] = useState(true);
     const [editingTeam, setEditingTeam] = useState<string | null>(null);
     const [selectedPlayer, setSelectedPlayer] = useState<GamePlayer | null>(null);
     const [editablePlayer, setEditablePlayer] = useState({
@@ -147,7 +147,6 @@ export default function GameDetailsScreen() {
     const [availablePlayers, setAvailablePlayers] = useState<AvailablePlayer[]>([]);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
     const [addingPlayer, setAddingPlayer] = useState(false);
-    const [savingStats, setSavingStats] = useState(false);
     const [positions, setPositions] = useState<Position[]>([]);
 
     const [positionPickerOpen, setPositionPickerOpen] = useState(false);
@@ -242,189 +241,74 @@ export default function GameDetailsScreen() {
         });
     };
 
-    const fetchPositions = async () => {
+    const refreshGameData = useCallback(async () => {
         try {
             const headers = await authHeaders();
-            const response = await fetch(`${BASE_URL}/posicao/list`, { headers });
+            const gameResponse = await fetch(`${BASE_URL}/jogos/${idGame}`, { headers });
+            if (gameResponse.ok) {
+                const gameData: BackendGameResponse = await gameResponse.json();
+                
+                if (gameData && gameData.jogoId) {
+                    const team1 = gameData.times?.[0] || null;
+                    const team2 = gameData.times?.[1] || null;
 
-            if (!response.ok) {
-                throw new Error(`Erro ao buscar posições: ${response.status} ${response.statusText}`);
+                    const parsedData: GameDetails = {
+                        id: gameData.jogoId,
+                        titulo: `Jogo ${gameData.jogoId}`,
+                        time1: team1?.nome || "Time 1",
+                        time2: team2?.nome || "Time 2",
+                        placar1: parseInt(String(team1?.totais?.gols || "0"), 10),
+                        placar2: parseInt(String(team2?.totais?.gols || "0"), 10),
+                        data: matchDetails?.data || "",
+                        hora_inicio: matchDetails?.hora_inicio || "",
+                        local: matchDetails?.local || "",
+                        tipo_partida_nome: matchDetails?.tipo_partida_nome || "",
+                        jogadores: [
+                            ...(team1?.jogadores?.map((jogador: BackendPlayer) => ({
+                                id: jogador.jogadorId,
+                                nome: jogador.nome,
+                                time: team1.nome,
+                                posicao: "",
+                                gols: jogador.eventos.gol,
+                                assistencias: jogador.eventos.assistencia,
+                                cartoes: jogador.eventos.cartaoAmarelo + jogador.eventos.cartaoVermelho,
+                                cartoesAmarelos: jogador.eventos.cartaoAmarelo,
+                                cartoesVermelhos: jogador.eventos.cartaoVermelho,
+                                defesas: jogador.eventos.defesa,
+                                rating: 0.0,
+                                timeParticipanteId: jogador.timeParticipanteId,
+                                jogadorId: jogador.jogadorId,
+                            })) || []),
+                            ...(team2?.jogadores?.map((jogador: BackendPlayer) => ({
+                                id: jogador.jogadorId,
+                                nome: jogador.nome,
+                                time: team2.nome,
+                                posicao: "",
+                                gols: jogador.eventos.gol,
+                                assistencias: jogador.eventos.assistencia,
+                                cartoes: jogador.eventos.cartaoAmarelo + jogador.eventos.cartaoVermelho,
+                                cartoesAmarelos: jogador.eventos.cartaoAmarelo,
+                                cartoesVermelhos: jogador.eventos.cartaoVermelho,
+                                defesas: jogador.eventos.defesa,
+                                rating: 0.0,
+                                timeParticipanteId: jogador.timeParticipanteId,
+                                jogadorId: jogador.jogadorId,
+                            })) || []),
+                        ],
+                    };
+
+                    setGameDetails(parsedData);
+                }
             }
-
-            const data: Position[] = await response.json();
-
-
-            setPositions(data);
-            setPositionItems(data.map(pos => ({ label: pos.nome, value: pos.id.toString() })));
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao buscar posições';
-            console.error("Erro ao buscar posições:", errorMessage);
-            setPositions([]);
-            setPositionItems([]);
+            console.error("Erro ao atualizar dados do jogo:", error);
         }
-    };
+    }, [idGame, matchDetails]);
 
-    const handleSaveChanges = async () => {
-        if (!selectedPlayer || !gameDetails || savingStats) return;
-
-        if (!selectedPlayer.jogadorId || !selectedPlayer.timeParticipanteId) {
-            showAlert(
-                'error',
-                'Erro',
-                'Dados insuficientes para salvar. IDs do jogador ou time não encontrados.'
-            );
-            return;
-        }
-
+    const fetchMatchDetails = useCallback(async () => {
         try {
-            setSavingStats(true);
-
-            const playerStats: any = {
-                jogadorId: selectedPlayer.jogadorId,
-                timeParticipanteId: selectedPlayer.timeParticipanteId,
-                jogoId: gameDetails.id
-            };
-
-
-            if (editablePlayer.gols > 0) playerStats.gol = editablePlayer.gols;
-            if (editablePlayer.assistencias > 0) playerStats.assistencia = editablePlayer.assistencias;
-            if (editablePlayer.defesas > 0) playerStats.defesa = editablePlayer.defesas;
-            if (editablePlayer.cartoesAmarelos > 0) playerStats.cartaoAmarelo = editablePlayer.cartoesAmarelos;
-            if (editablePlayer.cartoesVermelhos > 0) playerStats.cartaoVermelho = editablePlayer.cartoesVermelhos;
-            if (editablePlayer.posicaoId > 0) playerStats.posicaoId = editablePlayer.posicaoId;
-
-
-            const headers = await authHeaders();
-            const response = await fetch(`${BASE_URL}/time-participantes/${selectedPlayer.jogadorId}`, {
-                method: 'PUT',
-                headers: {
-                    ...headers,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(playerStats)
-            });
-
-
-
-            if (!response.ok) {
-                const errorData = await response.text();
-                console.error("Erro na resposta:", errorData);
-                throw new Error(`Erro ao salvar estatísticas: ${response.status} ${response.statusText}`);
-            }
-
-            const result = await response.json();
-
-            await fetchMatchDetails();
-            await fetchGameDetails(true);
-
-            showAlert(
-                'success',
-                'Sucesso',
-                'Estatísticas do jogador salvas com sucesso!'
-            );
-
-            bottomSheetRef.current?.close();
-
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-            console.error("Erro ao salvar estatísticas:", errorMessage);
-
-            showAlert(
-                'error',
-                'Erro',
-                `Não foi possível salvar as estatísticas: ${errorMessage}`
-            );
-        } finally {
-            setSavingStats(false);
-        }
-    };
-
-    const handleAddPlayerToTeam = async (player: AvailablePlayer) => {
-        if (!gameDetails || !editingTeam || addingPlayer) return;
-
-        try {
-            setAddingPlayer(true);
-
-            const team1Name = gameDetails.time1;
-            const team2Name = gameDetails.time2;
-            
-            const headers = await authHeaders();
-            const gameResponse = await fetch(`${BASE_URL}/partidas/resumo/${id}`, { headers });
-            
-            if (!gameResponse.ok) {
-                throw new Error('Erro ao buscar dados do jogo para adicionar jogador');
-            }
-            
-            const gameData: BackendGameResponse[] = await gameResponse.json();
-            const currentGameData = gameData[0];
-            
-            let timeId: number | null = null;
-            
-            if (editingTeam === team1Name && currentGameData.times[0]) {
-                timeId = currentGameData.times[0].timeId;
-            } else if (editingTeam === team2Name && currentGameData.times[1]) {
-                timeId = currentGameData.times[1].timeId;
-            }
-            
-            if (!timeId) {
-                throw new Error('Time não encontrado para adicionar jogador');
-            }
-
-            const posicaoId = positions.find(pos => 
-                player.posicoes && player.posicoes.includes(pos.nome)
-            )?.id || positions[0]?.id || 1; 
-
-            const addPlayerResponse = await fetch(`${BASE_URL}/time-participantes`, {
-                method: 'POST',
-                headers: {
-                    ...headers,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    timeId: timeId,
-                    jogadorId: player.id,
-                    posicaoId: posicaoId
-                })
-            });
-
-            if (!addPlayerResponse.ok) {
-                const errorData = await addPlayerResponse.json();
-                throw new Error(errorData.message || 'Erro ao adicionar jogador ao time');
-            }
-
-            await fetchMatchDetails();
-            await fetchGameDetails(true);
-            
-            setAvailablePlayers(prev => prev.filter(p => p.id !== player.id));
-            bottomSheetRef.current?.close();
-
-            showAlert(
-                'success',
-                'Sucesso',
-                'Jogador adicionado ao time com sucesso!'
-            );
-
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-            console.error("Erro ao adicionar jogador ao time:", errorMessage);
-            
-            showAlert(
-                'error',
-                'Erro',
-                `Não foi possível adicionar o jogador ao time: ${errorMessage}`
-            );
-        } finally {
-            setAddingPlayer(false);
-        }
-    };
-
-    const fetchMatchDetails = async () => {
-        try {
-
-
             const headers = await authHeaders();
             const response = await fetch(`${BASE_URL}/partidas/${id}`, { headers });
-
 
             if (!response.ok) {
                 throw new Error(`Erro ao buscar detalhes da partida: ${response.status} ${response.statusText}`);
@@ -437,9 +321,9 @@ export default function GameDetailsScreen() {
             const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao buscar detalhes da partida';
             console.error("Erro ao buscar detalhes da partida:", errorMessage);
         }
-    };
+    }, [id]);
 
-    const fetchGameDetails = async (isRefresh: boolean = false) => {
+    const fetchGameDetails = useCallback(async (isRefresh: boolean = false) => {
         try {
             if (!isRefresh) {
                 setLoading(true);
@@ -447,64 +331,58 @@ export default function GameDetailsScreen() {
             setError(null);
 
             const headers = await authHeaders();
-            const response = await fetch(`${BASE_URL}/partidas/resumo/${id}`, { headers });
+            const response = await fetch(`${BASE_URL}/jogos/${idGame}`, { headers });
             if (!response.ok) {
                 throw new Error(`Erro ${response.status}: ${response.statusText}`);
             }
 
-            const data: BackendGameResponse[] = await response.json();
+            const data: BackendGameResponse = await response.json();
 
-            if (!Array.isArray(data) || data.length === 0) {
+            if (!data || !data.jogoId) {
                 throw new Error("Nenhum dado encontrado para o jogo.");
             }
 
-            const gameData = data[0];
-
-            if (!gameData.jogoId) {
-                throw new Error("ID do jogo não encontrado nos dados retornados.");
-            }
-
-            const team1 = gameData.times?.[0] || null;
-            const team2 = gameData.times?.[1] || null;
+            const team1 = data.times?.[0] || null;
+            const team2 = data.times?.[1] || null;
 
             const parsedData: GameDetails = {
-                id: gameData.jogoId,
-                titulo: `Jogo ${gameData.jogoId}`,
+                id: data.jogoId,
+                titulo: `Jogo ${data.jogoId}`,
                 time1: team1?.nome || "Time 1",
                 time2: team2?.nome || "Time 2",
-                placar1: team1?.totais?.gols || 0,
-                placar2: team2?.totais?.gols || 0,
-                data: matchDetails?.data || "",
-                hora_inicio: matchDetails?.hora_inicio || "",
-                local: matchDetails?.local || "",
-                tipo_partida_nome: matchDetails?.tipo_partida_nome || "",
+                placar1: parseInt(String(team1?.totais?.gols || "0"), 10),
+                placar2: parseInt(String(team2?.totais?.gols || "0"), 10),
+                data: "",
+                hora_inicio: "",
+                local: "",
+                tipo_partida_nome: "",
                 jogadores: [
                     ...(team1?.jogadores?.map((jogador: BackendPlayer) => ({
-                        id: jogador.jogadorId || Math.random(),
-                        nome: String(jogador.nome || "Jogador sem nome"),
-                        time: String(team1.nome),
+                        id: jogador.jogadorId,
+                        nome: jogador.nome,
+                        time: team1.nome,
                         posicao: "",
-                        gols: Number(jogador.eventos?.gol || 0),
-                        assistencias: Number(jogador.eventos?.assistencia || 0),
-                        cartoes: Number((jogador.eventos?.cartaoAmarelo || 0) + (jogador.eventos?.cartaoVermelho || 0)),
-                        cartoesAmarelos: Number(jogador.eventos?.cartaoAmarelo || 0),
-                        cartoesVermelhos: Number(jogador.eventos?.cartaoVermelho || 0),
-                        defesas: Number(jogador.eventos?.defesa || 0),
+                        gols: jogador.eventos.gol,
+                        assistencias: jogador.eventos.assistencia,
+                        cartoes: jogador.eventos.cartaoAmarelo + jogador.eventos.cartaoVermelho,
+                        cartoesAmarelos: jogador.eventos.cartaoAmarelo,
+                        cartoesVermelhos: jogador.eventos.cartaoVermelho,
+                        defesas: jogador.eventos.defesa,
                         rating: 0.0,
                         timeParticipanteId: jogador.timeParticipanteId,
                         jogadorId: jogador.jogadorId,
                     })) || []),
                     ...(team2?.jogadores?.map((jogador: BackendPlayer) => ({
-                        id: jogador.jogadorId || Math.random(),
-                        nome: String(jogador.nome || "Jogador sem nome"),
-                        time: String(team2.nome),
+                        id: jogador.jogadorId,
+                        nome: jogador.nome,
+                        time: team2.nome,
                         posicao: "",
-                        gols: Number(jogador.eventos?.gol || 0),
-                        assistencias: Number(jogador.eventos?.assistencia || 0),
-                        cartoes: Number((jogador.eventos?.cartaoAmarelo || 0) + (jogador.eventos?.cartaoVermelho || 0)),
-                        cartoesAmarelos: Number(jogador.eventos?.cartaoAmarelo || 0),
-                        cartoesVermelhos: Number(jogador.eventos?.cartaoVermelho || 0),
-                        defesas: Number(jogador.eventos?.defesa || 0),
+                        gols: jogador.eventos.gol,
+                        assistencias: jogador.eventos.assistencia,
+                        cartoes: jogador.eventos.cartaoAmarelo + jogador.eventos.cartaoVermelho,
+                        cartoesAmarelos: jogador.eventos.cartaoAmarelo,
+                        cartoesVermelhos: jogador.eventos.cartaoVermelho,
+                        defesas: jogador.eventos.defesa,
                         rating: 0.0,
                         timeParticipanteId: jogador.timeParticipanteId,
                         jogadorId: jogador.jogadorId,
@@ -527,7 +405,24 @@ export default function GameDetailsScreen() {
                 setLoading(false);
             }
         }
-    };
+    }, [idGame]);
+
+    const updateGameDetailsWithMatchInfo = useCallback(() => {
+        if (gameDetails && matchDetails) {
+            setGameDetails(prev => prev ? {
+                ...prev,
+                data: matchDetails.data,
+                hora_inicio: matchDetails.hora_inicio,
+                local: matchDetails.local,
+                tipo_partida_nome: matchDetails.tipo_partida_nome
+            } : null);
+        }
+    }, [gameDetails, matchDetails]);
+
+    useEffect(() => {
+        updateGameDetailsWithMatchInfo();
+    }, [updateGameDetailsWithMatchInfo]);
+
 
     useEffect(() => {
         if (!id) {
@@ -538,18 +433,105 @@ export default function GameDetailsScreen() {
         }
     }, [id]);
 
-
     useFocusEffect(
         useCallback(() => {
-            if (id) {
-                const fetchData = async () => {
-                    await fetchPositions();
-                    await fetchMatchDetails();
-                    await fetchGameDetails();
-                };
-                fetchData();
-            }
-        }, [id])
+            if (!id) return;
+            
+            let isMounted = true;
+            
+            const fetchAllData = async () => {
+                try {
+                    // Buscar posições
+                    const headers = await authHeaders();
+                    const positionsResponse = await fetch(`${BASE_URL}/posicao/list`, { headers });
+                    if (positionsResponse.ok && isMounted) {
+                        const positionsData: Position[] = await positionsResponse.json();
+                        setPositions(positionsData);
+                        setPositionItems(positionsData.map(pos => ({ label: pos.nome, value: pos.id.toString() })));
+                    }
+
+                    // Buscar detalhes da partida
+                    const matchResponse = await fetch(`${BASE_URL}/partidas/${id}`, { headers });
+                    if (matchResponse.ok && isMounted) {
+                        const matchData = await matchResponse.json();
+                        setMatchDetails(matchData);
+                    }
+
+                    // Buscar detalhes do jogo
+                    const gameResponse = await fetch(`${BASE_URL}/jogos/${idGame}`, { headers });
+                    if (gameResponse.ok && isMounted) {
+                        const gameData: BackendGameResponse = await gameResponse.json();
+                        
+                        if (gameData && gameData.jogoId) {
+                            const team1 = gameData.times?.[0] || null;
+                            const team2 = gameData.times?.[1] || null;
+
+                            const parsedData: GameDetails = {
+                                id: gameData.jogoId,
+                                titulo: `Jogo ${gameData.jogoId}`,
+                                time1: team1?.nome || "Time 1",
+                                time2: team2?.nome || "Time 2",
+                                placar1: parseInt(String(team1?.totais?.gols || "0"), 10),
+                                placar2: parseInt(String(team2?.totais?.gols || "0"), 10),
+                                data: "",
+                                hora_inicio: "",
+                                local: "",
+                                tipo_partida_nome: "",
+                                jogadores: [
+                                    ...(team1?.jogadores?.map((jogador: BackendPlayer) => ({
+                                        id: jogador.jogadorId,
+                                        nome: jogador.nome,
+                                        time: team1.nome,
+                                        posicao: "",
+                                        gols: jogador.eventos.gol,
+                                        assistencias: jogador.eventos.assistencia,
+                                        cartoes: jogador.eventos.cartaoAmarelo + jogador.eventos.cartaoVermelho,
+                                        cartoesAmarelos: jogador.eventos.cartaoAmarelo,
+                                        cartoesVermelhos: jogador.eventos.cartaoVermelho,
+                                        defesas: jogador.eventos.defesa,
+                                        rating: 0.0,
+                                        timeParticipanteId: jogador.timeParticipanteId,
+                                        jogadorId: jogador.jogadorId,
+                                    })) || []),
+                                    ...(team2?.jogadores?.map((jogador: BackendPlayer) => ({
+                                        id: jogador.jogadorId,
+                                        nome: jogador.nome,
+                                        time: team2.nome,
+                                        posicao: "",
+                                        gols: jogador.eventos.gol,
+                                        assistencias: jogador.eventos.assistencia,
+                                        cartoes: jogador.eventos.cartaoAmarelo + jogador.eventos.cartaoVermelho,
+                                        cartoesAmarelos: jogador.eventos.cartaoAmarelo,
+                                        cartoesVermelhos: jogador.eventos.cartaoVermelho,
+                                        defesas: jogador.eventos.defesa,
+                                        rating: 0.0,
+                                        timeParticipanteId: jogador.timeParticipanteId,
+                                        jogadorId: jogador.jogadorId,
+                                    })) || []),
+                                ],
+                            };
+
+                            setGameDetails(parsedData);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Erro ao buscar dados:", error);
+                    if (isMounted) {
+                        setError("Erro ao carregar dados do jogo");
+                    }
+                } finally {
+                    if (isMounted) {
+                        setLoading(false);
+                    }
+                }
+            };
+
+            fetchAllData();
+            
+            return () => {
+                isMounted = false;
+            };
+        }, [id, idGame])
     );
 
     const [alertVisible, setAlertVisible] = useState(false);
@@ -569,6 +551,72 @@ export default function GameDetailsScreen() {
         setAlertConfig({ type, title, message, onConfirm });
         setAlertVisible(true);
     };
+
+    const handleSaveChanges = useCallback(async () => {
+        if (!selectedPlayer || !gameDetails) return;
+
+        try {
+            const headers = await authHeaders();
+            const response = await fetch(`${BASE_URL}/time-participantes/${selectedPlayer.jogadorId}`, {
+                method: 'PUT',
+                headers: {
+                    ...headers,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    jogadorId: selectedPlayer.jogadorId,
+                    timeParticipanteId: selectedPlayer.timeParticipanteId,
+                    jogoId: gameDetails.id,
+                    gols: editablePlayer.gols,
+                    assistencias: editablePlayer.assistencias,
+                    defesas: editablePlayer.defesas,
+                    cartoesAmarelos: editablePlayer.cartoesAmarelos,
+                    cartoesVermelhos: editablePlayer.cartoesVermelhos,
+                    posicaoId: editablePlayer.posicaoId,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao salvar estatísticas do jogador');
+            }
+
+            await refreshGameData();
+            showAlert('success', 'Sucesso', 'Estatísticas salvas com sucesso!');
+        } catch (error) {
+            console.error(error);
+            showAlert('error', 'Erro', 'Não foi possível salvar as estatísticas.');
+        }
+    }, [selectedPlayer, gameDetails, editablePlayer, refreshGameData]);
+
+    const handleAddPlayerToTeam = useCallback(async (player: AvailablePlayer) => {
+        if (!gameDetails || !editingTeam) return;
+
+        try {
+            const headers = await authHeaders();
+            const response = await fetch(`${BASE_URL}/time-participantes`, {
+                method: 'POST',
+                headers: {
+                    ...headers,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    timeId: editingTeam === gameDetails.time1 ? 1 : 2,
+                    jogadorId: player.id,
+                    posicaoId: positions[0]?.id || 1,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao adicionar jogador ao time');
+            }
+
+            await refreshGameData();
+            showAlert('success', 'Sucesso', 'Jogador adicionado com sucesso!');
+        } catch (error) {
+            console.error(error);
+            showAlert('error', 'Erro', 'Não foi possível adicionar o jogador.');
+        }
+    }, [gameDetails, editingTeam, positions, refreshGameData]);
 
     if (loading) {
         return (
@@ -616,7 +664,7 @@ export default function GameDetailsScreen() {
         <GestureHandlerRootView style={{ flex: 1 }}>
             <MainContainer>
                 <TopButtonsContainer>
-                    <BackButtonTab onPress={() => router.back()}>
+                    <BackButtonTab>
                         <CircleArrowLeft color="#2B6AE3" size={50} />
                     </BackButtonTab>
                 </TopButtonsContainer>
@@ -903,9 +951,9 @@ export default function GameDetailsScreen() {
                             </StatsFormContainer>
 
                             {showEditButton && (
-                                <Button onPress={handleSaveChanges} disabled={savingStats}>
+                                <Button onPress={handleSaveChanges}>
                                     <ButtonText>
-                                        {savingStats ? "SALVANDO..." : "SALVAR ALTERAÇÕES"}
+                                        SALVAR ALTERAÇÕES
                                     </ButtonText>
                                 </Button>
                             )}

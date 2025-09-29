@@ -137,12 +137,18 @@ function CustomHeader() {
         <Bell
           color="white"
           size={28}
-          onPress={() => router.push("/(tabs)/notifications")}
+          onPress={() => router.push({ 
+            pathname: "/(tabs)/notifications", 
+            params: { from: "/(tabs)" } 
+          })}
         />
         <Mail
           color="white"
           size={28}
-          onPress={() => router.push("/(tabs)/invites")}
+          onPress={() => router.push({ 
+            pathname: "/(tabs)/invites", 
+            params: { from: "/(tabs)" } 
+          })}
         />
       </View>
     </View>
@@ -181,12 +187,18 @@ function CustomHeaderIndex() {
           <Bell
             color="white"
             size={28}
-            onPress={() => router.push("/(tabs)/notifications")}
+            onPress={() => router.push({ 
+              pathname: "/(tabs)/notifications", 
+              params: { from: "/(tabs)" } 
+            })}
           />
           <Mail
             color="white"
             size={28}
-            onPress={() => router.push("/(tabs)/invites")}
+            onPress={() => router.push({ 
+              pathname: "/(tabs)/invites", 
+              params: { from: "/(tabs)" } 
+            })}
           />
         </View>
       </View>

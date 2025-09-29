@@ -81,7 +81,7 @@ export default function PerfilScreen() {
                     const headers = await authHeaders();
                     const posRes = await fetch(`${BASE_URL}/posicao/list`, { headers });
                     if (!posRes.ok) throw new Error('Falha ao carregar posições');
-                    const posicoesData: Array<{ id: number; nome: string }> = await posRes.json();
+                    const posicoesData: { id: number; nome: string }[] = await posRes.json();
                     if (!alive) return;
                     setItems(posicoesData.map(p => ({ label: p.nome, value: p.id })));
                     const meRes = await fetch(`${BASE_URL}/usuarios/me`, { headers });
@@ -162,7 +162,7 @@ export default function PerfilScreen() {
     return (
         <MainContainer>
             <TopButtonsContainer>
-                <BackButtonTab onPress={() => router.back()} >
+                <BackButtonTab>
                     <CircleArrowLeft color="#2B6AE3" size={50} />
                 </BackButtonTab>
                 <SairButton onPress={sair}>

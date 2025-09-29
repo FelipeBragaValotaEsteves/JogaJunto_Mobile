@@ -85,7 +85,7 @@ export default function GameAddScreen() {
                 () => {
                     router.replace({
                         pathname: '/(tabs)/gameDetails',
-                        params: { id: partidaId },
+                        params: { id: partidaId, idGame: data.jogo.id },
                     });
                 }
             );
@@ -102,7 +102,7 @@ export default function GameAddScreen() {
     return (
         <MainContainer>
             <TopButtonsContainer>
-                <BackButtonTab onPress={() => router.back()}>
+                <BackButtonTab>
                     <CircleArrowLeft color="#2B6AE3" size={50} />
                 </BackButtonTab>
             </TopButtonsContainer>

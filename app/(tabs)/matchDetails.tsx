@@ -3,28 +3,15 @@ import GameCard from '@/components/shared/GameCard';
 import { MainContainer } from '@/components/shared/MainContainer';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
 import typography from '@/constants/typography';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleArrowLeft, CirclePlus, CircleX, Edit, Users } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import styled from 'styled-components/native';
 import { Alert } from '../../components/shared/Alert';
 import { ContentContainer } from '../../components/shared/ContentContainer';
 import BASE_URL from '../../constants/config';
 import { authHeaders } from '../../utils/authHeaders';
-
-function formatDateTime(data: string, hora: string): { time: string; formattedDate: string } {
-    let dateObj: Date;
-    const onlyDate = data.split('T')[0];
-    const [year, month, day] = onlyDate.split('-').map(Number);
-    dateObj = new Date(year, month - 1, day);
-
-    const time = hora.slice(0, 5);
-    let dayOfWeek = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
-    dayOfWeek = dayOfWeek.replace('-feira', '');
-    dayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
-    const monthExtenso = dateObj.toLocaleDateString('pt-BR', { month: 'long' });
-    return { time, formattedDate: `${dayOfWeek}, ${day} de ${monthExtenso}` };
-}
+import { formatDateTime } from '../../utils/dateUtils';
 
 export default function MatchDetailsScreen() {
     const router = useRouter();
@@ -52,96 +39,103 @@ export default function MatchDetailsScreen() {
         setAlertVisible(true);
     };
 
-    useEffect(() => {
+    const fetchMatchDetails = useCallback(async () => {
         if (!id) {
             console.error("ID da partida não foi fornecido.");
             return;
         }
 
-        async function fetchMatchDetails() {
-            try {
-                const headers = await authHeaders();
-                const response = await fetch(`${BASE_URL}/partidas/${id}`, { headers });
+        try {
+            const headers = await authHeaders();
+            const response = await fetch(`${BASE_URL}/partidas/${id}`, { headers });
 
-                if (!response.ok) {
-                    throw new Error("Erro ao buscar detalhes da partida");
-                }
-
-                const data = await response.json();
-                setMatchDetails(data);
-            } catch (error) {
-                showAlert(
-                    'error',
-                    'Erro',
-                    'Não foi possível carregar os detalhes da partida. Tente novamente mais tarde.'
-                );
+            if (!response.ok) {
+                throw new Error("Erro ao buscar detalhes da partida");
             }
-        }
 
-        fetchMatchDetails();
+            const data = await response.json();
+            setMatchDetails(data);
+        } catch (error) {
+            console.error("Erro ao buscar detalhes da partida:", error);
+            showAlert(
+                'error',
+                'Erro',
+                'Não foi possível carregar os detalhes da partida. Tente novamente mais tarde.'
+            );
+        }
     }, [id]);
 
-    useEffect(() => {
-        async function fetchGames() {
-            try {
-                const headers = await authHeaders();
-                const response = await fetch(`${BASE_URL}/partidas/resumo/${id}`, { headers });
+    const fetchGames = useCallback(async () => {
+        if (!id) return;
 
-                if (!response.ok) {
-                    throw new Error("Erro ao buscar jogos");
-                }
+        try {
+            const headers = await authHeaders();
+            const response = await fetch(`${BASE_URL}/partidas/resumo/${id}`, { headers });
 
-                const data = await response.json();
-
-                const formattedGames = data.map((jogo: any) => {
-                    const time1 = jogo.times[0];
-                    const time2 = jogo.times[1];
-
-                    return {
-                        id: jogo.jogoId,
-                        titulo: `Jogo ${jogo.jogoId}`,
-                        time1: time1?.nome || "",
-                        time2: time2?.nome || "",
-                        placar1: time1?.totais?.gols || 0,
-                        placar2: time2?.totais?.gols || 0,
-                        eventos: [
-                            ...(time1?.jogadores?.flatMap((jogador: any) => 
-                                Object.entries(jogador.eventos || {})
-                                    .filter(([evento, valor]) => Number(valor) > 0)
-                                    .map(([evento, valor]) => ({
-                                        type: evento,
-                                        player: jogador.nome,
-                                        team: time1.nome,
-                                        value: valor,
-                                    }))
-                            ) || []),
-                            ...(time2?.jogadores?.flatMap((jogador: any) => 
-                                Object.entries(jogador.eventos || {})
-                                    .filter(([evento, valor]) => Number(valor) > 0)
-                                    .map(([evento, valor]) => ({
-                                        type: evento,
-                                        player: jogador.nome,
-                                        team: time2.nome,
-                                        value: valor,
-                                    }))
-                            ) || [])
-                        ],
-                    };
-                });
-
-                console.log(formattedGames);
-                
-
-                setGames(formattedGames);
-            } catch (error) {
-                console.error("Erro ao buscar jogos:", error);
+            if (!response.ok) {
+                throw new Error("Erro ao buscar jogos");
             }
-        }
 
-        if (id) {
+            const data = await response.json();
+
+            const formattedGames = data.map((jogo: any) => {
+                const time1 = jogo.times[0];
+                const time2 = jogo.times[1];
+
+                return {
+                    id: jogo.jogoId,
+                    titulo: `Jogo ${jogo.jogoId}`,
+                    time1: time1?.nome || "",
+                    time2: time2?.nome || "",
+                    placar1: time1?.totais?.gols || 0,
+                    placar2: time2?.totais?.gols || 0,
+                    eventos: [
+                        ...(time1?.jogadores?.flatMap((jogador: any) => 
+                            Object.entries(jogador.eventos || {})
+                                .filter(([evento, valor]) => Number(valor) > 0)
+                                .map(([evento, valor]) => ({
+                                    type: evento,
+                                    player: jogador.nome,
+                                    team: time1.nome,
+                                    value: valor,
+                                }))
+                        ) || []),
+                        ...(time2?.jogadores?.flatMap((jogador: any) => 
+                            Object.entries(jogador.eventos || {})
+                                .filter(([evento, valor]) => Number(valor) > 0)
+                                .map(([evento, valor]) => ({
+                                    type: evento,
+                                    player: jogador.nome,
+                                    team: time2.nome,
+                                    value: valor,
+                                }))
+                        ) || [])
+                    ],
+                };
+            });
+
+            console.log(formattedGames);
+            setGames(formattedGames);
+        } catch (error) {
+            console.error("Erro ao buscar jogos:", error);
+            showAlert(
+                'error',
+                'Erro',
+                'Não foi possível carregar os jogos. Tente novamente mais tarde.'
+            );
+        }
+    }, [id]);
+
+    // Carrega os dados toda vez que a tela é focada
+    useFocusEffect(
+        useCallback(() => {
+            if (!id) return;
+
+            // Carrega detalhes da partida e jogos
+            fetchMatchDetails();
             fetchGames();
-        }
-    }, [id]);
+        }, [id, fetchMatchDetails, fetchGames])
+    );
 
     const handleEdit = () => {
         if (!matchDetails) return;
@@ -229,7 +223,7 @@ export default function MatchDetailsScreen() {
     return (
         <MainContainer>
             <TopButtonsContainer>
-                <BackButtonTab onPress={() => router.back()}>
+                <BackButtonTab>
                     <CircleArrowLeft color="#2B6AE3" size={50} />
                 </BackButtonTab>
                 <ButtonsContainer>
@@ -261,6 +255,7 @@ export default function MatchDetailsScreen() {
             </SubTitleContainer>
 
             {games.map((jogo, index) => (
+
                 <GameCard
                     key={index}
                     title={jogo.titulo}
@@ -273,7 +268,7 @@ export default function MatchDetailsScreen() {
                         router.push({
                             pathname: "/(tabs)/gameDetails",
                             params: {
-                                id: matchDetails.id,
+                                id: matchDetails.id, idGame: jogo.id
                             },
                         });
                     }}

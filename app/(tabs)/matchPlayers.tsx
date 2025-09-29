@@ -49,7 +49,7 @@ export default function MatchPlayersScreen() {
     return (
         <MainContainer>
             <TopButtonsContainer>
-                <BackButtonTab onPress={() => router.back()} >
+                <BackButtonTab>
                     <CircleArrowLeft color="#2B6AE3" size={50} />
                 </BackButtonTab>
                 {showEditButton === 'true' && (

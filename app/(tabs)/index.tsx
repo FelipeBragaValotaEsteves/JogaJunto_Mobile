@@ -75,7 +75,10 @@ export default function HomeScreen() {
       <TitlePageIndex>Histórico</TitlePageIndex>
 
       <HistoryGrid>
-        <HistoryTouchable onPress={() => router.push("/(tabs)/playedMatches")}>
+        <HistoryTouchable onPress={() => router.push({ 
+          pathname: "/(tabs)/playedMatches", 
+          params: { from: "index" } 
+        })}>
           <HistoryCard>
             <HistoryImage
               source={require("../../assets/images/jogadas.jpg")}
@@ -87,7 +90,10 @@ export default function HomeScreen() {
           </HistoryCard>
         </HistoryTouchable>
 
-        <HistoryTouchable onPress={() => router.push("/(tabs)/createdMatches")}>
+        <HistoryTouchable onPress={() => router.push({ 
+          pathname: "/(tabs)/createdMatches", 
+          params: { from: "index" } 
+        })}>
           <HistoryCard>
             <HistoryImage
               source={require("../../assets/images/criadas.jpg")}
