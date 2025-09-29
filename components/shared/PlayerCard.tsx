@@ -22,7 +22,7 @@ export default function PlayerCard({ nome, foto, posicoes, status, onAdd }: Play
                 </LeftSection>
                 <MiddleSection>
                     <PlayerName>{nome}</PlayerName>
-                    <PlayerPositions>{posicoes.join(', ')}</PlayerPositions>
+                    <PlayerPositions>{Array.isArray(posicoes) && posicoes.length > 0 ? posicoes.join(', ') : 'Posição não definida'}</PlayerPositions>
                 </MiddleSection>
                 <RightSection>
                     {onAdd ? (

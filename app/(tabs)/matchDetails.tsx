@@ -215,35 +215,7 @@ export default function MatchDetailsScreen() {
             },
         });
     };
-    const addGame = async (homeTeam: string, visitorTeam: string) => {
-        try {
-            const headers = await authHeaders();
-            const response = await fetch(`${BASE_URL}/jogos`, {
-                method: 'POST',
-                headers: {
-                    ...headers,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    partidaId: matchDetails.id
-                }),
-            });
-            console.log(response);
-            console.log(matchDetails.id);
-
-            
-            if (!response.ok) {
-                throw new Error('Erro ao adicionar o jogo');
-            }
-
-            const data = await response.json();
-            showAlert('success', 'Sucesso', 'Jogo adicionado com sucesso!');
-            return data;
-        } catch (error) {
-            showAlert('error', 'Erro', 'Não foi possível adicionar o jogo. Tente novamente.');
-        }
-    };
-
+    
     if (!matchDetails || Object.keys(matchDetails).length === 0) {
         return (
             <MainContainer>
@@ -310,15 +282,11 @@ export default function MatchDetailsScreen() {
 
             <ContentContainer>
                 <AddGameButton
-                    onPress={async () => {
-                        try {
-                            const newGame = await addGame('Time Casa', 'Time Visitante'); 
-                            router.push({
-                                pathname: '/(tabs)/gameDetails',
-                                params: { id: newGame.id },
-                            });
-                        } catch (error) {
-                        }
+                    onPress={() => {
+                        router.push({
+                            pathname: '/(tabs)/gameAdd',
+                            params: { partidaId: matchDetails.id },
+                        });
                     }}
                 >
                     <CirclePlus color="#B0BEC5" size={64} />

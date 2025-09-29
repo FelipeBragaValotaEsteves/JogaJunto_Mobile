@@ -145,6 +145,8 @@ export default function GameDetailsScreen() {
         posicaoId: 0
     });
     const [availablePlayers, setAvailablePlayers] = useState<AvailablePlayer[]>([]);
+    const [loadingPlayers, setLoadingPlayers] = useState(false);
+    const [addingPlayer, setAddingPlayer] = useState(false);
     const [savingStats, setSavingStats] = useState(false);
     const [positions, setPositions] = useState<Position[]>([]);
 
@@ -158,13 +160,46 @@ export default function GameDetailsScreen() {
             setEditingTeam(null);
             setSelectedPlayer(null);
             setPositionPickerOpen(false);
+            setLoadingPlayers(false);
+            setAddingPlayer(false);
+            setAvailablePlayers([]);
         }
     }, []);
 
-    const handleAddPlayer = (teamName: string) => {
+    const handleAddPlayer = async (teamName: string) => {
         setEditingTeam(teamName);
         setSelectedPlayer(null);
+        
+        setAvailablePlayers([]);
+        setLoadingPlayers(true);
         bottomSheetRef.current?.expand();
+        
+        try {
+            const headers = await authHeaders();
+            const response = await fetch(`${BASE_URL}/jogadores/jogadoresDisponiveis/?id=${id}`, { headers });
+            
+            if (!response.ok) {
+                throw new Error(`Erro ao buscar jogadores disponíveis: ${response.status} ${response.statusText}`);
+            }
+            
+            const data: AvailablePlayer[] = await response.json();
+            const playersWithValidPositions = (data || []).map(player => ({
+                ...player,
+                posicoes: Array.isArray(player.posicoes) ? player.posicoes : []
+            }));
+            setAvailablePlayers(playersWithValidPositions);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao buscar jogadores';
+            console.error("Erro ao buscar jogadores disponíveis:", errorMessage);
+            setAvailablePlayers([]);
+            showAlert(
+                'error',
+                'Erro',
+                'Não foi possível carregar os jogadores disponíveis. Tente novamente.'
+            );
+        } finally {
+            setLoadingPlayers(false);
+        }
     };
 
     const handlePlayerPress = (player: GamePlayer) => {
@@ -209,11 +244,8 @@ export default function GameDetailsScreen() {
 
     const fetchPositions = async () => {
         try {
-
-
             const headers = await authHeaders();
             const response = await fetch(`${BASE_URL}/posicao/list`, { headers });
-
 
             if (!response.ok) {
                 throw new Error(`Erro ao buscar posições: ${response.status} ${response.statusText}`);
@@ -282,17 +314,8 @@ export default function GameDetailsScreen() {
 
             const result = await response.json();
 
-
-
-            const updatedJogadores = gameDetails.jogadores.map(p =>
-                p.id === selectedPlayer.id ? {
-                    ...p,
-                    ...editablePlayer,
-                    cartoes: editablePlayer.cartoesAmarelos + editablePlayer.cartoesVermelhos
-                } : p
-            );
-
-            setGameDetails({ ...gameDetails, jogadores: updatedJogadores });
+            await fetchMatchDetails();
+            await fetchGameDetails(true);
 
             showAlert(
                 'success',
@@ -316,27 +339,83 @@ export default function GameDetailsScreen() {
         }
     };
 
-    const handleAddPlayerToTeam = (player: AvailablePlayer) => {
-        if (!gameDetails || !editingTeam) return;
+    const handleAddPlayerToTeam = async (player: AvailablePlayer) => {
+        if (!gameDetails || !editingTeam || addingPlayer) return;
 
-        const newPlayer: GamePlayer = {
-            ...player,
-            id: Math.random(),
-            time: editingTeam,
-            posicao: player.posicoes[0] || 'ZAG',
-            gols: 0,
-            assistencias: 0,
-            cartoes: 0,
-            cartoesAmarelos: 0,
-            cartoesVermelhos: 0,
-            defesas: 0,
-            rating: 5.0,
-        };
+        try {
+            setAddingPlayer(true);
 
-        setGameDetails(prev => prev ? { ...prev, jogadores: [...prev.jogadores, newPlayer] } : null);
+            const team1Name = gameDetails.time1;
+            const team2Name = gameDetails.time2;
+            
+            const headers = await authHeaders();
+            const gameResponse = await fetch(`${BASE_URL}/partidas/resumo/${id}`, { headers });
+            
+            if (!gameResponse.ok) {
+                throw new Error('Erro ao buscar dados do jogo para adicionar jogador');
+            }
+            
+            const gameData: BackendGameResponse[] = await gameResponse.json();
+            const currentGameData = gameData[0];
+            
+            let timeId: number | null = null;
+            
+            if (editingTeam === team1Name && currentGameData.times[0]) {
+                timeId = currentGameData.times[0].timeId;
+            } else if (editingTeam === team2Name && currentGameData.times[1]) {
+                timeId = currentGameData.times[1].timeId;
+            }
+            
+            if (!timeId) {
+                throw new Error('Time não encontrado para adicionar jogador');
+            }
 
-        setAvailablePlayers(prev => prev.filter(p => p.id !== player.id));
-        bottomSheetRef.current?.close();
+            const posicaoId = positions.find(pos => 
+                player.posicoes && player.posicoes.includes(pos.nome)
+            )?.id || positions[0]?.id || 1; 
+
+            const addPlayerResponse = await fetch(`${BASE_URL}/time-participantes`, {
+                method: 'POST',
+                headers: {
+                    ...headers,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    timeId: timeId,
+                    jogadorId: player.id,
+                    posicaoId: posicaoId
+                })
+            });
+
+            if (!addPlayerResponse.ok) {
+                const errorData = await addPlayerResponse.json();
+                throw new Error(errorData.message || 'Erro ao adicionar jogador ao time');
+            }
+
+            await fetchMatchDetails();
+            await fetchGameDetails(true);
+            
+            setAvailablePlayers(prev => prev.filter(p => p.id !== player.id));
+            bottomSheetRef.current?.close();
+
+            showAlert(
+                'success',
+                'Sucesso',
+                'Jogador adicionado ao time com sucesso!'
+            );
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+            console.error("Erro ao adicionar jogador ao time:", errorMessage);
+            
+            showAlert(
+                'error',
+                'Erro',
+                `Não foi possível adicionar o jogador ao time: ${errorMessage}`
+            );
+        } finally {
+            setAddingPlayer(false);
+        }
     };
 
     const fetchMatchDetails = async () => {
@@ -360,9 +439,11 @@ export default function GameDetailsScreen() {
         }
     };
 
-    const fetchGameDetails = async () => {
+    const fetchGameDetails = async (isRefresh: boolean = false) => {
         try {
-            setLoading(true);
+            if (!isRefresh) {
+                setLoading(true);
+            }
             setError(null);
 
             const headers = await authHeaders();
@@ -400,31 +481,31 @@ export default function GameDetailsScreen() {
                 jogadores: [
                     ...(team1?.jogadores?.map((jogador: BackendPlayer) => ({
                         id: jogador.jogadorId || Math.random(),
-                        nome: jogador.nome || "Jogador sem nome",
-                        time: team1.nome,
+                        nome: String(jogador.nome || "Jogador sem nome"),
+                        time: String(team1.nome),
                         posicao: "",
-                        gols: jogador.eventos?.gol || 0,
-                        assistencias: jogador.eventos?.assistencia || 0,
-                        cartoes: (jogador.eventos?.cartaoAmarelo || 0) + (jogador.eventos?.cartaoVermelho || 0),
-                        cartoesAmarelos: jogador.eventos?.cartaoAmarelo || 0,
-                        cartoesVermelhos: jogador.eventos?.cartaoVermelho || 0,
-                        defesas: jogador.eventos?.defesa || 0,
-                        rating: 0,
+                        gols: Number(jogador.eventos?.gol || 0),
+                        assistencias: Number(jogador.eventos?.assistencia || 0),
+                        cartoes: Number((jogador.eventos?.cartaoAmarelo || 0) + (jogador.eventos?.cartaoVermelho || 0)),
+                        cartoesAmarelos: Number(jogador.eventos?.cartaoAmarelo || 0),
+                        cartoesVermelhos: Number(jogador.eventos?.cartaoVermelho || 0),
+                        defesas: Number(jogador.eventos?.defesa || 0),
+                        rating: 0.0,
                         timeParticipanteId: jogador.timeParticipanteId,
                         jogadorId: jogador.jogadorId,
                     })) || []),
                     ...(team2?.jogadores?.map((jogador: BackendPlayer) => ({
                         id: jogador.jogadorId || Math.random(),
-                        nome: jogador.nome || "Jogador sem nome",
-                        time: team2.nome,
+                        nome: String(jogador.nome || "Jogador sem nome"),
+                        time: String(team2.nome),
                         posicao: "",
-                        gols: jogador.eventos?.gol || 0,
-                        assistencias: jogador.eventos?.assistencia || 0,
-                        cartoes: (jogador.eventos?.cartaoAmarelo || 0) + (jogador.eventos?.cartaoVermelho || 0),
-                        cartoesAmarelos: jogador.eventos?.cartaoAmarelo || 0,
-                        cartoesVermelhos: jogador.eventos?.cartaoVermelho || 0,
-                        defesas: jogador.eventos?.defesa || 0,
-                        rating: 0,
+                        gols: Number(jogador.eventos?.gol || 0),
+                        assistencias: Number(jogador.eventos?.assistencia || 0),
+                        cartoes: Number((jogador.eventos?.cartaoAmarelo || 0) + (jogador.eventos?.cartaoVermelho || 0)),
+                        cartoesAmarelos: Number(jogador.eventos?.cartaoAmarelo || 0),
+                        cartoesVermelhos: Number(jogador.eventos?.cartaoVermelho || 0),
+                        defesas: Number(jogador.eventos?.defesa || 0),
+                        rating: 0.0,
                         timeParticipanteId: jogador.timeParticipanteId,
                         jogadorId: jogador.jogadorId,
                     })) || []),
@@ -442,7 +523,9 @@ export default function GameDetailsScreen() {
                 errorMessage || 'Não foi possível carregar os detalhes do jogo. Tente novamente mais tarde.'
             );
         } finally {
-            setLoading(false);
+            if (!isRefresh) {
+                setLoading(false);
+            }
         }
     };
 
@@ -544,22 +627,24 @@ export default function GameDetailsScreen() {
                 <Divider />
                 <SubTitleContainer>
                     <SubTitleText>
-                        {matchInfo ? `${matchInfo.formattedDate} às ${matchInfo.time}` :
-                            gameDetails?.data && gameDetails?.hora_inicio ?
+                        {matchInfo ? 
+                            `${matchInfo.formattedDate} às ${matchInfo.time}` :
+                            (gameDetails?.data && gameDetails?.hora_inicio) ?
                                 `${gameDetails.data} às ${gameDetails.hora_inicio}` :
-                                "Data não informada"}
+                                "Data não informada"
+                        }
                     </SubTitleText>
                     <SubTitleText>
-                        {matchInfo?.tipo || gameDetails?.tipo_partida_nome || ""}
+                        {matchInfo?.tipo || gameDetails?.tipo_partida_nome || "Tipo não informado"}
                     </SubTitleText>
                 </SubTitleContainer>
 
                 <ContentContainer>
                     <GameCard>
-                        <GameTitle>{gameDetails.titulo}</GameTitle>
+                        <GameTitle>{gameDetails.titulo || 'Jogo'}</GameTitle>
                         <ScoreSection>
                             <TeamName>{team1Name}</TeamName>
-                            <Score>{gameDetails.placar1} x {gameDetails.placar2}</Score>
+                            <Score>{gameDetails.placar1 || 0} x {gameDetails.placar2 || 0}</Score>
                             <TeamNameRight>{team2Name}</TeamNameRight>
                         </ScoreSection>
                     </GameCard>
@@ -570,8 +655,8 @@ export default function GameDetailsScreen() {
                                 <TouchableOpacity key={player.id} onPress={() => handlePlayerPress(player)}>
                                     <PlayerCardTeam>
                                         <PlayerNameSection>
-                                            <PlayerName>{player.nome}</PlayerName>
-                                            {player.posicao && player.posicao.trim() && <PlayerPosition>{player.posicao}</PlayerPosition>}
+                                            <PlayerName>{player.nome || 'Jogador'}</PlayerName>
+                                            {player.posicao && typeof player.posicao === 'string' && player.posicao.trim() !== '' && <PlayerPosition>{player.posicao}</PlayerPosition>}
                                         </PlayerNameSection>
                                         <PlayerDetailsSection>
                                             <StatsSection>
@@ -580,7 +665,7 @@ export default function GameDetailsScreen() {
                                                         <SoccerBallIcon color="#007bff" size={18} />
                                                         {player.gols > 1 && (
                                                             <Badge>
-                                                                <BadgeText>{player.gols}</BadgeText>
+                                                                <BadgeText>{player.gols || 0}</BadgeText>
                                                             </Badge>
                                                         )}
                                                     </StatIcon>
@@ -590,7 +675,7 @@ export default function GameDetailsScreen() {
                                                         <SneakerMoveIcon color="#007bff" size={18} />
                                                         {player.assistencias > 1 && (
                                                             <Badge>
-                                                                <BadgeText>{player.assistencias}</BadgeText>
+                                                                <BadgeText>{player.assistencias || 0}</BadgeText>
                                                             </Badge>
                                                         )}
                                                     </StatIcon>
@@ -600,7 +685,7 @@ export default function GameDetailsScreen() {
                                                         <SquareIcon color="#FFC107" size={18} />
                                                         {player.cartoesAmarelos > 1 && (
                                                             <Badge>
-                                                                <BadgeText>{player.cartoesAmarelos}</BadgeText>
+                                                                <BadgeText>{player.cartoesAmarelos || 0}</BadgeText>
                                                             </Badge>
                                                         )}
                                                     </StatIcon>
@@ -610,15 +695,15 @@ export default function GameDetailsScreen() {
                                                         <SquareIcon color="#ff4d4d" size={18} />
                                                         {player.cartoesVermelhos > 1 && (
                                                             <Badge>
-                                                                <BadgeText>{player.cartoesVermelhos}</BadgeText>
+                                                                <BadgeText>{player.cartoesVermelhos || 0}</BadgeText>
                                                             </Badge>
                                                         )}
                                                     </StatIcon>
                                                 )}
                                             </StatsSection>
-                                            {player.rating > 0 && (
+                                            {typeof player.rating === 'number' && (
                                                 <RatingSection>
-                                                    <Rating rating={player.rating}>{player.rating.toFixed(1)}</Rating>
+                                                    <Rating rating={player.rating || 0}>{(player.rating || 0).toFixed(1)}</Rating>
                                                 </RatingSection>
                                             )}
                                         </PlayerDetailsSection>
@@ -636,8 +721,8 @@ export default function GameDetailsScreen() {
                                 <TouchableOpacity key={player.id} onPress={() => handlePlayerPress(player)}>
                                     <PlayerCardTeam>
                                         <PlayerNameSection>
-                                            <PlayerName>{player.nome}</PlayerName>
-                                            {player.posicao && player.posicao.trim() && <PlayerPosition>{player.posicao}</PlayerPosition>}
+                                            <PlayerName>{player.nome || 'Jogador'}</PlayerName>
+                                            {player.posicao && typeof player.posicao === 'string' && player.posicao.trim() !== '' && <PlayerPosition>{player.posicao}</PlayerPosition>}
                                         </PlayerNameSection>
                                         <PlayerDetailsSection>
                                             <StatsSection>
@@ -646,7 +731,7 @@ export default function GameDetailsScreen() {
                                                         <SoccerBallIcon color="#007bff" size={18} />
                                                         {player.gols > 1 && (
                                                             <Badge>
-                                                                <BadgeText>{player.gols}</BadgeText>
+                                                                <BadgeText>{player.gols || 0}</BadgeText>
                                                             </Badge>
                                                         )}
                                                     </StatIcon>
@@ -656,7 +741,7 @@ export default function GameDetailsScreen() {
                                                         <SneakerMoveIcon color="#007bff" size={18} />
                                                         {player.assistencias > 1 && (
                                                             <Badge>
-                                                                <BadgeText>{player.assistencias}</BadgeText>
+                                                                <BadgeText>{player.assistencias || 0}</BadgeText>
                                                             </Badge>
                                                         )}
                                                     </StatIcon>
@@ -666,7 +751,7 @@ export default function GameDetailsScreen() {
                                                         <SquareIcon color="#FFC107" size={18} />
                                                         {player.cartoesAmarelos > 1 && (
                                                             <Badge>
-                                                                <BadgeText>{player.cartoesAmarelos}</BadgeText>
+                                                                <BadgeText>{player.cartoesAmarelos || 0}</BadgeText>
                                                             </Badge>
                                                         )}
                                                     </StatIcon>
@@ -676,15 +761,15 @@ export default function GameDetailsScreen() {
                                                         <SquareIcon color="#ff4d4d" size={18} />
                                                         {player.cartoesVermelhos > 1 && (
                                                             <Badge>
-                                                                <BadgeText>{player.cartoesVermelhos}</BadgeText>
+                                                                <BadgeText>{player.cartoesVermelhos || 0}</BadgeText>
                                                             </Badge>
                                                         )}
                                                     </StatIcon>
                                                 )}
                                             </StatsSection>
-                                            {player.rating > 0 && (
+                                            {typeof player.rating === 'number' && (
                                                 <RatingSection>
-                                                    <Rating rating={player.rating}>{player.rating.toFixed(1)}</Rating>
+                                                    <Rating rating={player.rating || 0}>{(player.rating || 0).toFixed(1)}</Rating>
                                                 </RatingSection>
                                             )}
                                         </PlayerDetailsSection>
@@ -712,7 +797,7 @@ export default function GameDetailsScreen() {
                             <PlayerImageNamePositionContainer>
                                 <PlayerImage />
                                 <View>
-                                    <PlayerNameSheet>{selectedPlayer.nome}</PlayerNameSheet>
+                                    <PlayerNameSheet>{selectedPlayer.nome || 'Jogador'}</PlayerNameSheet>
                                     {showEditButton ? (
                                         <CompactSelectContainer>
                                             <Select
@@ -736,7 +821,7 @@ export default function GameDetailsScreen() {
                                             />
                                         </CompactSelectContainer>
                                     ) : (
-                                        <PlayerPositionSheet>{selectedPlayer.posicao}</PlayerPositionSheet>
+                                        <PlayerPositionSheet>{selectedPlayer.posicao || 'Posição não definida'}</PlayerPositionSheet>
                                     )}
                                 </View>
                             </PlayerImageNamePositionContainer>
@@ -803,10 +888,6 @@ export default function GameDetailsScreen() {
                                     )}
                                 </StatEditRow>
                                 <StatEditRow>
-                                    <StatLabel>Total Cartões</StatLabel>
-                                    <StatValue>{showEditButton ? editablePlayer.cartoes : selectedPlayer.cartoes}</StatValue>
-                                </StatEditRow>
-                                <StatEditRow>
                                     <StatLabel>Nota</StatLabel>
                                     {showEditButton ? (
                                         <NumberInput
@@ -816,7 +897,7 @@ export default function GameDetailsScreen() {
                                             isFloat={true}
                                         />
                                     ) : (
-                                        <StatValue>{selectedPlayer.rating.toFixed(1)}</StatValue>
+                                        <StatValue>{(selectedPlayer.rating || 0).toFixed(1)}</StatValue>
                                     )}
                                 </StatEditRow>
                             </StatsFormContainer>
@@ -831,19 +912,30 @@ export default function GameDetailsScreen() {
                         </PlayerDetailsContainer>
                     ) : (
                         <View style={{ flex: 1 }}>
-                            <GameTitle style={{ marginBottom: 16 }}>Adicionar Jogador ao {editingTeam}</GameTitle>
-                            {availablePlayers.length > 0 ? (
+                            <GameTitle style={{ marginBottom: 16 }}>Adicionar Jogador ao {editingTeam || 'Time'}</GameTitle>
+                            {loadingPlayers ? (
+                                <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 16, color: '#666' }}>
+                                    Carregando jogadores disponíveis...
+                                </Text>
+                            ) : availablePlayers.length > 0 ? (
                                 availablePlayers.map((item) => (
                                     <PlayerCard
                                         key={item.id.toString()}
                                         nome={item.nome}
                                         foto={item.foto}
                                         posicoes={item.posicoes}
-                                        onAdd={() => handleAddPlayerToTeam(item)}
+                                        onAdd={addingPlayer ? undefined : () => handleAddPlayerToTeam(item)}
                                     />
                                 ))
                             ) : (
-                                <Text>Nenhum jogador disponível.</Text>
+                                <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 16, color: '#666' }}>
+                                    Nenhum jogador disponível.
+                                </Text>
+                            )}
+                            {addingPlayer && (
+                                <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 16, color: '#2B6AE3' }}>
+                                    Adicionando jogador ao time...
+                                </Text>
                             )}
                         </View>
                     )}
@@ -997,8 +1089,10 @@ const Rating = styled.Text<{ rating: number }>`
   font-size: ${typography["txt-2"].fontSize}px;
   font-family: ${typography["txt-2"].fontFamily};
   color: white;
-  background-color: ${({ rating }) =>
-        rating < 4 ? '#FF4D4D' : rating <= 7 ? '#FFC107' : '#4CAF50'};
+  background-color: ${({ rating }) => {
+    const r = rating || 0;
+    return r < 4 ? '#FF4D4D' : r <= 7 ? '#FFC107' : '#4CAF50';
+  }};
   padding: 2px 8px;
   border-radius: 2px;
 `;

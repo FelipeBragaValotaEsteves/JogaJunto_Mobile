@@ -107,6 +107,11 @@ export default function TabsLayout() {
         name="gameDetails"
         options={{ title: "Detalhes do Jogo", href: null }}
       />
+
+      <Tabs.Screen
+        name="gameAdd"
+        options={{ title: "Adicionar Jogo", href: null }}
+      />
     </Tabs>
   );
 }
