@@ -37,7 +37,6 @@ export function BackButtonTab({ children, onPress, defaultRoute }: BackButtonPro
     }
 
     console.log('BackButton clicked, going to index');
-    // Por enquanto, sempre volta para a tela principal
     router.push('/(tabs)' as any);
   };
 

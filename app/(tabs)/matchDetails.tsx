@@ -11,7 +11,7 @@ import { Alert } from '../../components/shared/Alert';
 import { ContentContainer } from '../../components/shared/ContentContainer';
 import BASE_URL from '../../constants/config';
 import { authHeaders } from '../../utils/authHeaders';
-import { formatDateTime } from '../../utils/dateUtils';
+import { formatDateTime } from '../../utils/formatDateTime';
 
 export default function MatchDetailsScreen() {
     const router = useRouter();
@@ -126,12 +126,10 @@ export default function MatchDetailsScreen() {
         }
     }, [id]);
 
-    // Carrega os dados toda vez que a tela é focada
     useFocusEffect(
         useCallback(() => {
             if (!id) return;
 
-            // Carrega detalhes da partida e jogos
             fetchMatchDetails();
             fetchGames();
         }, [id, fetchMatchDetails, fetchGames])
@@ -258,7 +256,7 @@ export default function MatchDetailsScreen() {
 
                 <GameCard
                     key={index}
-                    title={jogo.titulo}
+                    title={'Jogo' + index}
                     team1={jogo.time1}
                     team2={jogo.time2}
                     score1={jogo.placar1}

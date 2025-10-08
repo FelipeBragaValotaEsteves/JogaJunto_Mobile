@@ -441,7 +441,6 @@ export default function GameDetailsScreen() {
             
             const fetchAllData = async () => {
                 try {
-                    // Buscar posições
                     const headers = await authHeaders();
                     const positionsResponse = await fetch(`${BASE_URL}/posicao/list`, { headers });
                     if (positionsResponse.ok && isMounted) {
@@ -450,14 +449,12 @@ export default function GameDetailsScreen() {
                         setPositionItems(positionsData.map(pos => ({ label: pos.nome, value: pos.id.toString() })));
                     }
 
-                    // Buscar detalhes da partida
                     const matchResponse = await fetch(`${BASE_URL}/partidas/${id}`, { headers });
                     if (matchResponse.ok && isMounted) {
                         const matchData = await matchResponse.json();
                         setMatchDetails(matchData);
                     }
 
-                    // Buscar detalhes do jogo
                     const gameResponse = await fetch(`${BASE_URL}/jogos/${idGame}`, { headers });
                     if (gameResponse.ok && isMounted) {
                         const gameData: BackendGameResponse = await gameResponse.json();
