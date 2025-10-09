@@ -1,7 +1,10 @@
+import * as Device from "expo-device";
+import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { TouchableOpacity } from "react-native";
-import styled from "styled-components/native";
+import { styled } from "styled-components/native";
+
 import LogoJogaJunto from "../../assets/images/logo-white.svg";
 import { Alert } from "../../components/shared/Alert";
 import { OutlineButton, OutlineButtonText } from "../../components/shared/Button";
@@ -10,18 +13,60 @@ import { TitlePage } from "../../components/shared/TitlePage";
 import BASE_URL from "../../constants/config";
 import { useAuth } from "../../contexts/AuthContext";
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true
+  }),
+});
+
+
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
+
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({
     type: "error",
     title: "",
     message: "",
   });
+
+  useEffect(() => {
+    registerForPushNotificationsAsync().then((token) => {
+      if (token) setExpoPushToken(token);
+    });
+  }, []);
+
+  async function registerForPushNotificationsAsync() {
+    if (!Device.isDevice) {
+      console.log("Notificações push funcionam apenas em dispositivos físicos");
+      return null;
+    }
+
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== "granted") {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== "granted") {
+      console.log("Permissão negada para notificações");
+      return null;
+    }
+
+    const tokenData = await Notifications.getExpoPushTokenAsync();
+    return tokenData.data;
+  }
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -37,10 +82,12 @@ export default function LoginScreen() {
     try {
       const response = await fetch(`${BASE_URL}/auth/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          deviceSerial: expoPushToken, 
+        }),
       });
 
       const data = await response.json();
@@ -85,16 +132,8 @@ export default function LoginScreen() {
       <FormContainer>
         <TitlePage>Login</TitlePage>
 
-        <Input
-          placeholder="E-mail"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <Input
-          placeholder="Senha"
-          value={password}
-          onChangeText={setPassword}
-        />
+        <Input placeholder="E-mail" value={email} onChangeText={setEmail} />
+        <Input placeholder="Senha" value={password} onChangeText={setPassword} secureTextEntry />
         <OutlineButton onPress={handleLogin}>
           <OutlineButtonText>ENTRAR</OutlineButtonText>
         </OutlineButton>

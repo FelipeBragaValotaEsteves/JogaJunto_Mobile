@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { CircleArrowLeft } from "lucide-react-native";
 import React, { useState } from 'react';
 import { ActivityIndicator } from 'react-native';
-import styled from "styled-components/native";
+import { styled } from "styled-components/native";
 import LogoJogaJunto from "../../assets/images/logo-white.svg";
 import { Alert } from "../../components/shared/Alert";
 import { BackButtonAuth } from "../../components/shared/BackButton";
