@@ -6,7 +6,7 @@ import typography from '@/constants/typography';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleArrowLeft, CirclePlus, CircleX, Edit, Users } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
-import styled from 'styled-components/native';
+import { styled } from 'styled-components/native';
 import { Alert } from '../../components/shared/Alert';
 import { ContentContainer } from '../../components/shared/ContentContainer';
 import BASE_URL from '../../constants/config';
@@ -90,7 +90,7 @@ export default function MatchDetailsScreen() {
                     placar1: time1?.totais?.gols || 0,
                     placar2: time2?.totais?.gols || 0,
                     eventos: [
-                        ...(time1?.jogadores?.flatMap((jogador: any) => 
+                        ...(time1?.jogadores?.flatMap((jogador: any) =>
                             Object.entries(jogador.eventos || {})
                                 .filter(([evento, valor]) => Number(valor) > 0)
                                 .map(([evento, valor]) => ({
@@ -100,7 +100,7 @@ export default function MatchDetailsScreen() {
                                     value: valor,
                                 }))
                         ) || []),
-                        ...(time2?.jogadores?.flatMap((jogador: any) => 
+                        ...(time2?.jogadores?.flatMap((jogador: any) =>
                             Object.entries(jogador.eventos || {})
                                 .filter(([evento, valor]) => Number(valor) > 0)
                                 .map(([evento, valor]) => ({
@@ -114,7 +114,6 @@ export default function MatchDetailsScreen() {
                 };
             });
 
-            console.log(formattedGames);
             setGames(formattedGames);
         } catch (error) {
             console.error("Erro ao buscar jogos:", error);
@@ -207,7 +206,7 @@ export default function MatchDetailsScreen() {
             },
         });
     };
-    
+
     if (!matchDetails || Object.keys(matchDetails).length === 0) {
         return (
             <MainContainer>
@@ -221,7 +220,18 @@ export default function MatchDetailsScreen() {
     return (
         <MainContainer>
             <TopButtonsContainer>
-                <BackButtonTab>
+                <BackButtonTab onPress={() => {
+                    if (showEditButton) {
+                        router.replace({
+                            pathname: '/(tabs)/createdMatches',
+                        });
+                    } else {
+                        router.replace({
+                            pathname: '/(tabs)/playedMatches',
+                        });
+                    }
+
+                }}>
                     <CircleArrowLeft color="#2B6AE3" size={50} />
                 </BackButtonTab>
                 <ButtonsContainer>

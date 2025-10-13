@@ -7,7 +7,7 @@ import { CircleArrowLeft } from "lucide-react-native";
 
 import { NoResults } from "@/components/shared/NoResults";
 import React, { useCallback, useState } from "react";
-import styled from "styled-components/native";
+import { styled } from "styled-components/native";
 import BASE_URL from "../../constants/config";
 import { authHeaders, getUserId } from '../../utils/authHeaders';
 
@@ -71,7 +71,7 @@ export default function CreatedMatchesScreen() {
         createdMatches.map((match, index) => {
           const [date] = match.data.split('T');
           const isCanceled = match.status === 'cancelada';
-          
+
           return (
             <MatchCard
               key={index}

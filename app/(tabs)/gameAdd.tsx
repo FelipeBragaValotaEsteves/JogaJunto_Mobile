@@ -7,7 +7,7 @@ import { TitlePageTabs } from '@/components/shared/TitlePage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleArrowLeft } from 'lucide-react-native';
 import React, { useState } from 'react';
-import styled from 'styled-components/native';
+import { styled } from 'styled-components/native';
 import { Alert } from '../../components/shared/Alert';
 import BASE_URL from '../../constants/config';
 import { authHeaders } from '../../utils/authHeaders';
@@ -102,7 +102,12 @@ export default function GameAddScreen() {
     return (
         <MainContainer>
             <TopButtonsContainer>
-                <BackButtonTab>
+                <BackButtonTab onPress={() => {
+                    router.replace({
+                        pathname: '/(tabs)/matchDetails',
+                        params: { id: partidaId },
+                    });
+                }}>
                     <CircleArrowLeft color="#2B6AE3" size={50} />
                 </BackButtonTab>
             </TopButtonsContainer>

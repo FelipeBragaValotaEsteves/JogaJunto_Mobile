@@ -1,56 +1,25 @@
+import { GameDetailsMain } from '@/components/GameDetailsMain';
 import { Alert } from '@/components/shared/Alert';
 import { BackButtonTab } from '@/components/shared/BackButton';
 import { Button, ButtonText } from '@/components/shared/Button';
 import { ContentContainer } from '@/components/shared/ContentContainer';
+import { GameHeader } from '@/components/shared/GameHeader';
 import { MainContainer } from '@/components/shared/MainContainer';
 import { NumberInput } from '@/components/shared/NumberInput';
 import PlayerCard from '@/components/shared/PlayerCard';
 import { Select } from '@/components/shared/Select';
-import { TitlePageTabs } from '@/components/shared/TitlePage';
 import typography from '@/constants/typography';
+import { Player, useGameDetails } from '@/hooks/useGameDetails';
+import { TopButtonsContainer } from '@/styles/gameDetailsStyles';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { CircleArrowLeft, Plus } from 'lucide-react-native';
-import { SneakerMoveIcon, SoccerBallIcon, SquareIcon } from 'phosphor-react-native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { CircleArrowLeft } from 'lucide-react-native';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Float } from 'react-native/Libraries/Types/CodegenTypes';
-import styled from 'styled-components/native';
+import { styled } from 'styled-components/native';
 import BASE_URL from '../../constants/config';
 import { authHeaders } from '../../utils/authHeaders';
-
-function formatDateTime(data: string, hora: string): { time: string; formattedDate: string } {
-    let dateObj: Date;
-    const onlyDate = data.split('T')[0];
-    const [year, month, day] = onlyDate.split('-').map(Number);
-    dateObj = new Date(year, month - 1, day);
-
-    const time = hora.slice(0, 5);
-    let dayOfWeek = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
-    dayOfWeek = dayOfWeek.replace('-feira', '');
-    dayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
-    const monthExtenso = dateObj.toLocaleDateString('pt-BR', { month: 'long' });
-    return { time, formattedDate: `${dayOfWeek}, ${day} de ${monthExtenso}` };
-}
-
-interface GamePlayer {
-    id: number;
-    nome: string;
-    time: string;
-    posicao: string;
-    gols: number;
-    assistencias: number;
-    cartoes: number;
-    cartoesAmarelos: number;
-    cartoesVermelhos: number;
-    defesas: number;
-    rating: Float;
-    foto?: string;
-    posicoes?: string[];
-    timeParticipanteId?: number;
-    jogadorId?: number;
-}
 
 interface AvailablePlayer {
     id: number;
@@ -59,80 +28,17 @@ interface AvailablePlayer {
     posicoes: string[];
 }
 
-interface BackendPlayerEventos {
-    gol: number;
-    assistencia: number;
-    defesa: number;
-    cartaoAmarelo: number;
-    cartaoVermelho: number;
-}
-
-interface BackendPlayer {
-    timeParticipanteId: number;
-    jogadorId: number;
-    nome: string;
-    eventos: BackendPlayerEventos;
-}
-
-interface BackendTeamTotais {
-    gols: number;
-    assistencias: number;
-    cartoesAmarelos: number;
-    cartoesVermelhos: number;
-}
-
-interface BackendTeam {
-    timeId: number;
-    nome: string;
-    totais: BackendTeamTotais;
-    jogadores: BackendPlayer[];
-}
-
-interface BackendGameResponse {
-    jogoId: number;
-    times: BackendTeam[];
-}
-
-interface MatchDetails {
-    id: number;
-    titulo: string;
-    descricao: string;
-    data: string;
-    hora_inicio: string;
-    local: string;
-    tipo_partida_nome: string;
-    status: string;
-}
-
-interface GameDetails {
-    id: number;
-    titulo: string;
-    time1: string;
-    time2: string;
-    placar1: number;
-    placar2: number;
-    data: string;
-    hora_inicio: string;
-    local: string;
-    tipo_partida_nome: string;
-    jogadores: GamePlayer[];
-}
-
-interface Position {
-    id: number;
-    nome: string;
-}
-
 export default function GameDetailsScreen() {
     const router = useRouter();
+
     const { id, idGame } = useLocalSearchParams();
-    const [gameDetails, setGameDetails] = useState<GameDetails | null>(null);
-    const [matchDetails, setMatchDetails] = useState<MatchDetails | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [showEditButton] = useState(true);
+    const { gameDetails, matchDetails, positions, loading, error, fetchAll } = useGameDetails(
+        id as string,
+        idGame as string
+    );
+
     const [editingTeam, setEditingTeam] = useState<string | null>(null);
-    const [selectedPlayer, setSelectedPlayer] = useState<GamePlayer | null>(null);
+    const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
     const [editablePlayer, setEditablePlayer] = useState({
         gols: 0,
         assistencias: 0,
@@ -147,389 +53,74 @@ export default function GameDetailsScreen() {
     const [availablePlayers, setAvailablePlayers] = useState<AvailablePlayer[]>([]);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
     const [addingPlayer, setAddingPlayer] = useState(false);
-    const [positions, setPositions] = useState<Position[]>([]);
-
     const [positionPickerOpen, setPositionPickerOpen] = useState(false);
     const [positionItems, setPositionItems] = useState<{ label: string; value: string }[]>([]);
 
     const bottomSheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['100%'], []);
+
     const handleSheetChanges = useCallback((index: number) => {
         if (index === -1) {
-            setEditingTeam(null);
             setSelectedPlayer(null);
-            setPositionPickerOpen(false);
-            setLoadingPlayers(false);
-            setAddingPlayer(false);
-            setAvailablePlayers([]);
+            setEditingTeam(null);
         }
     }, []);
 
     const handleAddPlayer = async (teamName: string) => {
         setEditingTeam(teamName);
         setSelectedPlayer(null);
-        
         setAvailablePlayers([]);
         setLoadingPlayers(true);
         bottomSheetRef.current?.expand();
-        
+
         try {
             const headers = await authHeaders();
-            const response = await fetch(`${BASE_URL}/jogadores/jogadoresDisponiveis/?id=${id}`, { headers });
-            
-            if (!response.ok) {
-                throw new Error(`Erro ao buscar jogadores disponíveis: ${response.status} ${response.statusText}`);
+            const response = await fetch(`${BASE_URL}/partidas/${id}/jogadores-disponiveis`, { headers });
+
+            if (response.ok) {
+                const data = await response.json();
+                setAvailablePlayers(data || []);
             }
-            
-            const data: AvailablePlayer[] = await response.json();
-            const playersWithValidPositions = (data || []).map(player => ({
-                ...player,
-                posicoes: Array.isArray(player.posicoes) ? player.posicoes : []
-            }));
-            setAvailablePlayers(playersWithValidPositions);
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao buscar jogadores';
-            console.error("Erro ao buscar jogadores disponíveis:", errorMessage);
-            setAvailablePlayers([]);
-            showAlert(
-                'error',
-                'Erro',
-                'Não foi possível carregar os jogadores disponíveis. Tente novamente.'
-            );
+            console.error('Erro ao buscar jogadores disponíveis:', error);
         } finally {
             setLoadingPlayers(false);
         }
     };
 
-    const handlePlayerPress = (player: GamePlayer) => {
+    const handlePlayerPress = (player: Player) => {
         setSelectedPlayer(player);
-
 
         const currentPosition = positions.find(pos => pos.nome === player.posicao);
 
         setEditablePlayer({
-            gols: player.gols,
-            assistencias: player.assistencias,
-            cartoes: player.cartoes,
-            cartoesAmarelos: player.cartoesAmarelos,
-            cartoesVermelhos: player.cartoesVermelhos,
-            defesas: player.defesas,
-            rating: player.rating,
-            posicao: player.posicao,
+            gols: player.gols || 0,
+            assistencias: player.assistencias || 0,
+            cartoes: 0,
+            cartoesAmarelos: player.cartoesAmarelos || 0,
+            cartoesVermelhos: player.cartoesVermelhos || 0,
+            defesas: player.defesas || 0,
+            rating: player.rating || 0,
+            posicao: player.posicao || '',
             posicaoId: currentPosition?.id || 0
         });
+
+        const posItems = positions.map(pos => ({
+            label: pos.nome,
+            value: pos.id.toString()
+        }));
+        setPositionItems(posItems);
+
         setEditingTeam(null);
         bottomSheetRef.current?.expand();
     };
 
-    const handleStatChange = (stat: keyof Omit<typeof editablePlayer, 'posicao'>, value: number) => {
-        setEditablePlayer(prev => {
-            const newValue = prev[stat] + value;
-
-            if (stat === 'rating') {
-                return { ...prev, [stat]: Math.max(0, parseFloat(newValue.toFixed(1))) };
-            }
-
-            const updatedPlayer = { ...prev, [stat]: Math.max(0, newValue) };
-
-
-            if (stat === 'cartoesAmarelos' || stat === 'cartoesVermelhos') {
-                updatedPlayer.cartoes = updatedPlayer.cartoesAmarelos + updatedPlayer.cartoesVermelhos;
-            }
-
-            return updatedPlayer;
-        });
+    const handleStatChange = (stat: keyof typeof editablePlayer, value: number | string) => {
+        setEditablePlayer(prev => ({
+            ...prev,
+            [stat]: value
+        }));
     };
-
-    const refreshGameData = useCallback(async () => {
-        try {
-            const headers = await authHeaders();
-            const gameResponse = await fetch(`${BASE_URL}/jogos/${idGame}`, { headers });
-            if (gameResponse.ok) {
-                const gameData: BackendGameResponse = await gameResponse.json();
-                
-                if (gameData && gameData.jogoId) {
-                    const team1 = gameData.times?.[0] || null;
-                    const team2 = gameData.times?.[1] || null;
-
-                    const parsedData: GameDetails = {
-                        id: gameData.jogoId,
-                        titulo: `Jogo ${gameData.jogoId}`,
-                        time1: team1?.nome || "Time 1",
-                        time2: team2?.nome || "Time 2",
-                        placar1: parseInt(String(team1?.totais?.gols || "0"), 10),
-                        placar2: parseInt(String(team2?.totais?.gols || "0"), 10),
-                        data: matchDetails?.data || "",
-                        hora_inicio: matchDetails?.hora_inicio || "",
-                        local: matchDetails?.local || "",
-                        tipo_partida_nome: matchDetails?.tipo_partida_nome || "",
-                        jogadores: [
-                            ...(team1?.jogadores?.map((jogador: BackendPlayer) => ({
-                                id: jogador.jogadorId,
-                                nome: jogador.nome,
-                                time: team1.nome,
-                                posicao: "",
-                                gols: jogador.eventos.gol,
-                                assistencias: jogador.eventos.assistencia,
-                                cartoes: jogador.eventos.cartaoAmarelo + jogador.eventos.cartaoVermelho,
-                                cartoesAmarelos: jogador.eventos.cartaoAmarelo,
-                                cartoesVermelhos: jogador.eventos.cartaoVermelho,
-                                defesas: jogador.eventos.defesa,
-                                rating: 0.0,
-                                timeParticipanteId: jogador.timeParticipanteId,
-                                jogadorId: jogador.jogadorId,
-                            })) || []),
-                            ...(team2?.jogadores?.map((jogador: BackendPlayer) => ({
-                                id: jogador.jogadorId,
-                                nome: jogador.nome,
-                                time: team2.nome,
-                                posicao: "",
-                                gols: jogador.eventos.gol,
-                                assistencias: jogador.eventos.assistencia,
-                                cartoes: jogador.eventos.cartaoAmarelo + jogador.eventos.cartaoVermelho,
-                                cartoesAmarelos: jogador.eventos.cartaoAmarelo,
-                                cartoesVermelhos: jogador.eventos.cartaoVermelho,
-                                defesas: jogador.eventos.defesa,
-                                rating: 0.0,
-                                timeParticipanteId: jogador.timeParticipanteId,
-                                jogadorId: jogador.jogadorId,
-                            })) || []),
-                        ],
-                    };
-
-                    setGameDetails(parsedData);
-                }
-            }
-        } catch (error) {
-            console.error("Erro ao atualizar dados do jogo:", error);
-        }
-    }, [idGame, matchDetails]);
-
-    const fetchMatchDetails = useCallback(async () => {
-        try {
-            const headers = await authHeaders();
-            const response = await fetch(`${BASE_URL}/partidas/${id}`, { headers });
-
-            if (!response.ok) {
-                throw new Error(`Erro ao buscar detalhes da partida: ${response.status} ${response.statusText}`);
-            }
-
-            const data = await response.json();
-
-            setMatchDetails(data);
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao buscar detalhes da partida';
-            console.error("Erro ao buscar detalhes da partida:", errorMessage);
-        }
-    }, [id]);
-
-    const fetchGameDetails = useCallback(async (isRefresh: boolean = false) => {
-        try {
-            if (!isRefresh) {
-                setLoading(true);
-            }
-            setError(null);
-
-            const headers = await authHeaders();
-            const response = await fetch(`${BASE_URL}/jogos/${idGame}`, { headers });
-            if (!response.ok) {
-                throw new Error(`Erro ${response.status}: ${response.statusText}`);
-            }
-
-            const data: BackendGameResponse = await response.json();
-
-            if (!data || !data.jogoId) {
-                throw new Error("Nenhum dado encontrado para o jogo.");
-            }
-
-            const team1 = data.times?.[0] || null;
-            const team2 = data.times?.[1] || null;
-
-            const parsedData: GameDetails = {
-                id: data.jogoId,
-                titulo: `Jogo ${data.jogoId}`,
-                time1: team1?.nome || "Time 1",
-                time2: team2?.nome || "Time 2",
-                placar1: parseInt(String(team1?.totais?.gols || "0"), 10),
-                placar2: parseInt(String(team2?.totais?.gols || "0"), 10),
-                data: "",
-                hora_inicio: "",
-                local: "",
-                tipo_partida_nome: "",
-                jogadores: [
-                    ...(team1?.jogadores?.map((jogador: BackendPlayer) => ({
-                        id: jogador.jogadorId,
-                        nome: jogador.nome,
-                        time: team1.nome,
-                        posicao: "",
-                        gols: jogador.eventos.gol,
-                        assistencias: jogador.eventos.assistencia,
-                        cartoes: jogador.eventos.cartaoAmarelo + jogador.eventos.cartaoVermelho,
-                        cartoesAmarelos: jogador.eventos.cartaoAmarelo,
-                        cartoesVermelhos: jogador.eventos.cartaoVermelho,
-                        defesas: jogador.eventos.defesa,
-                        rating: 0.0,
-                        timeParticipanteId: jogador.timeParticipanteId,
-                        jogadorId: jogador.jogadorId,
-                    })) || []),
-                    ...(team2?.jogadores?.map((jogador: BackendPlayer) => ({
-                        id: jogador.jogadorId,
-                        nome: jogador.nome,
-                        time: team2.nome,
-                        posicao: "",
-                        gols: jogador.eventos.gol,
-                        assistencias: jogador.eventos.assistencia,
-                        cartoes: jogador.eventos.cartaoAmarelo + jogador.eventos.cartaoVermelho,
-                        cartoesAmarelos: jogador.eventos.cartaoAmarelo,
-                        cartoesVermelhos: jogador.eventos.cartaoVermelho,
-                        defesas: jogador.eventos.defesa,
-                        rating: 0.0,
-                        timeParticipanteId: jogador.timeParticipanteId,
-                        jogadorId: jogador.jogadorId,
-                    })) || []),
-                ],
-            };
-
-            setGameDetails(parsedData);
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-            console.error("Erro ao buscar detalhes do jogo:", errorMessage);
-            setError(errorMessage);
-            showAlert(
-                'error',
-                'Erro',
-                errorMessage || 'Não foi possível carregar os detalhes do jogo. Tente novamente mais tarde.'
-            );
-        } finally {
-            if (!isRefresh) {
-                setLoading(false);
-            }
-        }
-    }, [idGame]);
-
-    const updateGameDetailsWithMatchInfo = useCallback(() => {
-        if (gameDetails && matchDetails) {
-            setGameDetails(prev => prev ? {
-                ...prev,
-                data: matchDetails.data,
-                hora_inicio: matchDetails.hora_inicio,
-                local: matchDetails.local,
-                tipo_partida_nome: matchDetails.tipo_partida_nome
-            } : null);
-        }
-    }, [gameDetails, matchDetails]);
-
-    useEffect(() => {
-        updateGameDetailsWithMatchInfo();
-    }, [updateGameDetailsWithMatchInfo]);
-
-
-    useEffect(() => {
-        if (!id) {
-            console.error("ID do jogo não foi fornecido.");
-            setError("ID do jogo não foi fornecido.");
-            setLoading(false);
-            return;
-        }
-    }, [id]);
-
-    useFocusEffect(
-        useCallback(() => {
-            if (!id) return;
-            
-            let isMounted = true;
-            
-            const fetchAllData = async () => {
-                try {
-                    const headers = await authHeaders();
-                    const positionsResponse = await fetch(`${BASE_URL}/posicao/list`, { headers });
-                    if (positionsResponse.ok && isMounted) {
-                        const positionsData: Position[] = await positionsResponse.json();
-                        setPositions(positionsData);
-                        setPositionItems(positionsData.map(pos => ({ label: pos.nome, value: pos.id.toString() })));
-                    }
-
-                    const matchResponse = await fetch(`${BASE_URL}/partidas/${id}`, { headers });
-                    if (matchResponse.ok && isMounted) {
-                        const matchData = await matchResponse.json();
-                        setMatchDetails(matchData);
-                    }
-
-                    const gameResponse = await fetch(`${BASE_URL}/jogos/${idGame}`, { headers });
-                    if (gameResponse.ok && isMounted) {
-                        const gameData: BackendGameResponse = await gameResponse.json();
-                        
-                        if (gameData && gameData.jogoId) {
-                            const team1 = gameData.times?.[0] || null;
-                            const team2 = gameData.times?.[1] || null;
-
-                            const parsedData: GameDetails = {
-                                id: gameData.jogoId,
-                                titulo: `Jogo ${gameData.jogoId}`,
-                                time1: team1?.nome || "Time 1",
-                                time2: team2?.nome || "Time 2",
-                                placar1: parseInt(String(team1?.totais?.gols || "0"), 10),
-                                placar2: parseInt(String(team2?.totais?.gols || "0"), 10),
-                                data: "",
-                                hora_inicio: "",
-                                local: "",
-                                tipo_partida_nome: "",
-                                jogadores: [
-                                    ...(team1?.jogadores?.map((jogador: BackendPlayer) => ({
-                                        id: jogador.jogadorId,
-                                        nome: jogador.nome,
-                                        time: team1.nome,
-                                        posicao: "",
-                                        gols: jogador.eventos.gol,
-                                        assistencias: jogador.eventos.assistencia,
-                                        cartoes: jogador.eventos.cartaoAmarelo + jogador.eventos.cartaoVermelho,
-                                        cartoesAmarelos: jogador.eventos.cartaoAmarelo,
-                                        cartoesVermelhos: jogador.eventos.cartaoVermelho,
-                                        defesas: jogador.eventos.defesa,
-                                        rating: 0.0,
-                                        timeParticipanteId: jogador.timeParticipanteId,
-                                        jogadorId: jogador.jogadorId,
-                                    })) || []),
-                                    ...(team2?.jogadores?.map((jogador: BackendPlayer) => ({
-                                        id: jogador.jogadorId,
-                                        nome: jogador.nome,
-                                        time: team2.nome,
-                                        posicao: "",
-                                        gols: jogador.eventos.gol,
-                                        assistencias: jogador.eventos.assistencia,
-                                        cartoes: jogador.eventos.cartaoAmarelo + jogador.eventos.cartaoVermelho,
-                                        cartoesAmarelos: jogador.eventos.cartaoAmarelo,
-                                        cartoesVermelhos: jogador.eventos.cartaoVermelho,
-                                        defesas: jogador.eventos.defesa,
-                                        rating: 0.0,
-                                        timeParticipanteId: jogador.timeParticipanteId,
-                                        jogadorId: jogador.jogadorId,
-                                    })) || []),
-                                ],
-                            };
-
-                            setGameDetails(parsedData);
-                        }
-                    }
-                } catch (error) {
-                    console.error("Erro ao buscar dados:", error);
-                    if (isMounted) {
-                        setError("Erro ao carregar dados do jogo");
-                    }
-                } finally {
-                    if (isMounted) {
-                        setLoading(false);
-                    }
-                }
-            };
-
-            fetchAllData();
-            
-            return () => {
-                isMounted = false;
-            };
-        }, [id, idGame])
-    );
 
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertConfig, setAlertConfig] = useState<{
@@ -554,66 +145,74 @@ export default function GameDetailsScreen() {
 
         try {
             const headers = await authHeaders();
-            const response = await fetch(`${BASE_URL}/time-participantes/${selectedPlayer.jogadorId}`, {
+
+            const response = await fetch(`${BASE_URL}/time-participantes/${selectedPlayer.id}`, {
                 method: 'PUT',
                 headers: {
                     ...headers,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    jogadorId: selectedPlayer.jogadorId,
-                    timeParticipanteId: selectedPlayer.timeParticipanteId,
-                    jogoId: gameDetails.id,
-                    gols: editablePlayer.gols,
-                    assistencias: editablePlayer.assistencias,
-                    defesas: editablePlayer.defesas,
-                    cartoesAmarelos: editablePlayer.cartoesAmarelos,
-                    cartoesVermelhos: editablePlayer.cartoesVermelhos,
-                    posicaoId: editablePlayer.posicaoId,
-                }),
+                    gol: editablePlayer.gols,
+                    assistencia: editablePlayer.assistencias,
+                    cartaoAmarelo: editablePlayer.cartoesAmarelos,
+                    cartaoVermelho: editablePlayer.cartoesVermelhos,
+                    defesa: editablePlayer.defesas,
+                    posicaoId: editablePlayer.posicaoId
+                })
             });
 
-            if (!response.ok) {
-                throw new Error('Erro ao salvar estatísticas do jogador');
-            }
+            if (response.ok) {
+                showAlert('success', 'Sucesso', 'Estatísticas do jogador atualizadas com sucesso!');
+                bottomSheetRef.current?.close();
 
-            await refreshGameData();
-            showAlert('success', 'Sucesso', 'Estatísticas salvas com sucesso!');
+                await fetchAll();
+            } else {
+                const errorData = await response.json();
+                showAlert('error', 'Erro', errorData.message || 'Erro ao salvar as alterações.');
+            }
         } catch (error) {
-            console.error(error);
-            showAlert('error', 'Erro', 'Não foi possível salvar as estatísticas.');
+            console.error('Erro ao salvar alterações:', error);
+            showAlert('error', 'Erro', 'Erro ao salvar as alterações. Verifique sua conexão.');
         }
-    }, [selectedPlayer, gameDetails, editablePlayer, refreshGameData]);
+    }, [selectedPlayer, gameDetails, editablePlayer, fetchAll]);
 
     const handleAddPlayerToTeam = useCallback(async (player: AvailablePlayer) => {
         if (!gameDetails || !editingTeam) return;
 
         try {
+            setAddingPlayer(true);
             const headers = await authHeaders();
-            const response = await fetch(`${BASE_URL}/time-participantes`, {
+
+            const response = await fetch(`${BASE_URL}/partidas/${id}/jogadores`, {
                 method: 'POST',
                 headers: {
                     ...headers,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    timeId: editingTeam === gameDetails.time1 ? 1 : 2,
                     jogadorId: player.id,
-                    posicaoId: positions[0]?.id || 1,
-                }),
+                    timeNome: editingTeam,
+                    jogoId: gameDetails.id
+                })
             });
 
-            if (!response.ok) {
-                throw new Error('Erro ao adicionar jogador ao time');
-            }
+            if (response.ok) {
+                showAlert('success', 'Sucesso', `${player.nome} foi adicionado ao ${editingTeam}!`);
+                bottomSheetRef.current?.close();
 
-            await refreshGameData();
-            showAlert('success', 'Sucesso', 'Jogador adicionado com sucesso!');
+                await fetchAll();
+            } else {
+                const errorData = await response.json();
+                showAlert('error', 'Erro', errorData.message || 'Erro ao adicionar jogador ao time.');
+            }
         } catch (error) {
-            console.error(error);
-            showAlert('error', 'Erro', 'Não foi possível adicionar o jogador.');
+            console.error('Erro ao adicionar jogador:', error);
+            showAlert('error', 'Erro', 'Erro ao adicionar jogador ao time. Verifique sua conexão.');
+        } finally {
+            setAddingPlayer(false);
         }
-    }, [gameDetails, editingTeam, positions, refreshGameData]);
+    }, [gameDetails, editingTeam, id, fetchAll]);
 
     if (loading) {
         return (
@@ -629,11 +228,7 @@ export default function GameDetailsScreen() {
                 <TitlePageTabs>Erro ao carregar jogo</TitlePageTabs>
                 <ContentContainer>
                     <Text>{error || 'Erro desconhecido'}</Text>
-                    <Button onPress={async () => {
-                        setError(null);
-                        await fetchMatchDetails();
-                        await fetchGameDetails();
-                    }}>
+                    <Button onPress={fetchAll}>
                         <ButtonText>Tentar novamente</ButtonText>
                     </Button>
                 </ContentContainer>
@@ -641,349 +236,153 @@ export default function GameDetailsScreen() {
         );
     }
 
-    const team1Players = gameDetails?.jogadores?.filter(player => player.time === gameDetails.time1) || [];
-    const team2Players = gameDetails?.jogadores?.filter(player => player.time === gameDetails.time2) || [];
-
-    const team1Name = gameDetails?.time1 || "Time 1";
-    const team2Name = gameDetails?.time2 || "Time 2";
-
-    const matchInfo = matchDetails && gameDetails ? (() => {
-        const { time, formattedDate } = formatDateTime(matchDetails.data, matchDetails.hora_inicio);
-        return {
-            formattedDate,
-            time,
-            local: matchDetails.local,
-            tipo: matchDetails.tipo_partida_nome
-        };
-    })() : null;
-
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
             <MainContainer>
                 <TopButtonsContainer>
-                    <BackButtonTab>
+                    <BackButtonTab onPress={() => {
+                        if (matchDetails) {
+                            router.replace({
+                                pathname: '/(tabs)/matchDetails',
+                                params: { id: matchDetails.id },
+                            });
+                        }
+                    }}>
                         <CircleArrowLeft color="#2B6AE3" size={50} />
                     </BackButtonTab>
                 </TopButtonsContainer>
 
-                <TitlePageTabs style={{ marginBottom: 8 }}>
-                    {matchInfo?.local || gameDetails?.local || "Local não informado"}
-                </TitlePageTabs>
-                <Divider />
-                <SubTitleContainer>
-                    <SubTitleText>
-                        {matchInfo ? 
-                            `${matchInfo.formattedDate} às ${matchInfo.time}` :
-                            (gameDetails?.data && gameDetails?.hora_inicio) ?
-                                `${gameDetails.data} às ${gameDetails.hora_inicio}` :
-                                "Data não informada"
-                        }
-                    </SubTitleText>
-                    <SubTitleText>
-                        {matchInfo?.tipo || gameDetails?.tipo_partida_nome || "Tipo não informado"}
-                    </SubTitleText>
-                </SubTitleContainer>
+                <GameHeader matchDetails={matchDetails} gameDetails={gameDetails} />
 
                 <ContentContainer>
-                    <GameCard>
-                        <GameTitle>{gameDetails.titulo || 'Jogo'}</GameTitle>
-                        <ScoreSection>
-                            <TeamName>{team1Name}</TeamName>
-                            <Score>{gameDetails.placar1 || 0} x {gameDetails.placar2 || 0}</Score>
-                            <TeamNameRight>{team2Name}</TeamNameRight>
-                        </ScoreSection>
-                    </GameCard>
-
-                    <PlayersSection>
-                        <TeamSection>
-                            {team1Players.map(player => (
-                                <TouchableOpacity key={player.id} onPress={() => handlePlayerPress(player)}>
-                                    <PlayerCardTeam>
-                                        <PlayerNameSection>
-                                            <PlayerName>{player.nome || 'Jogador'}</PlayerName>
-                                            {player.posicao && typeof player.posicao === 'string' && player.posicao.trim() !== '' && <PlayerPosition>{player.posicao}</PlayerPosition>}
-                                        </PlayerNameSection>
-                                        <PlayerDetailsSection>
-                                            <StatsSection>
-                                                {player.gols > 0 && (
-                                                    <StatIcon>
-                                                        <SoccerBallIcon color="#007bff" size={18} />
-                                                        {player.gols > 1 && (
-                                                            <Badge>
-                                                                <BadgeText>{player.gols || 0}</BadgeText>
-                                                            </Badge>
-                                                        )}
-                                                    </StatIcon>
-                                                )}
-                                                {player.assistencias > 0 && (
-                                                    <StatIcon>
-                                                        <SneakerMoveIcon color="#007bff" size={18} />
-                                                        {player.assistencias > 1 && (
-                                                            <Badge>
-                                                                <BadgeText>{player.assistencias || 0}</BadgeText>
-                                                            </Badge>
-                                                        )}
-                                                    </StatIcon>
-                                                )}
-                                                {player.cartoesAmarelos > 0 && (
-                                                    <StatIcon>
-                                                        <SquareIcon color="#FFC107" size={18} />
-                                                        {player.cartoesAmarelos > 1 && (
-                                                            <Badge>
-                                                                <BadgeText>{player.cartoesAmarelos || 0}</BadgeText>
-                                                            </Badge>
-                                                        )}
-                                                    </StatIcon>
-                                                )}
-                                                {player.cartoesVermelhos > 0 && (
-                                                    <StatIcon>
-                                                        <SquareIcon color="#ff4d4d" size={18} />
-                                                        {player.cartoesVermelhos > 1 && (
-                                                            <Badge>
-                                                                <BadgeText>{player.cartoesVermelhos || 0}</BadgeText>
-                                                            </Badge>
-                                                        )}
-                                                    </StatIcon>
-                                                )}
-                                            </StatsSection>
-                                            {typeof player.rating === 'number' && (
-                                                <RatingSection>
-                                                    <Rating rating={player.rating || 0}>{(player.rating || 0).toFixed(1)}</Rating>
-                                                </RatingSection>
-                                            )}
-                                        </PlayerDetailsSection>
-                                    </PlayerCardTeam>
-                                </TouchableOpacity>
-                            ))}
-                            <AddPlayerButton onPress={() => handleAddPlayer(team1Name)}>
-                                <Plus color="#2B6AE3" size={20} />
-                                <AddPlayerText>Adicionar</AddPlayerText>
-                            </AddPlayerButton>
-                        </TeamSection>
-
-                        <TeamSection>
-                            {team2Players.map(player => (
-                                <TouchableOpacity key={player.id} onPress={() => handlePlayerPress(player)}>
-                                    <PlayerCardTeam>
-                                        <PlayerNameSection>
-                                            <PlayerName>{player.nome || 'Jogador'}</PlayerName>
-                                            {player.posicao && typeof player.posicao === 'string' && player.posicao.trim() !== '' && <PlayerPosition>{player.posicao}</PlayerPosition>}
-                                        </PlayerNameSection>
-                                        <PlayerDetailsSection>
-                                            <StatsSection>
-                                                {player.gols > 0 && (
-                                                    <StatIcon>
-                                                        <SoccerBallIcon color="#007bff" size={18} />
-                                                        {player.gols > 1 && (
-                                                            <Badge>
-                                                                <BadgeText>{player.gols || 0}</BadgeText>
-                                                            </Badge>
-                                                        )}
-                                                    </StatIcon>
-                                                )}
-                                                {player.assistencias > 0 && (
-                                                    <StatIcon>
-                                                        <SneakerMoveIcon color="#007bff" size={18} />
-                                                        {player.assistencias > 1 && (
-                                                            <Badge>
-                                                                <BadgeText>{player.assistencias || 0}</BadgeText>
-                                                            </Badge>
-                                                        )}
-                                                    </StatIcon>
-                                                )}
-                                                {player.cartoesAmarelos > 0 && (
-                                                    <StatIcon>
-                                                        <SquareIcon color="#FFC107" size={18} />
-                                                        {player.cartoesAmarelos > 1 && (
-                                                            <Badge>
-                                                                <BadgeText>{player.cartoesAmarelos || 0}</BadgeText>
-                                                            </Badge>
-                                                        )}
-                                                    </StatIcon>
-                                                )}
-                                                {player.cartoesVermelhos > 0 && (
-                                                    <StatIcon>
-                                                        <SquareIcon color="#ff4d4d" size={18} />
-                                                        {player.cartoesVermelhos > 1 && (
-                                                            <Badge>
-                                                                <BadgeText>{player.cartoesVermelhos || 0}</BadgeText>
-                                                            </Badge>
-                                                        )}
-                                                    </StatIcon>
-                                                )}
-                                            </StatsSection>
-                                            {typeof player.rating === 'number' && (
-                                                <RatingSection>
-                                                    <Rating rating={player.rating || 0}>{(player.rating || 0).toFixed(1)}</Rating>
-                                                </RatingSection>
-                                            )}
-                                        </PlayerDetailsSection>
-                                    </PlayerCardTeam>
-                                </TouchableOpacity>
-                            ))}
-                            <AddPlayerButton onPress={() => handleAddPlayer(team2Name)}>
-                                <Plus color="#2B6AE3" size={20} />
-                                <AddPlayerText>Adicionar</AddPlayerText>
-                            </AddPlayerButton>
-                        </TeamSection>
-                    </PlayersSection>
+                    <GameDetailsMain
+                        gameDetails={gameDetails}
+                        matchDetails={matchDetails}
+                        onPlayerPress={handlePlayerPress}
+                        onAddPlayer={handleAddPlayer}
+                    />
                 </ContentContainer>
             </MainContainer>
+
             <BottomSheet
                 ref={bottomSheetRef}
                 index={-1}
                 snapPoints={snapPoints}
                 onChange={handleSheetChanges}
-                enablePanDownToClose={true}
+                enablePanDownToClose
             >
-                <BottomSheetView style={{ flex: 1, padding: 24 }}>
+                <BottomSheetView style={{ flex: 1, padding: 20 }}>
                     {selectedPlayer ? (
                         <PlayerDetailsContainer>
                             <PlayerImageNamePositionContainer>
                                 <PlayerImage />
                                 <View>
-                                    <PlayerNameSheet>{selectedPlayer.nome || 'Jogador'}</PlayerNameSheet>
-                                    {showEditButton ? (
-                                        <CompactSelectContainer>
-                                            <Select
-                                                open={positionPickerOpen}
-                                                value={editablePlayer.posicaoId.toString()}
-                                                items={positionItems}
-                                                setOpen={setPositionPickerOpen}
-                                                setValue={(callback) => {
-                                                    const newPositionId = callback(editablePlayer.posicaoId.toString());
-                                                    const selectedPosition = positions.find(pos => pos.id.toString() === newPositionId);
-                                                    setEditablePlayer(prev => ({
-                                                        ...prev,
-                                                        posicaoId: parseInt(newPositionId),
-                                                        posicao: selectedPosition?.nome || ''
-                                                    }));
-                                                }}
-                                                setItems={setPositionItems}
-                                                placeholder="Selecione a posição"
-                                                zIndex={1000}
-                                                zIndexInverse={3000}
-                                            />
-                                        </CompactSelectContainer>
-                                    ) : (
-                                        <PlayerPositionSheet>{selectedPlayer.posicao || 'Posição não definida'}</PlayerPositionSheet>
-                                    )}
+                                    <PlayerNameSheet>{selectedPlayer.nome}</PlayerNameSheet>
+                                    <PlayerPositionSheet>{selectedPlayer.posicao || 'Posição não definida'}</PlayerPositionSheet>
                                 </View>
                             </PlayerImageNamePositionContainer>
 
-                            <StatsFormContainer style={{ marginBottom: 24 }}>
+                            <StatsFormContainer>
+                                <StatEditRow>
+                                    <StatLabel>Posição</StatLabel>
+                                    <CompactSelectContainer>
+                                        <Select
+                                            items={positionItems}
+                                            value={editablePlayer.posicaoId.toString()}
+                                            setValue={(callback: any) => {
+                                                const value = typeof callback === 'function' ? callback(editablePlayer.posicaoId.toString()) : callback;
+                                                const position = positions.find(p => p.id.toString() === value);
+                                                handleStatChange('posicaoId', parseInt(value));
+                                                handleStatChange('posicao', position?.nome || '');
+                                            }}
+                                            open={positionPickerOpen}
+                                            setOpen={setPositionPickerOpen}
+                                            setItems={setPositionItems}
+                                        />
+                                    </CompactSelectContainer>
+                                </StatEditRow>
+
                                 <StatEditRow>
                                     <StatLabel>Gols</StatLabel>
-                                    {showEditButton ? (
-                                        <NumberInput
-                                            value={editablePlayer.gols}
-                                            onDecrease={() => handleStatChange('gols', -1)}
-                                            onIncrease={() => handleStatChange('gols', 1)}
-                                        />
-                                    ) : (
-                                        <StatValue>{selectedPlayer.gols}</StatValue>
-                                    )}
+                                    <NumberInput
+                                        value={editablePlayer.gols}
+                                        onDecrease={() => handleStatChange('gols', Math.max(0, editablePlayer.gols - 1))}
+                                        onIncrease={() => handleStatChange('gols', editablePlayer.gols + 1)}
+                                    />
                                 </StatEditRow>
+
                                 <StatEditRow>
                                     <StatLabel>Assistências</StatLabel>
-                                    {showEditButton ? (
-                                        <NumberInput
-                                            value={editablePlayer.assistencias}
-                                            onDecrease={() => handleStatChange('assistencias', -1)}
-                                            onIncrease={() => handleStatChange('assistencias', 1)}
-                                        />
-                                    ) : (
-                                        <StatValue>{selectedPlayer.assistencias}</StatValue>
-                                    )}
+                                    <NumberInput
+                                        value={editablePlayer.assistencias}
+                                        onDecrease={() => handleStatChange('assistencias', Math.max(0, editablePlayer.assistencias - 1))}
+                                        onIncrease={() => handleStatChange('assistencias', editablePlayer.assistencias + 1)}
+                                    />
                                 </StatEditRow>
-                                <StatEditRow>
-                                    <StatLabel>Defesas</StatLabel>
-                                    {showEditButton ? (
-                                        <NumberInput
-                                            value={editablePlayer.defesas}
-                                            onDecrease={() => handleStatChange('defesas', -1)}
-                                            onIncrease={() => handleStatChange('defesas', 1)}
-                                        />
-                                    ) : (
-                                        <StatValue>{selectedPlayer.defesas}</StatValue>
-                                    )}
-                                </StatEditRow>
+
                                 <StatEditRow>
                                     <StatLabel>Cartões Amarelos</StatLabel>
-                                    {showEditButton ? (
-                                        <NumberInput
-                                            value={editablePlayer.cartoesAmarelos}
-                                            onDecrease={() => handleStatChange('cartoesAmarelos', -1)}
-                                            onIncrease={() => handleStatChange('cartoesAmarelos', 1)}
-                                        />
-                                    ) : (
-                                        <StatValue>{selectedPlayer.cartoesAmarelos}</StatValue>
-                                    )}
+                                    <NumberInput
+                                        value={editablePlayer.cartoesAmarelos}
+                                        onDecrease={() => handleStatChange('cartoesAmarelos', Math.max(0, editablePlayer.cartoesAmarelos - 1))}
+                                        onIncrease={() => handleStatChange('cartoesAmarelos', editablePlayer.cartoesAmarelos + 1)}
+                                    />
                                 </StatEditRow>
+
                                 <StatEditRow>
                                     <StatLabel>Cartões Vermelhos</StatLabel>
-                                    {showEditButton ? (
-                                        <NumberInput
-                                            value={editablePlayer.cartoesVermelhos}
-                                            onDecrease={() => handleStatChange('cartoesVermelhos', -1)}
-                                            onIncrease={() => handleStatChange('cartoesVermelhos', 1)}
-                                        />
-                                    ) : (
-                                        <StatValue>{selectedPlayer.cartoesVermelhos}</StatValue>
-                                    )}
+                                    <NumberInput
+                                        value={editablePlayer.cartoesVermelhos}
+                                        onDecrease={() => handleStatChange('cartoesVermelhos', Math.max(0, editablePlayer.cartoesVermelhos - 1))}
+                                        onIncrease={() => handleStatChange('cartoesVermelhos', editablePlayer.cartoesVermelhos + 1)}
+                                    />
                                 </StatEditRow>
-                                <StatEditRow>
-                                    <StatLabel>Nota</StatLabel>
-                                    {showEditButton ? (
-                                        <NumberInput
-                                            value={editablePlayer.rating}
-                                            onDecrease={() => handleStatChange('rating', -0.1)}
-                                            onIncrease={() => handleStatChange('rating', 0.1)}
-                                            isFloat={true}
-                                        />
-                                    ) : (
-                                        <StatValue>{(selectedPlayer.rating || 0).toFixed(1)}</StatValue>
-                                    )}
-                                </StatEditRow>
-                            </StatsFormContainer>
 
-                            {showEditButton && (
-                                <Button onPress={handleSaveChanges}>
-                                    <ButtonText>
-                                        SALVAR ALTERAÇÕES
-                                    </ButtonText>
+                                <StatEditRow>
+                                    <StatLabel>Defesas</StatLabel>
+                                    <NumberInput
+                                        value={editablePlayer.defesas}
+                                        onDecrease={() => handleStatChange('defesas', Math.max(0, editablePlayer.defesas - 1))}
+                                        onIncrease={() => handleStatChange('defesas', editablePlayer.defesas + 1)}
+                                    />
+                                </StatEditRow>
+
+                                <StatEditRow>
+                                    <StatLabel>Rating</StatLabel>
+                                    <NumberInput
+                                        value={editablePlayer.rating}
+                                        onDecrease={() => handleStatChange('rating', Math.max(0, Number((editablePlayer.rating - 0.1).toFixed(1))))}
+                                        onIncrease={() => handleStatChange('rating', Math.min(10, Number((editablePlayer.rating + 0.1).toFixed(1))))}
+                                        isFloat={true}
+                                    />
+                                </StatEditRow>
+
+                                <Button onPress={handleSaveChanges} style={{ marginTop: 20 }}>
+                                    <ButtonText>Salvar</ButtonText>
                                 </Button>
-                            )}
+                            </StatsFormContainer>
                         </PlayerDetailsContainer>
-                    ) : (
-                        <View style={{ flex: 1 }}>
-                            <GameTitle style={{ marginBottom: 16 }}>Adicionar Jogador ao {editingTeam || 'Time'}</GameTitle>
+                    ) : editingTeam ? (
+                        <View>
+                            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>
+                                Adicionar jogador ao {editingTeam}
+                            </Text>
+
                             {loadingPlayers ? (
-                                <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 16, color: '#666' }}>
-                                    Carregando jogadores disponíveis...
-                                </Text>
-                            ) : availablePlayers.length > 0 ? (
-                                availablePlayers.map((item) => (
+                                <Text>Carregando jogadores disponíveis...</Text>
+                            ) : (
+                                availablePlayers.map((player) => (
                                     <PlayerCard
-                                        key={item.id.toString()}
-                                        nome={item.nome}
-                                        foto={item.foto}
-                                        posicoes={item.posicoes}
-                                        onAdd={addingPlayer ? undefined : () => handleAddPlayerToTeam(item)}
+                                        key={player.id}
+                                        nome={player.nome}
+                                        foto={player.foto}
+                                        posicoes={player.posicoes}
+                                        onAdd={() => handleAddPlayerToTeam(player)}
                                     />
                                 ))
-                            ) : (
-                                <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 16, color: '#666' }}>
-                                    Nenhum jogador disponível.
-                                </Text>
-                            )}
-                            {addingPlayer && (
-                                <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 16, color: '#2B6AE3' }}>
-                                    Adicionando jogador ao time...
-                                </Text>
                             )}
                         </View>
-                    )}
+                    ) : null}
                 </BottomSheetView>
             </BottomSheet>
 
@@ -999,192 +398,15 @@ export default function GameDetailsScreen() {
     );
 }
 
-const TopButtonsContainer = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-  margin-bottom: 10px;
-`;
-
-const Divider = styled.View`
-  height: 2px;
-  background-color: #d6dde0ff;
-`;
-
-const SubTitleContainer = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 8px;
-  margin-bottom: 20px;
-`;
-
-const SubTitleText = styled.Text`
-  font-size: ${typography["txt-2"].fontSize}px;
-  font-family: ${typography["txt-2"].fontFamily};
-  color: #2C2C2C;
-`;
-
-const GameCard = styled.View`
-  margin-bottom: 32px;
-`;
-
-const GameTitle = styled.Text`
-  font-size: ${typography["txt-1"].fontSize}px;
-  font-family: ${typography["txt-1"].fontFamily};
-  color: #2C2C2C;
-  text-align: start;
-  margin-bottom: 12px;
-`;
-
-const ScoreSection = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-`;
-
-const TeamName = styled.Text`
-  text-align: left;
-  font-size: ${typography["txt-1"].fontSize}px;
-  font-family: ${typography["txt-1"].fontFamily};
-  color: #2C2C2C;
-  word-wrap: break-word; 
-  width: 33%; 
-`;
-
-const Score = styled.Text`
-  text-align: center; 
-  font-size: ${typography["txt-1"].fontSize}px;
-  font-family: ${typography["txt-1"].fontFamily};
-  color: #2C2C2C;
-  width: 33%; 
-
-`;
-
-const TeamNameRight = styled.Text`
-  text-align: right;
-  font-size: ${typography["txt-1"].fontSize}px;
-  font-family: ${typography["txt-1"].fontFamily};
-  color: #2C2C2C;
-  width: 33%;
-`;
-
-const PlayersSection = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 16px; 
-`;
-
-const TeamSection = styled.View`
-  flex: 1;
-`;
-
-const PlayerCardTeam = styled.View`
-  border-bottom-width: 2px;
-  border-bottom-color: #B0BEC5;
-  padding: 6px 0;
-`;
-
-const PlayerNameSection = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-`;
-
-const PlayerName = styled.Text`
-  font-size: ${typography["txt-2"].fontSize}px;
-  font-family: ${typography["txt-2"].fontFamily};
-  color: #2C2C2C;
-`;
-
-const PlayerDetailsSection = styled.View`
-  flex-direction: row;
-  justify-content: flex-end;
-`;
-
-const StatsSection = styled.View`
-  flex: 2;
-  flex-direction: row;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-right: 16px;
-`;
-
-const RatingSection = styled.View`
-  align-items: end;
-`;
-
-const PlayerPosition = styled.Text`
-  font-size: ${typography["txt-3"].fontSize}px;
-  font-family: ${typography["txt-3"].fontFamily};
-  color: #2C2C2C;
-  font-weight: bold;
-`;
-
-const StatIcon = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-`;
-
-const Rating = styled.Text<{ rating: number }>`
-  font-size: ${typography["txt-2"].fontSize}px;
-  font-family: ${typography["txt-2"].fontFamily};
-  color: white;
-  background-color: ${({ rating }) => {
-    const r = rating || 0;
-    return r < 4 ? '#FF4D4D' : r <= 7 ? '#FFC107' : '#4CAF50';
-  }};
-  padding: 2px 8px;
-  border-radius: 2px;
-`;
-
-const Badge = styled.View`
- position: absolute;
-  top: -6px;
-right: -10px;
-  background-color: #FF4D4D;
-  border-radius: 8px;
-  padding: 2px 6px;
-  margin-left: 4px;
-`;
-
-const BadgeText = styled.Text`
-  font-size: 10px;
-  font-family: ${typography["txt-3"].fontFamily};
-  color: white;
-  font-weight: bold;
-`;
-
-const AddPlayerButton = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  background-color: #f8f9fa;
-  padding: 12px;
-  border-radius: 8px;
-  margin-top: 12px;
-`;
-
-const AddPlayerText = styled.Text`
-  font-size: ${typography["btn-2"].fontSize}px;
-  font-family: ${typography["btn-2"].fontFamily};
-  color: #2B6AE3;
-  margin-left: 8px;
-`;
-
 const PlayerDetailsContainer = styled.View`
-    align-items: start;
+    align-items: flex-start;
     width: 100%;
 `;
 
 const PlayerImageNamePositionContainer = styled.View`
     flex-direction: row;
     gap: 16px;
-    align-items: start;
+    align-items: flex-start;
 `;
 
 const PlayerImage = styled.View`
@@ -1208,10 +430,6 @@ const PlayerPositionSheet = styled.Text`
     margin-bottom: 24px;
 `;
 
-const CompactSelectContainer = styled.View`
-    width: 80%;
-`;
-
 const StatsFormContainer = styled.View`
     width: 100%;
 `;
@@ -1230,8 +448,14 @@ const StatLabel = styled.Text`
     color: #333;
 `;
 
-const StatValue = styled.Text`
-    font-size: 18px;
-    font-weight: bold;
-    color: #333;
+const CompactSelectContainer = styled.View`
+    width: 60%;
+`;
+
+const TitlePageTabs = styled.Text`
+    font-size: ${typography['txt-1'].fontSize}px;
+    font-family: ${typography['txt-1'].fontFamily};
+    color: #2C2C2C;
+    text-align: center;
+    margin-bottom: 20px;
 `;

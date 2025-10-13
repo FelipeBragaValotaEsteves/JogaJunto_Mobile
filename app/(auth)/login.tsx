@@ -47,7 +47,6 @@ export default function LoginScreen() {
 
   async function registerForPushNotificationsAsync() {
     if (!Device.isDevice) {
-      console.log("Notificações push funcionam apenas em dispositivos físicos");
       return null;
     }
 
@@ -60,7 +59,6 @@ export default function LoginScreen() {
     }
 
     if (finalStatus !== "granted") {
-      console.log("Permissão negada para notificações");
       return null;
     }
 

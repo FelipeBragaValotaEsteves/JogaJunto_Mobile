@@ -8,7 +8,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { Camera, CircleArrowLeft, LogOut } from "lucide-react-native";
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Platform, Text, View } from 'react-native';
-import styled from 'styled-components/native';
+import { styled } from 'styled-components/native';
 import { Alert } from '../../components/shared/Alert';
 import { Button, ButtonText } from '../../components/shared/Button';
 import { Input } from '../../components/shared/Input';
@@ -181,12 +181,11 @@ export default function PerfilScreen() {
                                 {imagem ? (
                                     <Imagem source={{ uri: imagem }} />
                                 ) : imgServidor ? (
-                                    <Imagem 
-                                        source={{ 
-                                            uri: imgServidor.startsWith('http') ? imgServidor : `${BASE_URL}${imgServidor}` 
-                                        }} 
+                                    <Imagem
+                                        source={{
+                                            uri: imgServidor.startsWith('http') ? imgServidor : `${BASE_URL}${imgServidor}`
+                                        }}
                                         onError={(e) => {
-                                            console.log('Erro ao carregar imagem:', e.nativeEvent.error);
                                             setImgServidor(null);
                                         }}
                                     />
@@ -201,12 +200,11 @@ export default function PerfilScreen() {
                                 {imagem ? (
                                     <Imagem source={{ uri: imagem }} />
                                 ) : imgServidor ? (
-                                    <Imagem 
-                                        source={{ 
-                                            uri: imgServidor.startsWith('http') ? imgServidor : `${BASE_URL}${imgServidor}` 
+                                    <Imagem
+                                        source={{
+                                            uri: imgServidor.startsWith('http') ? imgServidor : `${BASE_URL}${imgServidor}`
                                         }}
                                         onError={(e) => {
-                                            console.log('Erro ao carregar imagem:', e.nativeEvent.error);
                                             setImgServidor(null);
                                         }}
                                     />

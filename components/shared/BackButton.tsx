@@ -1,6 +1,6 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React from 'react';
-import styled from 'styled-components/native';
+import { styled } from 'styled-components/native';
 
 interface BackButtonProps {
   children?: React.ReactNode;
@@ -28,7 +28,6 @@ export function BackButtonAuth({ children, onPress }: BackButtonProps) {
 
 export function BackButtonTab({ children, onPress, defaultRoute }: BackButtonProps) {
   const router = useRouter();
-  const params = useLocalSearchParams();
 
   const handlePress = () => {
     if (onPress) {
@@ -36,7 +35,6 @@ export function BackButtonTab({ children, onPress, defaultRoute }: BackButtonPro
       return;
     }
 
-    console.log('BackButton clicked, going to index');
     router.push('/(tabs)' as any);
   };
 
