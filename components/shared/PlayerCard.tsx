@@ -1,41 +1,55 @@
 import typography from '@/constants/typography';
 import React from 'react';
-import styled from 'styled-components/native';
+import { Text } from 'react-native';
+import { styled } from 'styled-components/native';
 import { Button, ButtonText } from './Button';
 import { ContentContainer } from './ContentContainer';
 
 
 interface PlayerCardProps {
-    nome: string;
-    foto: string;
-    posicoes: string[];
-    status?: 'Confirmado' | 'Pendente' | 'Recusado';
-    onAdd?: () => void;
+  nome: string;
+  foto: string | null;
+  posicoes: string[];
+  status?: 'Confirmado' | 'Pendente' | 'Recusado';
+  onAdd?: () => void;
 }
 
 export default function PlayerCard({ nome, foto, posicoes, status, onAdd }: PlayerCardProps) {
-    return (
-        <ContentContainer style={{ marginBottom: 20 }}>
-            <CardContainer>
-                <LeftSection>
-                    <ProfileImage source={{ uri: foto }} />
-                </LeftSection>
-                <MiddleSection>
-                    <PlayerName>{nome}</PlayerName>
-                    <PlayerPositions>{Array.isArray(posicoes) && posicoes.length > 0 ? posicoes.join(', ') : 'Posição não definida'}</PlayerPositions>
-                </MiddleSection>
-                <RightSection>
-                    {onAdd ? (
-                        <Button onPress={onAdd}>
-                            <ButtonText>ADICIONAR</ButtonText>
-                        </Button>
-                    ) : (
-                        status && <PlayerStatus status={status}>{status}</PlayerStatus>
-                    )}
-                </RightSection>
-            </CardContainer>
-        </ContentContainer>
-    );
+  return (
+    <ContentContainer style={{ marginBottom: 20 }}>
+      <CardContainer>
+        <LeftSection>
+          {foto ? (
+            <ProfileImage
+              source={{ uri: foto }}
+              onError={(e) => {
+                console.log('Erro ao carregar imagem do jogador:', e.nativeEvent.error);
+              }}
+            />
+          ) : (
+            <PlaceholderImage>
+              <Text style={{ color: '#B0BEC5', fontSize: 12, textAlign: 'center' }}>
+                Sem{'\n'}Foto
+              </Text>
+            </PlaceholderImage>
+          )}
+        </LeftSection>
+        <MiddleSection>
+          <PlayerName>{nome}</PlayerName>
+          <PlayerPositions>{Array.isArray(posicoes) && posicoes.length > 0 ? posicoes.join(', ') : 'Posição não definida'}</PlayerPositions>
+        </MiddleSection>
+        <RightSection>
+          {onAdd ? (
+            <Button onPress={onAdd}>
+              <ButtonText>ADICIONAR</ButtonText>
+            </Button>
+          ) : (
+            status && <PlayerStatus status={status}>{status}</PlayerStatus>
+          )}
+        </RightSection>
+      </CardContainer>
+    </ContentContainer>
+  );
 }
 
 const CardContainer = styled.View`
@@ -65,6 +79,15 @@ const ProfileImage = styled.Image`
   border-radius: 25px;
 `;
 
+const PlaceholderImage = styled.View`
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  background-color: #e2e8f0;
+  justify-content: center;
+  align-items: center;
+`;
+
 const PlayerName = styled.Text`
   font-size: ${typography['txt-1'].fontSize}px;
   font-family: ${typography['txt-1'].fontFamily};
@@ -81,16 +104,4 @@ const PlayerStatus = styled.Text<{ status: string }>`
   font-family: ${typography['txt-2-bold'].fontFamily};
   color: ${({ status }) =>
     status === 'Confirmado' ? '#2ECC71' : status === 'Pendente' ? '#F1C40F' : '#E74C3C'};
-`;
-
-const AddButton = styled.TouchableOpacity`
-    background-color: #2B6AE3;
-    padding: 8px 12px;
-    border-radius: 6px;
-`;
-
-const AddButtonText = styled.Text`
-    color: white;
-    font-size: ${typography['btn-2'].fontSize}px;
-    font-family: ${typography['btn-2'].fontFamily};
 `;

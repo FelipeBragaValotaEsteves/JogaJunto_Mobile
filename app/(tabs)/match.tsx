@@ -6,7 +6,7 @@ import { TitlePageTabs } from '@/components/shared/TitlePage';
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { CircleArrowLeft } from "lucide-react-native";
 import React, { useCallback, useEffect, useState } from 'react';
-import styled from 'styled-components/native';
+import { styled } from 'styled-components/native';
 import { Alert } from '../../components/shared/Alert';
 import { Button, ButtonText } from '../../components/shared/Button';
 import { DatePicker } from '../../components/shared/DatePicker';
@@ -174,7 +174,7 @@ export default function MatchScreen() {
     }, []);
 
     function formatCurrency(value: string): string {
-        const numericValue = value.replace(/\D/g, ""); 
+        const numericValue = value.replace(/\D/g, "");
         const formattedValue = (Number(numericValue) / 100).toLocaleString("pt-BR", {
             style: "currency",
             currency: "BRL",
@@ -183,7 +183,7 @@ export default function MatchScreen() {
     }
 
     function parseCurrency(value: string): number {
-        return Number(value.replace(/[^0-9,-]+/g, "").replace(",", ".")); 
+        return Number(value.replace(/[^0-9,-]+/g, "").replace(",", "."));
     }
 
     const salvarPartida = async () => {
@@ -206,7 +206,7 @@ export default function MatchScreen() {
                 hora_inicio: horaInicial || undefined,
                 hora_fim: horaFinal || undefined,
                 tipo_partida_id: tipo ?? null,
-                valor: valor ? parseCurrency(valor) : undefined, 
+                valor: valor ? parseCurrency(valor) : undefined,
             };
 
             const method = id ? 'PUT' : 'POST';

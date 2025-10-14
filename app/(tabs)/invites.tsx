@@ -7,7 +7,7 @@ import { CircleArrowLeft } from "lucide-react-native";
 import { InviteCard } from "@/components/shared/InviteCard";
 import { NoResults } from "@/components/shared/NoResults";
 import React, { useState } from "react";
-import styled from "styled-components/native";
+import { styled } from "styled-components/native";
 
 type Notification = {
     title: string;

@@ -3,78 +3,215 @@ import { BackButtonTab } from '@/components/shared/BackButton';
 import { Input } from '@/components/shared/Input';
 import { MainContainer } from '@/components/shared/MainContainer';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
-import { useRouter } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { CircleArrowLeft } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
-import styled from 'styled-components/native';
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator, Text } from 'react-native';
+import { styled } from 'styled-components/native';
+import { Alert } from '../../components/shared/Alert';
+import BASE_URL, { BASE_URL_IMAGE } from '../../constants/config';
+import { authHeaders } from '../../utils/authHeaders';
+
+interface AvailablePlayer {
+    id: number;
+    nome: string;
+    foto: string | null;
+    posicoes: string[];
+}
 
 export default function AddPlayerScreen() {
-    const router = useRouter();
-    const [players, setPlayers] = useState<any[]>([]);
-    const [searchQuery, setSearchQuery] = useState('');
+    const { showEditButton, matchId } = useLocalSearchParams();
 
-    useEffect(() => {
-        const mockPlayers = [
-            {
-                id: 1,
-                nome: 'João Silva',
-                foto: 'https://randomuser.me/api/portraits/men/1.jpg',
-                posicoes: ['Atacante', 'Meio-campo'],
-            },
-            {
-                id: 2,
-                nome: 'Carlos Souza',
-                foto: 'https://randomuser.me/api/portraits/men/2.jpg',
-                posicoes: ['Defensor'],
-            },
-            {
-                id: 3,
-                nome: 'Ana Pereira',
-                foto: 'https://randomuser.me/api/portraits/women/1.jpg',
-                posicoes: ['Goleiro'],
-            },
-            {
-                id: 4,
-                nome: 'Maria Oliveira',
-                foto: 'https://randomuser.me/api/portraits/women/2.jpg',
-                posicoes: ['Atacante'],
-            },
-        ];
-        setPlayers(mockPlayers);
-    }, []);
+    const [players, setPlayers] = useState<AvailablePlayer[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{
+        type: string;
+        title: string;
+        message: string;
+        onConfirm?: (() => void) | undefined;
+    }>({
+        type: 'success',
+        title: '',
+        message: '',
+        onConfirm: undefined,
+    });
+
+    const showAlert = (type: string, title: string, message: string, onConfirm?: () => void) => {
+        setAlertConfig({ type, title, message, onConfirm });
+        setAlertVisible(true);
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            const fetchAvailablePlayers = async () => {
+                try {
+                    setLoading(true);
+                    setError(null);
+
+                    if (!matchId) {
+                        setError('ID da partida não encontrado');
+                        return;
+                    }
+
+                    const headers = await authHeaders();
+                    const response = await fetch(`${BASE_URL}/jogadores/disponiveis/partida/${matchId}`, {
+                        headers
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Erro ${response.status}: Falha ao carregar jogadores`);
+                    }
+
+                    const data = await response.json();
+
+                    const processedData = data.map((player: any) => {
+                        const originalFoto = player.foto;
+                        let processedFoto = null;
+                        
+                        if (originalFoto && 
+                            typeof originalFoto === 'string' && 
+                            originalFoto !== '[object Object]' && 
+                            originalFoto.trim() !== '') {
+                            
+                            if (originalFoto.startsWith('http')) {
+                                processedFoto = originalFoto;
+                            } else {
+                                processedFoto = `${BASE_URL_IMAGE}${originalFoto}`;
+                            }
+                        }
+                        
+                        return {
+                            ...player,
+                            foto: processedFoto
+                        };
+                    });
+
+                    setPlayers(processedData || []);
+                } catch (err: any) {
+                    console.error('Erro ao buscar jogadores disponíveis:', err);
+                    setError(err?.message || 'Erro ao carregar jogadores disponíveis');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            if (matchId) {
+                fetchAvailablePlayers();
+            }
+        }, [matchId])
+    );
 
     const filteredPlayers = players.filter((player) =>
         player.nome.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const handleInvite = (playerName: string) => {
-        console.log(`Jogador ${playerName} convidado!`);
+    const handleInvite = async (playerId: number, playerName: string) => {
+        try {
+
+            const headers = await authHeaders();
+            const response = await fetch(`${BASE_URL}/convites`, {
+                method: 'POST',
+                headers: {
+                    ...headers,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    partida_id: parseInt(matchId as string),
+                    usuario_id: playerId
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Erro ${response.status}: Falha ao enviar convite`);
+            }
+
+            const result = await response.json();
+
+            showAlert(
+                'success', 
+                'Convite Enviado!', 
+                `Convite enviado para ${playerName} com sucesso!`,
+                () => {
+                    setPlayers(prev => prev.filter(p => p.id !== playerId));
+                }
+            );
+
+        } catch (err: any) {
+            console.error('Erro ao enviar convite:', err);
+            showAlert(
+                'error', 
+                'Erro ao Enviar Convite', 
+                err?.message || 'Não foi possível enviar o convite. Tente novamente.'
+            );
+        }
     };
 
     return (
         <MainContainer>
             <TopButtonsContainer>
-                <BackButtonTab>
+                <BackButtonTab onPress={() => {
+                    router.replace({
+                        pathname: '/(tabs)/matchPlayers',
+                        params: { matchId: matchId, showEditButton: showEditButton },
+                    });
+                }}>
                     <CircleArrowLeft color="#2B6AE3" size={50} />
                 </BackButtonTab>
             </TopButtonsContainer>
             <TitlePageTabs>Adicionar Jogador</TitlePageTabs>
 
-            <Input
-                placeholder="Digite o nome do jogador"
-                value={searchQuery}
-                onChangeText={(text) => setSearchQuery(text)}
-            />
+            {loading ? (
+                <LoadingContainer>
+                    <ActivityIndicator size="large" color="#2B6AE3" />
+                    <Text>Carregando jogadores disponíveis...</Text>
+                </LoadingContainer>
+            ) : error ? (
+                <ErrorContainer>
+                    <Text style={{ color: '#e74c3c', textAlign: 'center' }}>
+                        {error}
+                    </Text>
+                </ErrorContainer>
+            ) : (
+                <>
+                    <Input
+                        placeholder="Digite o nome do jogador"
+                        value={searchQuery}
+                        onChangeText={(text) => setSearchQuery(text)}
+                    />
 
-            {filteredPlayers.map((player) => (
-                <AddPlayerCard
-                    key={player.id}
-                    nome={player.nome}
-                    foto={player.foto}
-                    posicoes={player.posicoes}
-                    onInvite={() => handleInvite(player.nome)}
-                />
-            ))}
+                    {filteredPlayers.length === 0 ? (
+                        <NoResultsContainer>
+                            <Text style={{ textAlign: 'center', color: '#666' }}>
+                                {searchQuery ? 'Nenhum jogador encontrado' : 'Nenhum jogador disponível'}
+                            </Text>
+                        </NoResultsContainer>
+                    ) : (
+                        filteredPlayers.map((player) => (
+                            <AddPlayerCard
+                                key={player.id}
+                                nome={player.nome}
+                                foto={player.foto}
+                                posicoes={player.posicoes}
+                                onInvite={() => handleInvite(player.id, player.nome)}
+                            />
+                        ))
+                    )}
+                </>
+            )}
+
+            <Alert
+                visible={alertVisible}
+                type={alertConfig.type}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                onClose={() => setAlertVisible(false)}
+                onConfirm={alertConfig.onConfirm}
+            />
         </MainContainer>
     );
 }
@@ -85,4 +222,25 @@ const TopButtonsContainer = styled.View`
   align-items: center;
   margin-top: 10px;
   margin-bottom: 10px;
+`;
+
+const LoadingContainer = styled.View`
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+`;
+
+const ErrorContainer = styled.View`
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+`;
+
+const NoResultsContainer = styled.View`
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
 `;

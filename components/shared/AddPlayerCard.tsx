@@ -1,35 +1,49 @@
 import typography from '@/constants/typography';
 import React from 'react';
-import styled from 'styled-components/native';
+import { Text } from 'react-native';
+import { styled } from 'styled-components/native';
 import { Button, ButtonText } from './Button';
 import { ContentContainer } from './ContentContainer';
 
 interface AddPlayerCardProps {
-    nome: string;
-    foto: string;
-    posicoes: string[];
-    onInvite: () => void;
+  nome: string;
+  foto: string | null;
+  posicoes: string[];
+  onInvite: () => void;
 }
 
 export default function AddPlayerCard({ nome, foto, posicoes, onInvite }: AddPlayerCardProps) {
-    return (
-        <ContentContainer style={{ marginBottom: 20 }}>
-            <CardContainer>
-                <LeftSection>
-                    <ProfileImage source={{ uri: foto }} />
-                </LeftSection>
-                <MiddleSection>
-                    <PlayerName>{nome}</PlayerName>
-                    <PlayerPositions>{posicoes.join(', ')}</PlayerPositions>
-                </MiddleSection>
-                <RightSection>
-                    <Button onPress={onInvite}>
-                        <ButtonText>Convidar</ButtonText>
-                    </Button>
-                </RightSection>
-            </CardContainer>
-        </ContentContainer>
-    );
+  return (
+    <ContentContainer style={{ marginBottom: 20 }}>
+      <CardContainer>
+        <LeftSection>
+          {foto ? (
+            <ProfileImage
+              source={{ uri: foto }}
+              onError={(e) => {
+                console.log('Erro ao carregar imagem do jogador disponível:', e.nativeEvent.error);
+              }}
+            />
+          ) : (
+            <PlaceholderImage>
+              <Text style={{ color: '#B0BEC5', fontSize: 12, textAlign: 'center' }}>
+                Sem{'\n'}Foto
+              </Text>
+            </PlaceholderImage>
+          )}
+        </LeftSection>
+        <MiddleSection>
+          <PlayerName>{nome}</PlayerName>
+          <PlayerPositions>{posicoes.join(', ')}</PlayerPositions>
+        </MiddleSection>
+        <RightSection>
+          <Button onPress={onInvite}>
+            <ButtonText>Convidar</ButtonText>
+          </Button>
+        </RightSection>
+      </CardContainer>
+    </ContentContainer>
+  );
 }
 
 const CardContainer = styled.View`
@@ -57,6 +71,15 @@ const ProfileImage = styled.Image`
   width: 50px;
   height: 50px;
   border-radius: 25px;
+`;
+
+const PlaceholderImage = styled.View`
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  background-color: #e2e8f0;
+  justify-content: center;
+  align-items: center;
 `;
 
 const PlayerName = styled.Text`
