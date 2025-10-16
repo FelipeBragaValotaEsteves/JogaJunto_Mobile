@@ -1,11 +1,11 @@
 import { TeamSection } from '@/components/shared/TeamSection';
 import typography from '@/constants/typography';
-import { GameDetails, MatchDetails, Player } from '@/hooks/useGameDetails';
+import { GameDetails, Player } from '@/hooks/useGameDetails';
 import { styled } from 'styled-components/native';
 
 interface GameDetailsMainProps {
   gameDetails: GameDetails;
-  matchDetails: MatchDetails | null;
+  title: string;
   onPlayerPress: (player: Player) => void;
   onAddPlayer: (teamName: string) => void;
 }
@@ -64,14 +64,14 @@ const TeamSectionContainer = styled.View`
   flex: 1;
 `;
 
-export function GameDetailsMain({ gameDetails, matchDetails, onPlayerPress, onAddPlayer }: GameDetailsMainProps) {
+export function GameDetailsMain({ gameDetails, title, onPlayerPress, onAddPlayer }: GameDetailsMainProps) {
   const team1 = gameDetails.times?.[0];
   const team2 = gameDetails.times?.[1];
 
   return (
     <>
       <GameCard>
-        <GameTitle>{gameDetails.titulo || 'Jogo'}</GameTitle>
+        <GameTitle>{title}</GameTitle>
         <ScoreSection>
           <TeamName>{team1?.nome || 'Time 1'}</TeamName>
           <Score>{gameDetails.placar1 || 0} x {gameDetails.placar2 || 0}</Score>

@@ -92,7 +92,6 @@ export default function GameAddScreen() {
 
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-            console.error("Erro ao criar jogo:", errorMessage);
             showAlert('error', 'Erro', `Não foi possível criar o jogo: ${errorMessage}`);
         } finally {
             setSaving(false);

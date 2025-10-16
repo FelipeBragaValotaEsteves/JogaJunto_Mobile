@@ -15,6 +15,7 @@ export interface Player {
 }
 
 export interface Team {
+  id: number;
   nome: string;
   jogadores: Player[];
 }
@@ -84,6 +85,7 @@ export function useGameDetails(id: string, idGame: string) {
         placar2: gameData.times?.[1]?.totais?.gols ?? 0,
         times:
           gameData.times?.map((t: any) => ({
+            id: t.id ?? t.timeId ?? 0,
             nome: t.nome,
             jogadores:
               t.jogadores?.map((j: any) => ({

@@ -1,6 +1,6 @@
 import typography from '@/constants/typography';
+import { User } from 'lucide-react-native';
 import React from 'react';
-import { Text } from 'react-native';
 import { styled } from 'styled-components/native';
 import { Button, ButtonText } from './Button';
 import { ContentContainer } from './ContentContainer';
@@ -28,9 +28,7 @@ export default function PlayerCard({ nome, foto, posicoes, status, onAdd }: Play
             />
           ) : (
             <PlaceholderImage>
-              <Text style={{ color: '#B0BEC5', fontSize: 12, textAlign: 'center' }}>
-                Sem{'\n'}Foto
-              </Text>
+              <User size={30} color="#B0BEC5" />
             </PlaceholderImage>
           )}
         </LeftSection>
@@ -44,7 +42,7 @@ export default function PlayerCard({ nome, foto, posicoes, status, onAdd }: Play
               <ButtonText>ADICIONAR</ButtonText>
             </Button>
           ) : (
-            status && <PlayerStatus status={status}>{status}</PlayerStatus>
+            status && <PlayerStatus status={status}>{status.toUpperCase()}</PlayerStatus>
           )}
         </RightSection>
       </CardContainer>
@@ -103,5 +101,5 @@ const PlayerStatus = styled.Text<{ status: string }>`
   font-size: ${typography['txt-2-bold'].fontSize}px;
   font-family: ${typography['txt-2-bold'].fontFamily};
   color: ${({ status }) =>
-    status === 'Confirmado' ? '#2ECC71' : status === 'Pendente' ? '#F1C40F' : '#E74C3C'};
+    status === 'aceito' ? '#2ECC71' : status === 'pendente' || status === 'inserido manualmente' ? '#F1C40F' : '#E74C3C'};
 `;

@@ -41,7 +41,6 @@ export default function MatchDetailsScreen() {
 
     const fetchMatchDetails = useCallback(async () => {
         if (!id) {
-            console.error("ID da partida não foi fornecido.");
             return;
         }
 
@@ -56,7 +55,6 @@ export default function MatchDetailsScreen() {
             const data = await response.json();
             setMatchDetails(data);
         } catch (error) {
-            console.error("Erro ao buscar detalhes da partida:", error);
             showAlert(
                 'error',
                 'Erro',
@@ -84,7 +82,7 @@ export default function MatchDetailsScreen() {
 
                 return {
                     id: jogo.jogoId,
-                    titulo: `Jogo ${jogo.jogoId}`,
+                    titulo: `Jogo ${jogo.jogoId + 1}`,
                     time1: time1?.nome || "",
                     time2: time2?.nome || "",
                     placar1: time1?.totais?.gols || 0,
@@ -116,7 +114,6 @@ export default function MatchDetailsScreen() {
 
             setGames(formattedGames);
         } catch (error) {
-            console.error("Erro ao buscar jogos:", error);
             showAlert(
                 'error',
                 'Erro',
@@ -184,7 +181,6 @@ export default function MatchDetailsScreen() {
                         }
                     );
                 } catch (error) {
-                    console.error("Erro ao cancelar partida:", error);
                     showAlert(
                         'error',
                         'Erro',
@@ -266,7 +262,7 @@ export default function MatchDetailsScreen() {
 
                 <GameCard
                     key={index}
-                    title={'Jogo' + index}
+                    title={'Jogo ' + (index + 1)}
                     team1={jogo.time1}
                     team2={jogo.time2}
                     score1={jogo.placar1}
@@ -276,7 +272,7 @@ export default function MatchDetailsScreen() {
                         router.push({
                             pathname: "/(tabs)/gameDetails",
                             params: {
-                                id: matchDetails.id, idGame: jogo.id
+                                id: matchDetails.id, idGame: jogo.id, title: 'Jogo ' + (index + 1)
                             },
                         });
                     }}

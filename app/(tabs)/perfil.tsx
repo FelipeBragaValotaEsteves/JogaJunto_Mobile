@@ -96,7 +96,6 @@ export default function PerfilScreen() {
                         setPosicoes(me.posicoes.map((p: any) => p.id));
                     }
                 } catch (err: any) {
-                    console.error(err);
                     showAlert('error', 'Erro', err?.message || 'Não foi possível carregar os dados.');
                 } finally {
                     setLoading(false);
@@ -144,7 +143,6 @@ export default function PerfilScreen() {
             }
             showAlert('success', 'Sucesso', 'Perfil atualizado!');
         } catch (err: any) {
-            console.error(err);
             showAlert('error', 'Erro', err?.message || 'Não foi possível salvar.');
         } finally {
             setSaving(false);

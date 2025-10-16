@@ -81,7 +81,6 @@ export default function MatchPlayersScreen() {
                         setPlayers(processedData);
                     }
                 } catch (err: any) {
-                    console.error('Erro ao buscar jogadores da partida:', err);
                     if (isActive) {
                         setError(err?.message || 'Erro ao carregar jogadores da partida');
                     }

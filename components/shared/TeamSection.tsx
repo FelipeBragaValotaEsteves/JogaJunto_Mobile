@@ -34,7 +34,6 @@ export function TeamSection({ teamName, players, onPlayerPress, onAddPlayer }: T
         const cartoesAmarelos = player.cartoesAmarelos ?? 0;
         const cartoesVermelhos = player.cartoesVermelhos ?? 0;
         const rating = player.rating ?? 0;
-        console.log(player);
         
         return (
           <TouchableOpacity key={player.id.toString()} onPress={() => onPlayerPress(player)}>

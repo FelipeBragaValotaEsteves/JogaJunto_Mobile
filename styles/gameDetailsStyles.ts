@@ -24,7 +24,6 @@ export const AddPlayerButton = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  background-color: #f8f9fa;
   padding: 12px;
   border-radius: 8px;
   margin-top: 12px;

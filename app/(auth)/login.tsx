@@ -94,7 +94,6 @@ export default function LoginScreen() {
         try {
           await login(data.token, data.user.id);
         } catch (loginError) {
-          console.error("Erro ao processar login:", loginError);
           setAlertData({
             type: "error",
             title: "Erro",
@@ -111,7 +110,6 @@ export default function LoginScreen() {
         setAlertVisible(true);
       }
     } catch (error) {
-      console.error("Erro no login:", error);
       setAlertData({
         type: "error",
         title: "Erro",

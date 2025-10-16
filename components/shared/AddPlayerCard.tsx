@@ -1,6 +1,6 @@
 import typography from '@/constants/typography';
+import { User } from 'lucide-react-native';
 import React from 'react';
-import { Text } from 'react-native';
 import { styled } from 'styled-components/native';
 import { Button, ButtonText } from './Button';
 import { ContentContainer } from './ContentContainer';
@@ -26,9 +26,7 @@ export default function AddPlayerCard({ nome, foto, posicoes, onInvite }: AddPla
             />
           ) : (
             <PlaceholderImage>
-              <Text style={{ color: '#B0BEC5', fontSize: 12, textAlign: 'center' }}>
-                Sem{'\n'}Foto
-              </Text>
+              <User size={30} color="#B0BEC5" />
             </PlaceholderImage>
           )}
         </LeftSection>

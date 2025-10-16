@@ -77,7 +77,7 @@ export default function RegisterScreen() {
         setAlertVisible(true);
       }
     } catch (error) {
-      console.error("Erro ao cadastrar:", error);
+      console.log("Erro ao cadastrar:", error);
       setAlertData({
         type: "error",
         title: "Erro",

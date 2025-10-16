@@ -142,7 +142,6 @@ export default function AddPlayerScreen() {
             );
 
         } catch (err: any) {
-            console.error('Erro ao enviar convite:', err);
             showAlert(
                 'error', 
                 'Erro ao Enviar Convite', 

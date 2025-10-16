@@ -32,7 +32,7 @@ export default function CreatedMatchesScreen() {
       const matches = await fetchCreatedMatches(userId);
       setCreatedMatches(matches);
     } catch (error) {
-      console.error("Erro ao carregar partidas criadas:", error);
+      console.log("Erro ao carregar partidas criadas:", error);
     }
   }, []);
 

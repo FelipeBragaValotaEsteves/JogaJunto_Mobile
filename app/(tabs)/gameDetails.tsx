@@ -25,13 +25,14 @@ interface AvailablePlayer {
     id: number;
     nome: string;
     foto: string;
-    posicoes: string[];
+    status: string;
+    posicoes: (string | null)[];
 }
 
 export default function GameDetailsScreen() {
     const router = useRouter();
 
-    const { id, idGame } = useLocalSearchParams();
+    const { id, idGame, title } = useLocalSearchParams();
     const { gameDetails, matchDetails, positions, loading, error, fetchAll } = useGameDetails(
         id as string,
         idGame as string
@@ -52,7 +53,6 @@ export default function GameDetailsScreen() {
     });
     const [availablePlayers, setAvailablePlayers] = useState<AvailablePlayer[]>([]);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
-    const [addingPlayer, setAddingPlayer] = useState(false);
     const [positionPickerOpen, setPositionPickerOpen] = useState(false);
     const [positionItems, setPositionItems] = useState<{ label: string; value: string }[]>([]);
 
@@ -75,14 +75,18 @@ export default function GameDetailsScreen() {
 
         try {
             const headers = await authHeaders();
-            const response = await fetch(`${BASE_URL}/partidas/${id}/jogadores-disponiveis`, { headers });
-
+            const response = await fetch(`${BASE_URL}/jogadores/partida/${id}`, { headers });
+            console.log(`${BASE_URL}/jogadores/partida/${id}`, headers);
+            
+            console.log(response);
+            
             if (response.ok) {
                 const data = await response.json();
+
                 setAvailablePlayers(data || []);
             }
-        } catch (error) {
-            console.error('Erro ao buscar jogadores disponíveis:', error);
+        } catch (_error) {
+            console.log('Erro ao buscar jogadores disponíveis:', _error);
         } finally {
             setLoadingPlayers(false);
         }
@@ -171,8 +175,7 @@ export default function GameDetailsScreen() {
                 const errorData = await response.json();
                 showAlert('error', 'Erro', errorData.message || 'Erro ao salvar as alterações.');
             }
-        } catch (error) {
-            console.error('Erro ao salvar alterações:', error);
+        } catch {
             showAlert('error', 'Erro', 'Erro ao salvar as alterações. Verifique sua conexão.');
         }
     }, [selectedPlayer, gameDetails, editablePlayer, fetchAll]);
@@ -180,11 +183,21 @@ export default function GameDetailsScreen() {
     const handleAddPlayerToTeam = useCallback(async (player: AvailablePlayer) => {
         if (!gameDetails || !editingTeam) return;
 
-        try {
-            setAddingPlayer(true);
-            const headers = await authHeaders();
+        const selectedTeam = gameDetails.times?.find(team => team.nome === editingTeam);
+        if (!selectedTeam) {
+            showAlert('error', 'Erro', 'Time não encontrado.');
+            return;
+        }
 
-            const response = await fetch(`${BASE_URL}/partidas/${id}/jogadores`, {
+        try {
+            const headers = await authHeaders();
+            console.log(JSON.stringify({
+                    jogadorId: player.id,
+                    timeId: selectedTeam.id,
+                    jogoId: gameDetails.id
+                }));
+            
+            const response = await fetch(`${BASE_URL}/time-participantes`, {
                 method: 'POST',
                 headers: {
                     ...headers,
@@ -192,7 +205,7 @@ export default function GameDetailsScreen() {
                 },
                 body: JSON.stringify({
                     jogadorId: player.id,
-                    timeNome: editingTeam,
+                    timeId: selectedTeam.id,
                     jogoId: gameDetails.id
                 })
             });
@@ -206,13 +219,10 @@ export default function GameDetailsScreen() {
                 const errorData = await response.json();
                 showAlert('error', 'Erro', errorData.message || 'Erro ao adicionar jogador ao time.');
             }
-        } catch (error) {
-            console.error('Erro ao adicionar jogador:', error);
+        } catch {
             showAlert('error', 'Erro', 'Erro ao adicionar jogador ao time. Verifique sua conexão.');
-        } finally {
-            setAddingPlayer(false);
         }
-    }, [gameDetails, editingTeam, id, fetchAll]);
+    }, [gameDetails, editingTeam, fetchAll]);
 
     if (loading) {
         return (
@@ -257,7 +267,7 @@ export default function GameDetailsScreen() {
                 <ContentContainer>
                     <GameDetailsMain
                         gameDetails={gameDetails}
-                        matchDetails={matchDetails}
+                        title={title as string}
                         onPlayerPress={handlePlayerPress}
                         onAddPlayer={handleAddPlayer}
                     />
@@ -364,9 +374,9 @@ export default function GameDetailsScreen() {
                         </PlayerDetailsContainer>
                     ) : editingTeam ? (
                         <View>
-                            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>
+                            <TeamName>
                                 Adicionar jogador ao {editingTeam}
-                            </Text>
+                            </TeamName>
 
                             {loadingPlayers ? (
                                 <Text>Carregando jogadores disponíveis...</Text>
@@ -376,7 +386,7 @@ export default function GameDetailsScreen() {
                                         key={player.id}
                                         nome={player.nome}
                                         foto={player.foto}
-                                        posicoes={player.posicoes}
+                                        posicoes={player.posicoes.filter((pos): pos is string => pos !== null)}
                                         onAdd={() => handleAddPlayerToTeam(player)}
                                     />
                                 ))
@@ -458,4 +468,11 @@ const TitlePageTabs = styled.Text`
     color: #2C2C2C;
     text-align: center;
     margin-bottom: 20px;
+`;
+
+const TeamName = styled.Text`
+  text-align: left;
+  font-size: ${typography['txt-1'].fontSize}px;
+  font-family: ${typography['txt-1'].fontFamily};
+  margin-bottom: 16px;
 `;

@@ -31,7 +31,7 @@ export default function PlayedMatchesScreen() {
       const matches = await fetchPlayedMatches(userId);
       setPlayedMatches(matches);
     } catch (error) {
-      console.error("Erro ao carregar partidas jogadas:", error);
+      console.log("Erro ao carregar partidas jogadas:", error);
     }
   }, []);
 

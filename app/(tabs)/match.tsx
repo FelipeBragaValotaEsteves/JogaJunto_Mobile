@@ -107,7 +107,6 @@ export default function MatchScreen() {
                     setTipo(data.tipo_partida_id || null);
                     setAceitaJogadoresDeFora(data.aberto || false);
                 }).catch((error) => {
-                    console.error(error);
                     showAlert('error', 'Erro', 'Não foi possível carregar os detalhes da partida.');
                 });
             }
@@ -125,7 +124,6 @@ export default function MatchScreen() {
                 const data = await response.json();
                 setEstados(data.map((estado: any) => ({ label: estado.nome, value: estado.id })));
             } catch (error) {
-                console.error(error);
                 showAlert('error', 'Erro', 'Não foi possível carregar os estados.');
             }
         };
@@ -145,7 +143,6 @@ export default function MatchScreen() {
                     const data = await response.json();
                     setCidades(data.map((cidade: any) => ({ label: cidade.nome, value: cidade.id })));
                 } catch (error) {
-                    console.error(error);
                     showAlert('error', 'Erro', 'Não foi possível carregar as cidades.');
                 }
             };
@@ -165,7 +162,6 @@ export default function MatchScreen() {
                 const data = await response.json();
                 setItemsTipo(data.map((tipo: any) => ({ label: tipo.nome, value: tipo.id })));
             } catch (error) {
-                console.error(error);
                 showAlert('error', 'Erro', 'Não foi possível carregar os tipos de partida.');
             }
         };
