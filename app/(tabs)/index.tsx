@@ -8,13 +8,12 @@ import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
-import styled from "styled-components/native";
+import { styled } from "styled-components/native";
 import { authHeaders } from '../../utils/authHeaders';
 
 export default function HomeScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [username, setUsername] = useState("jogador");
   const [matches, setMatches] = useState<{ data: string; hora_inicio: string; local: string }[]>([]);
 
   useEffect(() => {
@@ -23,10 +22,9 @@ export default function HomeScreen() {
       setLoading(true);
       try {
         const matches = await getNearbyMatches();
-        
-        setMatches(matches);
-      } catch (error) {
 
+        setMatches(matches);
+      } catch {
       } finally {
         setLoading(false);
       }
@@ -54,11 +52,11 @@ export default function HomeScreen() {
     }
 
     const headers = await authHeaders();
-    
+
     const response = await fetch(`${BASE_URL}/partidas/proximas/${city}`, {
       headers,
     });
-    
+
     return await response.json();
   }
 
@@ -75,9 +73,9 @@ export default function HomeScreen() {
       <TitlePageIndex>Histórico</TitlePageIndex>
 
       <HistoryGrid>
-        <HistoryTouchable onPress={() => router.push({ 
-          pathname: "/(tabs)/playedMatches", 
-          params: { from: "index" } 
+        <HistoryTouchable onPress={() => router.push({
+          pathname: "/(tabs)/playedMatches",
+          params: { from: "index" }
         })}>
           <HistoryCard>
             <HistoryImage
@@ -90,9 +88,9 @@ export default function HomeScreen() {
           </HistoryCard>
         </HistoryTouchable>
 
-        <HistoryTouchable onPress={() => router.push({ 
-          pathname: "/(tabs)/createdMatches", 
-          params: { from: "index" } 
+        <HistoryTouchable onPress={() => router.push({
+          pathname: "/(tabs)/createdMatches",
+          params: { from: "index" }
         })}>
           <HistoryCard>
             <HistoryImage

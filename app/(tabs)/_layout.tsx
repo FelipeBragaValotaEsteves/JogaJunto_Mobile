@@ -6,9 +6,12 @@ import { Text, View } from "react-native";
 import LogoJogaJunto from "../../assets/images/logo-white-small.svg";
 import FabButton from "../../components/FabButton";
 import typography from "../../constants/typography";
+import { useNotifications } from "../../hooks/useNotifications";
 
 export default function TabsLayout() {
   const segments = useSegments();
+
+  useNotifications();
 
   const isIndex = segments.length === 1 && segments[0] === "(tabs)";
 

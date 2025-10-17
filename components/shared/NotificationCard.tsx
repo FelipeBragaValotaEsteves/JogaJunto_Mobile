@@ -2,7 +2,7 @@ import { ContentContainer } from "@/components/shared/ContentContainer";
 import typography from "@/constants/typography";
 import { ArrowRight } from "lucide-react-native";
 import React from "react";
-import styled from "styled-components/native";
+import { styled } from "styled-components/native";
 import { ButtonSpace } from "./Button";
 
 interface NotificationCardProps {
