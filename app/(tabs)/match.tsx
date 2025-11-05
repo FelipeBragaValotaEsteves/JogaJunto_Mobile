@@ -1,7 +1,7 @@
 import { BackButtonTab } from '@/components/shared/BackButton';
 import { Checkbox } from '@/components/shared/Checkbox';
 import { ContentContainer } from '@/components/shared/ContentContainer';
-import { MainContainer } from '@/components/shared/MainContainer';
+import { KeyboardAwareContainer, MainContainer } from '@/components/shared/MainContainer';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { CircleArrowLeft } from "lucide-react-native";
@@ -238,14 +238,15 @@ export default function MatchScreen() {
     };
 
     return (
-        <MainContainer>
-            <TopButtonsContainer>
-                <BackButtonTab>
-                    <CircleArrowLeft color="#2B6AE3" size={50} />
-                </BackButtonTab>
-            </TopButtonsContainer>
+        <KeyboardAwareContainer>
+            <MainContainer>
+                <TopButtonsContainer>
+                    <BackButtonTab>
+                        <CircleArrowLeft color="#2B6AE3" size={50} />
+                    </BackButtonTab>
+                </TopButtonsContainer>
 
-            <TitlePageTabs>Horário</TitlePageTabs>
+                <TitlePageTabs>Horário</TitlePageTabs>
 
             <ProgressContainer>
                 <ProgressStep active={currentPhase >= 1} />
@@ -384,7 +385,8 @@ export default function MatchScreen() {
                 onClose={() => setAlertVisible(false)}
                 onConfirm={alertConfig.onConfirm}
             />
-        </MainContainer>
+            </MainContainer>
+        </KeyboardAwareContainer>
     );
 }
 

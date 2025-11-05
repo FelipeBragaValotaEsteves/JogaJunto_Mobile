@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { CircleArrowLeft } from "lucide-react-native";
 import React, { useState } from 'react';
-import { ActivityIndicator } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { styled } from "styled-components/native";
 import LogoJogaJunto from "../../assets/images/logo-white.svg";
 import { Alert } from "../../components/shared/Alert";
@@ -67,40 +67,51 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <Container>
-      <Header>
-        <LogoJogaJunto width={265} />
-      </Header>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <ScrollView 
+        contentContainerStyle={{ flexGrow: 1 }} 
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Container>
+          <Header>
+            <LogoJogaJunto width={265} />
+          </Header>
 
-      <FormContainer>
-        <BackButtonAuth onPress={() => router.back()}>
-          <CircleArrowLeft color="#f5f7fa" size={50} />
-        </BackButtonAuth>
-        <TitlePage>Recuperação</TitlePage>
+          <FormContainer>
+            <BackButtonAuth onPress={() => router.back()}>
+              <CircleArrowLeft color="#f5f7fa" size={50} />
+            </BackButtonAuth>
+            <TitlePage>Recuperação</TitlePage>
 
-        <Input
-          placeholder="Digite seu e-mail"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
+            <Input
+              placeholder="Digite seu e-mail"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
+            />
 
-        <OutlineButton onPress={enviarCodigo} disabled={loading}>
-          <OutlineButtonText>
-            {loading ? <ActivityIndicator color="#22c55e" /> : "ENVIAR CÓDIGO"}
-          </OutlineButtonText>
-        </OutlineButton>
-      </FormContainer>
+            <OutlineButton onPress={enviarCodigo} disabled={loading}>
+              <OutlineButtonText>
+                {loading ? <ActivityIndicator color="#22c55e" /> : "ENVIAR CÓDIGO"}
+              </OutlineButtonText>
+            </OutlineButton>
+          </FormContainer>
 
-      <Alert
-        visible={alertVisible}
-        type={alertData.type}
-        title={alertData.title}
-        message={alertData.message}
-        onClose={() => setAlertVisible(false)}
-      />
-    </Container>
+          <Alert
+            visible={alertVisible}
+            type={alertData.type}
+            title={alertData.title}
+            message={alertData.message}
+            onClose={() => setAlertVisible(false)}
+          />
+        </Container>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

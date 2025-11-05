@@ -11,6 +11,12 @@ const TEXT = "#111";
 
 const Wrapper = styled.View<{ zIndex?: number }>`
   margin-bottom: 20px;
+  position: relative;
+  ${({ zIndex }) => (zIndex ? `z-index: ${zIndex};` : "z-index: 1000;")}
+`;
+
+const DropdownContainer = styled.View<{ zIndex?: number }>`
+  position: relative;
   ${({ zIndex }) => (zIndex ? `z-index: ${zIndex};` : "z-index: 1000;")}
 `;
 
@@ -25,6 +31,11 @@ const HelperText = styled.Text`
   margin-top: 6px;
   color: #607d8b;
   font-size: 12px;
+`;
+
+const SpacerWhenOpen = styled.View`
+  height: 240px;
+  z-index: -1;
 `;
 type SelectType = React.ComponentProps<typeof DropDownPicker> & {
     label?: string;
@@ -62,40 +73,47 @@ export function Select({
     return (
         <Wrapper zIndex={zIndex}>
             {!!label && <Label>{label}</Label>}
-            <DropDownPicker
-                open={open}
-                style={[
-                    {
-                        backgroundColor: "white",
-                        borderColor,
-                        borderWidth: 2,
-                        borderRadius: 16,
-                        minHeight: 55,
-                        paddingHorizontal: 20,
-                    },
-                    style,
-                ]}
-                dropDownContainerStyle={[
-                    {
-                        backgroundColor: "white",
-                        borderColor,
-                        borderWidth: 2,
-                        borderTopWidth: 0,
-                        borderRadius: 16,
-                        maxHeight: 220,
-                    },
-                    dropDownContainerStyle,
-                ]}
-                placeholderStyle={[{ color: PLACEHOLDER, ...baseFont }, placeholderStyle]}
-                textStyle={[{ color: TEXT, ...baseFont }, textStyle]}
-                labelStyle={[{ color: TEXT, ...baseFont }, labelStyle]}
-                listItemLabelStyle={[{ color: TEXT, ...baseFont }, listItemLabelStyle]}
-                selectedItemLabelStyle={[{ color: TEXT, ...baseFont }, selectedItemLabelStyle]}
-                listMode="SCROLLVIEW"
-                {...rest}
-            />
+            <DropdownContainer zIndex={zIndex}>
+                <DropDownPicker
+                    open={open}
+                    style={[
+                        {
+                            backgroundColor: "white",
+                            borderColor,
+                            borderWidth: 2,
+                            borderRadius: 16,
+                            minHeight: 55,
+                            paddingHorizontal: 20,
+                        },
+                        style,
+                    ]}
+                    dropDownContainerStyle={[
+                        {
+                            backgroundColor: "white",
+                            borderColor,
+                            borderWidth: 2,
+                            borderTopWidth: 0,
+                            borderRadius: 16,
+                            maxHeight: 220,
+                        },
+                        dropDownContainerStyle,
+                    ]}
+                    placeholderStyle={[{ color: PLACEHOLDER, ...baseFont }, placeholderStyle]}
+                    textStyle={[{ color: TEXT, ...baseFont }, textStyle]}
+                    labelStyle={[{ color: TEXT, ...baseFont }, labelStyle]}
+                    listItemLabelStyle={[{ color: TEXT, ...baseFont }, listItemLabelStyle]}
+                    selectedItemLabelStyle={[{ color: TEXT, ...baseFont }, selectedItemLabelStyle]}
+                    listMode="SCROLLVIEW"
+                    scrollViewProps={{
+                        nestedScrollEnabled: true,
+                    }}
+                    dropDownDirection="BOTTOM"
+                    {...rest}
+                />
+            </DropdownContainer>
 
             {!!helperText && <HelperText>{helperText}</HelperText>}
+            {open && <SpacerWhenOpen />}
         </Wrapper>
     );
 }

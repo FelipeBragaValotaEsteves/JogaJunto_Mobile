@@ -1,4 +1,5 @@
 import { BackButtonTab } from '@/components/shared/BackButton';
+import { Loading } from "@/components/shared/Loading";
 import { MainContainer } from "@/components/shared/MainContainer";
 import { TitlePageTabs } from "@/components/shared/TitlePage";
 import { useFocusEffect } from "expo-router";
@@ -7,7 +8,7 @@ import { CircleArrowLeft } from "lucide-react-native";
 import { NoResults } from "@/components/shared/NoResults";
 import { NotificationCard } from "@/components/shared/NotificationCard";
 import React, { useCallback, useState } from "react";
-import { ActivityIndicator, Text } from "react-native";
+import { Text } from "react-native";
 import { styled } from "styled-components/native";
 import BASE_URL from '../../constants/config';
 import { authHeaders, getUserId } from '../../utils/authHeaders';
@@ -96,10 +97,7 @@ export default function NotificationsScreen() {
       <TitlePageTabs>Notificações</TitlePageTabs>
 
       {loading ? (
-        <LoadingContainer>
-          <ActivityIndicator size="large" color="#2B6AE3" />
-          <Text>Carregando notificações...</Text>
-        </LoadingContainer>
+        <Loading />
       ) : error ? (
         <ErrorContainer>
           <Text style={{ color: '#e74c3c', textAlign: 'center' }}>
@@ -132,13 +130,6 @@ const TopButtonsContainer = styled.View`
   align-items: center;
   margin-top: 10px;
   margin-bottom: 10px;
-`;
-
-const LoadingContainer = styled.View`
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
 `;
 
 const ErrorContainer = styled.View`

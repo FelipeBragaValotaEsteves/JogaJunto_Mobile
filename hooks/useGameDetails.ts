@@ -6,6 +6,7 @@ export interface Player {
   id: number;
   nome: string;
   posicao: string;
+  foto?: string;
   gols?: number;
   assistencias?: number;
   cartoesAmarelos?: number;

@@ -1,13 +1,14 @@
 import { BackButtonTab } from '@/components/shared/BackButton';
 import { ContentContainer } from '@/components/shared/ContentContainer';
-import { MainContainer } from '@/components/shared/MainContainer';
+import { Loading } from '@/components/shared/Loading';
+import { KeyboardAwareContainer, MainContainer } from '@/components/shared/MainContainer';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
 import { useAuth } from '@/contexts/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from "expo-router";
 import { Camera, CircleArrowLeft, LogOut } from "lucide-react-native";
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Platform, Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { styled } from 'styled-components/native';
 import { Alert } from '../../components/shared/Alert';
 import { Button, ButtonText } from '../../components/shared/Button';
@@ -158,22 +159,22 @@ export default function PerfilScreen() {
     };
 
     return (
-        <MainContainer>
-            <TopButtonsContainer>
-                <BackButtonTab>
-                    <CircleArrowLeft color="#2B6AE3" size={50} />
-                </BackButtonTab>
-                <SairButton onPress={sair}>
-                    <LogOut color="#2B6AE3" size={30} />
-                </SairButton>
-            </TopButtonsContainer>
+        <KeyboardAwareContainer>
+            <MainContainer>
+                <TopButtonsContainer>
+                    <BackButtonTab>
+                        <CircleArrowLeft color="#2B6AE3" size={50} />
+                    </BackButtonTab>
+                    <SairButton onPress={sair}>
+                        <LogOut color="#2B6AE3" size={30} />
+                    </SairButton>
+                </TopButtonsContainer>
 
-            <TitlePageTabs>Perfil</TitlePageTabs>
-            <ContentContainer>
+                <TitlePageTabs>Perfil</TitlePageTabs>
                 {loading ? (
-                    <ActivityIndicator size="large" />
+                    <Loading />
                 ) : (
-                    <>
+                    <ContentContainer>
                         {!isWeb ? (
                             <ImagemContainer onPress={escolherImagem}>
                                 {imagem ? (
@@ -247,9 +248,8 @@ export default function PerfilScreen() {
                         <Button onPress={salvarPerfil} disabled={saving}>
                             <ButtonText>{saving ? 'SALVANDO...' : 'SALVAR'}</ButtonText>
                         </Button>
-                    </>
-                )}
-            </ContentContainer>
+                </ContentContainer>
+            )}
 
             <Alert
                 visible={alertVisible}
@@ -259,7 +259,8 @@ export default function PerfilScreen() {
                 onClose={() => setAlertVisible(false)}
                 onConfirm={alertConfig.onConfirm}
             />
-        </MainContainer>
+            </MainContainer>
+        </KeyboardAwareContainer>
     );
 }
 

@@ -1,12 +1,13 @@
 import AddPlayerCard from '@/components/shared/AddPlayerCard';
 import { BackButtonTab } from '@/components/shared/BackButton';
 import { Input } from '@/components/shared/Input';
-import { MainContainer } from '@/components/shared/MainContainer';
+import { Loading } from '@/components/shared/Loading';
+import { KeyboardAwareContainer, MainContainer } from '@/components/shared/MainContainer';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { CircleArrowLeft } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Text } from 'react-native';
+import { Text } from 'react-native';
 import { styled } from 'styled-components/native';
 import { Alert } from '../../components/shared/Alert';
 import BASE_URL, { BASE_URL_IMAGE } from '../../constants/config';
@@ -151,24 +152,22 @@ export default function AddPlayerScreen() {
     };
 
     return (
-        <MainContainer>
-            <TopButtonsContainer>
-                <BackButtonTab onPress={() => {
-                    router.replace({
-                        pathname: '/(tabs)/matchPlayers',
-                        params: { matchId: matchId, showEditButton: showEditButton },
-                    });
-                }}>
-                    <CircleArrowLeft color="#2B6AE3" size={50} />
-                </BackButtonTab>
-            </TopButtonsContainer>
-            <TitlePageTabs>Adicionar Jogador</TitlePageTabs>
+        <KeyboardAwareContainer>
+            <MainContainer>
+                <TopButtonsContainer>
+                    <BackButtonTab onPress={() => {
+                        router.replace({
+                            pathname: '/(tabs)/matchPlayers',
+                            params: { matchId: matchId, showEditButton: showEditButton },
+                        });
+                    }}>
+                        <CircleArrowLeft color="#2B6AE3" size={50} />
+                    </BackButtonTab>
+                </TopButtonsContainer>
+                <TitlePageTabs>Adicionar Jogador</TitlePageTabs>
 
             {loading ? (
-                <LoadingContainer>
-                    <ActivityIndicator size="large" color="#2B6AE3" />
-                    <Text>Carregando jogadores disponíveis...</Text>
-                </LoadingContainer>
+                <Loading />
             ) : error ? (
                 <ErrorContainer>
                     <Text style={{ color: '#e74c3c', textAlign: 'center' }}>
@@ -211,7 +210,8 @@ export default function AddPlayerScreen() {
                 onClose={() => setAlertVisible(false)}
                 onConfirm={alertConfig.onConfirm}
             />
-        </MainContainer>
+            </MainContainer>
+        </KeyboardAwareContainer>
     );
 }
 
@@ -221,13 +221,6 @@ const TopButtonsContainer = styled.View`
   align-items: center;
   margin-top: 10px;
   margin-bottom: 10px;
-`;
-
-const LoadingContainer = styled.View`
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
 `;
 
 const ErrorContainer = styled.View`

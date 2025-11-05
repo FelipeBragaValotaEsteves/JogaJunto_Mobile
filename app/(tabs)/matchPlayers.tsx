@@ -1,11 +1,12 @@
 import { BackButtonTab } from '@/components/shared/BackButton';
+import { Loading } from '@/components/shared/Loading';
 import { MainContainer } from '@/components/shared/MainContainer';
 import PlayerCard from '@/components/shared/PlayerCard';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleArrowLeft, CirclePlus } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Text } from 'react-native';
+import { Text } from 'react-native';
 import { styled } from 'styled-components/native';
 import BASE_URL, { BASE_URL_IMAGE } from '../../constants/config';
 import { authHeaders } from '../../utils/authHeaders';
@@ -122,10 +123,7 @@ export default function MatchPlayersScreen() {
             <TitlePageTabs>Jogadores da Partida</TitlePageTabs>
 
             {loading ? (
-                <LoadingContainer>
-                    <ActivityIndicator size="large" color="#2B6AE3" />
-                    <Text>Carregando jogadores...</Text>
-                </LoadingContainer>
+                <Loading />
             ) : error ? (
                 <ErrorContainer>
                     <Text style={{ color: '#e74c3c', textAlign: 'center' }}>
@@ -165,13 +163,6 @@ const AddPlayerButton = styled.TouchableOpacity`
   padding: 8px 12px;
   border-radius: 8px;
   margin-left: 10px;
-`;
-
-const LoadingContainer = styled.View`
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
 `;
 
 const ErrorContainer = styled.View`

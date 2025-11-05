@@ -4,21 +4,22 @@ import { BackButtonTab } from '@/components/shared/BackButton';
 import { Button, ButtonText } from '@/components/shared/Button';
 import { ContentContainer } from '@/components/shared/ContentContainer';
 import { GameHeader } from '@/components/shared/GameHeader';
-import { MainContainer } from '@/components/shared/MainContainer';
+import { Loading } from '@/components/shared/Loading';
+import { KeyboardAwareContainer, MainContainer } from '@/components/shared/MainContainer';
 import { NumberInput } from '@/components/shared/NumberInput';
 import PlayerCard from '@/components/shared/PlayerCard';
 import { Select } from '@/components/shared/Select';
 import typography from '@/constants/typography';
 import { Player, useGameDetails } from '@/hooks/useGameDetails';
 import { TopButtonsContainer } from '@/styles/gameDetailsStyles';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CircleArrowLeft } from 'lucide-react-native';
+import { CircleArrowLeft, User } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { styled } from 'styled-components/native';
-import BASE_URL from '../../constants/config';
+import BASE_URL, { BASE_URL_IMAGE } from '../../constants/config';
 import { authHeaders } from '../../utils/authHeaders';
 
 interface AvailablePlayer {
@@ -32,7 +33,7 @@ interface AvailablePlayer {
 export default function GameDetailsScreen() {
     const router = useRouter();
 
-    const { id, idGame, title } = useLocalSearchParams();
+    const { id, idGame, title, showEditButton } = useLocalSearchParams();
     const { gameDetails, matchDetails, positions, loading, error, fetchAll } = useGameDetails(
         id as string,
         idGame as string
@@ -77,9 +78,9 @@ export default function GameDetailsScreen() {
             const headers = await authHeaders();
             const response = await fetch(`${BASE_URL}/jogadores/partida/${id}`, { headers });
             console.log(`${BASE_URL}/jogadores/partida/${id}`, headers);
-            
+
             console.log(response);
-            
+
             if (response.ok) {
                 const data = await response.json();
 
@@ -93,6 +94,8 @@ export default function GameDetailsScreen() {
     };
 
     const handlePlayerPress = (player: Player) => {
+        console.log(player);
+        
         setSelectedPlayer(player);
 
         const currentPosition = positions.find(pos => pos.nome === player.posicao);
@@ -192,11 +195,11 @@ export default function GameDetailsScreen() {
         try {
             const headers = await authHeaders();
             console.log(JSON.stringify({
-                    jogadorId: player.id,
-                    timeId: selectedTeam.id,
-                    jogoId: gameDetails.id
-                }));
-            
+                jogadorId: player.id,
+                timeId: selectedTeam.id,
+                jogoId: gameDetails.id
+            }));
+
             const response = await fetch(`${BASE_URL}/time-participantes`, {
                 method: 'POST',
                 headers: {
@@ -225,11 +228,7 @@ export default function GameDetailsScreen() {
     }, [gameDetails, editingTeam, fetchAll]);
 
     if (loading) {
-        return (
-            <MainContainer>
-                <TitlePageTabs>Carregando detalhes do jogo...</TitlePageTabs>
-            </MainContainer>
-        );
+        return <Loading />;
     }
 
     if (error || !gameDetails) {
@@ -248,31 +247,33 @@ export default function GameDetailsScreen() {
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
-            <MainContainer>
-                <TopButtonsContainer>
-                    <BackButtonTab onPress={() => {
-                        if (matchDetails) {
-                            router.replace({
-                                pathname: '/(tabs)/matchDetails',
-                                params: { id: matchDetails.id },
-                            });
-                        }
-                    }}>
-                        <CircleArrowLeft color="#2B6AE3" size={50} />
-                    </BackButtonTab>
-                </TopButtonsContainer>
+            <KeyboardAwareContainer>
+                <MainContainer>
+                    <TopButtonsContainer>
+                        <BackButtonTab onPress={() => {
+                            if (matchDetails) {
+                                router.replace({
+                                    pathname: '/(tabs)/matchDetails',
+                                    params: { id: matchDetails.id, source: showEditButton ? 'createdMatches' : undefined },
+                                });
+                            }
+                        }}>
+                            <CircleArrowLeft color="#2B6AE3" size={50} />
+                        </BackButtonTab>
+                    </TopButtonsContainer>
 
-                <GameHeader matchDetails={matchDetails} gameDetails={gameDetails} />
+                    <GameHeader matchDetails={matchDetails} gameDetails={gameDetails} />
 
-                <ContentContainer>
-                    <GameDetailsMain
-                        gameDetails={gameDetails}
-                        title={title as string}
-                        onPlayerPress={handlePlayerPress}
-                        onAddPlayer={handleAddPlayer}
-                    />
-                </ContentContainer>
-            </MainContainer>
+                    <ContentContainer>
+                        <GameDetailsMain
+                            gameDetails={gameDetails}
+                            title={title as string}
+                            onPlayerPress={handlePlayerPress}
+                            onAddPlayer={handleAddPlayer}
+                        />
+                    </ContentContainer>
+                </MainContainer>
+            </KeyboardAwareContainer>
 
             <BottomSheet
                 ref={bottomSheetRef}
@@ -281,11 +282,31 @@ export default function GameDetailsScreen() {
                 onChange={handleSheetChanges}
                 enablePanDownToClose
             >
-                <BottomSheetView style={{ flex: 1, padding: 20 }}>
+                <BottomSheetScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
                     {selectedPlayer ? (
                         <PlayerDetailsContainer>
                             <PlayerImageNamePositionContainer>
-                                <PlayerImage />
+                                {selectedPlayer.foto ? (
+                                    selectedPlayer.foto.startsWith('http://') || selectedPlayer.foto.startsWith('https://') ? (
+                                        <PlayerImage
+                                            source={{ uri: selectedPlayer.foto }}
+                                            onError={(e) => {
+                                                console.log('Erro ao carregar imagem do jogador:', e.nativeEvent.error);
+                                            }}
+                                        />
+                                    ) : (
+                                        <PlayerImage
+                                            source={{ uri: `${BASE_URL_IMAGE}${selectedPlayer.foto}` }}
+                                            onError={(e) => {
+                                                console.log('Erro ao carregar imagem do jogador:', e.nativeEvent.error);
+                                            }}
+                                        />
+                                    )
+                                ) : (
+                                    <PlaceholderImage>
+                                        <User size={40} color="#B0BEC5" />
+                                    </PlaceholderImage>
+                                )}
                                 <View>
                                     <PlayerNameSheet>{selectedPlayer.nome}</PlayerNameSheet>
                                     <PlayerPositionSheet>{selectedPlayer.posicao || 'Posição não definida'}</PlayerPositionSheet>
@@ -368,7 +389,7 @@ export default function GameDetailsScreen() {
                                 </StatEditRow>
 
                                 <Button onPress={handleSaveChanges} style={{ marginTop: 20 }}>
-                                    <ButtonText>Salvar</ButtonText>
+                                    <ButtonText>SALVAR</ButtonText>
                                 </Button>
                             </StatsFormContainer>
                         </PlayerDetailsContainer>
@@ -393,7 +414,7 @@ export default function GameDetailsScreen() {
                             )}
                         </View>
                     ) : null}
-                </BottomSheetView>
+                </BottomSheetScrollView>
             </BottomSheet>
 
             <Alert
@@ -419,12 +440,21 @@ const PlayerImageNamePositionContainer = styled.View`
     align-items: flex-start;
 `;
 
-const PlayerImage = styled.View`
+const PlayerImage = styled.Image`
+    width: 100px;
+    height: 100px;
+    border-radius: 50px;
+    margin-bottom: 16px;
+`;
+
+const PlaceholderImage = styled.View`
     width: 100px;
     height: 100px;
     border-radius: 50px;
     background-color: #E0E0E0;
     margin-bottom: 16px;
+    justify-content: center;
+    align-items: center;
 `;
 
 const PlayerNameSheet = styled.Text`

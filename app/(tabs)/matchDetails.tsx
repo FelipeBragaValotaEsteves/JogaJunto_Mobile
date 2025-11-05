@@ -272,7 +272,7 @@ export default function MatchDetailsScreen() {
                         router.push({
                             pathname: "/(tabs)/gameDetails",
                             params: {
-                                id: matchDetails.id, idGame: jogo.id, title: 'Jogo ' + (index + 1)
+                                id: matchDetails.id, idGame: jogo.id, title: 'Jogo ' + (index + 1), showEditButton: showEditButton ? 'true' : 'false'   
                             },
                         });
                     }}
@@ -284,7 +284,10 @@ export default function MatchDetailsScreen() {
                     onPress={() => {
                         router.push({
                             pathname: '/(tabs)/gameAdd',
-                            params: { partidaId: matchDetails.id },
+                            params: {
+                                partidaId: matchDetails.id,
+                                title: 'Jogo ' + (games.length + 1)
+                            },
                         });
                     }}
                 >

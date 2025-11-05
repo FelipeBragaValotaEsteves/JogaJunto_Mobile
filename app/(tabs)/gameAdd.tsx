@@ -2,7 +2,7 @@ import { BackButtonTab } from '@/components/shared/BackButton';
 import { Button, ButtonText } from '@/components/shared/Button';
 import { ContentContainer } from '@/components/shared/ContentContainer';
 import { Input } from '@/components/shared/Input';
-import { MainContainer } from '@/components/shared/MainContainer';
+import { KeyboardAwareContainer, MainContainer } from '@/components/shared/MainContainer';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleArrowLeft } from 'lucide-react-native';
@@ -14,7 +14,7 @@ import { authHeaders } from '../../utils/authHeaders';
 
 export default function GameAddScreen() {
     const router = useRouter();
-    const { partidaId } = useLocalSearchParams();
+    const { partidaId, title } = useLocalSearchParams();
 
     const [team1Name, setTeam1Name] = useState('');
     const [team2Name, setTeam2Name] = useState('');
@@ -85,7 +85,7 @@ export default function GameAddScreen() {
                 () => {
                     router.replace({
                         pathname: '/(tabs)/gameDetails',
-                        params: { id: partidaId, idGame: data.jogo.id },
+                        params: { id: partidaId, idGame: data.jogo.id, title: title,  showEditButton: 'true'  },
                     });
                 }
             );
@@ -99,19 +99,20 @@ export default function GameAddScreen() {
     };
 
     return (
-        <MainContainer>
-            <TopButtonsContainer>
-                <BackButtonTab onPress={() => {
-                    router.replace({
-                        pathname: '/(tabs)/matchDetails',
-                        params: { id: partidaId },
-                    });
-                }}>
-                    <CircleArrowLeft color="#2B6AE3" size={50} />
-                </BackButtonTab>
-            </TopButtonsContainer>
+        <KeyboardAwareContainer>
+            <MainContainer>
+                <TopButtonsContainer>
+                    <BackButtonTab onPress={() => {
+                        router.replace({
+                            pathname: '/(tabs)/matchDetails',
+                            params: { id: partidaId },
+                        });
+                    }}>
+                        <CircleArrowLeft color="#2B6AE3" size={50} />
+                    </BackButtonTab>
+                </TopButtonsContainer>
 
-            <TitlePageTabs>Criar Novo Jogo</TitlePageTabs>
+                <TitlePageTabs>Criar Novo Jogo</TitlePageTabs>
 
             <ContentContainer>
                 <Input
@@ -143,7 +144,8 @@ export default function GameAddScreen() {
                 onClose={() => setAlertVisible(false)}
                 onConfirm={alertConfig.onConfirm}
             />
-        </MainContainer>
+            </MainContainer>
+        </KeyboardAwareContainer>
     );
 }
 

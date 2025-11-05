@@ -2,7 +2,7 @@ import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { TouchableOpacity } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from "react-native";
 import { styled } from "styled-components/native";
 
 import LogoJogaJunto from "../../assets/images/logo-white.svg";
@@ -120,38 +120,49 @@ export default function LoginScreen() {
   };
 
   return (
-    <Container>
-      <Header>
-        <LogoJogaJunto width={265} />
-      </Header>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <ScrollView 
+        contentContainerStyle={{ flexGrow: 1 }} 
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Container>
+          <Header>
+            <LogoJogaJunto width={265} />
+          </Header>
 
-      <FormContainer>
-        <TitlePage>Login</TitlePage>
+          <FormContainer>
+            <TitlePage>Login</TitlePage>
 
-        <Input placeholder="E-mail" value={email} onChangeText={setEmail} />
-        <Input placeholder="Senha" value={password} onChangeText={setPassword} secureTextEntry />
-        <OutlineButton onPress={handleLogin}>
-          <OutlineButtonText>ENTRAR</OutlineButtonText>
-        </OutlineButton>
+            <Input placeholder="E-mail" value={email} onChangeText={setEmail} />
+            <Input placeholder="Senha" value={password} onChangeText={setPassword} secureTextEntry />
+            <OutlineButton onPress={handleLogin}>
+              <OutlineButtonText>ENTRAR</OutlineButtonText>
+            </OutlineButton>
 
-        <Footer>
-          <TouchableOpacity onPress={() => router.push("/forgotPassword")}>
-            <ForgotText>esqueceu senha?</ForgotText>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push("./register")}>
-            <RegisterText>cadastre-se</RegisterText>
-          </TouchableOpacity>
-        </Footer>
-      </FormContainer>
+            <Footer>
+              <TouchableOpacity onPress={() => router.push("/forgotPassword")}>
+                <ForgotText>esqueceu senha?</ForgotText>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push("./register")}>
+                <RegisterText>cadastre-se</RegisterText>
+              </TouchableOpacity>
+            </Footer>
+          </FormContainer>
 
-      <Alert
-        visible={alertVisible}
-        type={alertData.type}
-        title={alertData.title}
-        message={alertData.message}
-        onClose={() => setAlertVisible(false)}
-      />
-    </Container>
+          <Alert
+            visible={alertVisible}
+            type={alertData.type}
+            title={alertData.title}
+            message={alertData.message}
+            onClose={() => setAlertVisible(false)}
+          />
+        </Container>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

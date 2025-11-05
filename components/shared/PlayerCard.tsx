@@ -1,5 +1,6 @@
+import { BASE_URL_IMAGE } from '@/constants/config';
 import typography from '@/constants/typography';
-import { User } from 'lucide-react-native';
+import { Plus, User } from 'lucide-react-native';
 import React from 'react';
 import { styled } from 'styled-components/native';
 import { Button, ButtonText } from './Button';
@@ -15,13 +16,19 @@ interface PlayerCardProps {
 }
 
 export default function PlayerCard({ nome, foto, posicoes, status, onAdd }: PlayerCardProps) {
+  const imageUri = foto 
+    ? (foto.startsWith('http://') || foto.startsWith('https://') 
+        ? foto 
+        : `${BASE_URL_IMAGE}${foto}`)
+    : null;
+
   return (
     <ContentContainer style={{ marginBottom: 20 }}>
       <CardContainer>
         <LeftSection>
-          {foto ? (
+          {imageUri ? (
             <ProfileImage
-              source={{ uri: foto }}
+              source={{ uri: imageUri }}
               onError={(e) => {
                 console.log('Erro ao carregar imagem do jogador:', e.nativeEvent.error);
               }}
@@ -34,12 +41,12 @@ export default function PlayerCard({ nome, foto, posicoes, status, onAdd }: Play
         </LeftSection>
         <MiddleSection>
           <PlayerName>{nome}</PlayerName>
-          <PlayerPositions>{Array.isArray(posicoes) && posicoes.length > 0 ? posicoes.join(', ') : 'Posição não definida'}</PlayerPositions>
+          <PlayerPositions>{Array.isArray(posicoes) && posicoes.length > 0 ? posicoes.join(', ') : ''}</PlayerPositions>
         </MiddleSection>
         <RightSection>
           {onAdd ? (
             <Button onPress={onAdd}>
-              <ButtonText>ADICIONAR</ButtonText>
+              <ButtonText><Plus size={24} color="#FFFFFF" /></ButtonText>
             </Button>
           ) : (
             status && <PlayerStatus status={status}>{status.toUpperCase()}</PlayerStatus>
@@ -72,15 +79,15 @@ const RightSection = styled.View`
 `;
 
 const ProfileImage = styled.Image`
-  width: 50px;
-  height: 50px;
-  border-radius: 25px;
+  width: 70px;
+  height: 70px;
+  border-radius: 9999px;
 `;
 
 const PlaceholderImage = styled.View`
-  width: 50px;
-  height: 50px;
-  border-radius: 25px;
+  width: 70px;
+  height: 70px;
+  border-radius: 9999px;
   background-color: #e2e8f0;
   justify-content: center;
   align-items: center;

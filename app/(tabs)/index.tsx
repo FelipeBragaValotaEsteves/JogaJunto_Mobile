@@ -1,3 +1,4 @@
+import { Loading } from "@/components/shared/Loading";
 import { MainContainer } from "@/components/shared/MainContainer";
 import { MatchCard } from "@/components/shared/MatchCard";
 import { NoResults } from "@/components/shared/NoResults";
@@ -7,8 +8,7 @@ import typography from "@/constants/typography";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
-import { styled } from "styled-components/native";
+import styled from "styled-components/native";
 import { authHeaders } from '../../utils/authHeaders';
 
 export default function HomeScreen() {
@@ -61,11 +61,7 @@ export default function HomeScreen() {
   }
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
+    return <Loading />;
   }
 
   return (

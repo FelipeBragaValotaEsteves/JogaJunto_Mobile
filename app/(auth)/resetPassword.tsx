@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { CircleArrowLeft } from 'lucide-react-native';
 import React, { useState } from "react";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { styled } from "styled-components/native";
 import LogoJogaJunto from "../../assets/images/logo-white.svg";
 import { Alert } from "../../components/shared/Alert";
@@ -81,49 +81,60 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <Container>
-      <Header>
-        <LogoJogaJunto width={265} />
-      </Header>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <ScrollView 
+        contentContainerStyle={{ flexGrow: 1 }} 
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Container>
+          <Header>
+            <LogoJogaJunto width={265} />
+          </Header>
 
-      <FormContainer>
-        <BackButtonAuth onPress={() => router.back()}>
-          <CircleArrowLeft color="#f5f7fa" size={50} />
-        </BackButtonAuth>
+          <FormContainer>
+            <BackButtonAuth onPress={() => router.back()}>
+              <CircleArrowLeft color="#f5f7fa" size={50} />
+            </BackButtonAuth>
 
-        <TitlePage>Redefinir Senha</TitlePage>
+            <TitlePage>Redefinir Senha</TitlePage>
 
-        <Input
-          placeholder="Código de recuperação"
-          value={codigo}
-          onChangeText={setCodigo}
-        />
-        <Input
-          placeholder="Nova senha"
-          value={novaSenha}
-          onChangeText={setNovaSenha}
-        />
-        <Input
-          placeholder="Confirmar nova senha"
-          value={confirmarSenha}
-          onChangeText={setConfirmarSenha}
-        />
+            <Input
+              placeholder="Código de recuperação"
+              value={codigo}
+              onChangeText={setCodigo}
+            />
+            <Input
+              placeholder="Nova senha"
+              value={novaSenha}
+              onChangeText={setNovaSenha}
+            />
+            <Input
+              placeholder="Confirmar nova senha"
+              value={confirmarSenha}
+              onChangeText={setConfirmarSenha}
+            />
 
-        <OutlineButton onPress={redefinirSenha} disabled={loading}>
-          <OutlineButtonText>
-            {loading ? <ActivityIndicator color="#22c55e" /> : "REDEFINIR SENHA"}
-          </OutlineButtonText>
-        </OutlineButton>
-      </FormContainer>
+            <OutlineButton onPress={redefinirSenha} disabled={loading}>
+              <OutlineButtonText>
+                {loading ? <ActivityIndicator color="#22c55e" /> : "REDEFINIR SENHA"}
+              </OutlineButtonText>
+            </OutlineButton>
+          </FormContainer>
 
-      <Alert
-        visible={alertVisible}
-        type={alertData.type}
-        title={alertData.title}
-        message={alertData.message}
-        onClose={() => setAlertVisible(false)}
-      />
-    </Container>
+          <Alert
+            visible={alertVisible}
+            type={alertData.type}
+            title={alertData.title}
+            message={alertData.message}
+            onClose={() => setAlertVisible(false)}
+          />
+        </Container>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

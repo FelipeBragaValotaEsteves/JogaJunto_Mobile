@@ -18,8 +18,8 @@ const GameTitle = styled.Text`
   font-size: ${typography['txt-1'].fontSize}px;
   font-family: ${typography['txt-1'].fontFamily};
   color: #2C2C2C;
-  text-align: center;
-  margin-bottom: 12px;
+  text-align: start;
+  margin-bottom: 32px;
 `;
 
 const ScoreSection = styled.View`

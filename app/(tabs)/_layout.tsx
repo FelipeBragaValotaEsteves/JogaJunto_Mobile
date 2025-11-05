@@ -1,4 +1,4 @@
-import { BottomTabBar } from "@react-navigation/bottom-tabs";
+import { BottomTabBar, BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Tabs, useRouter, useSegments } from "expo-router";
 import { Bell, Home, Mail, User } from "lucide-react-native";
 import { Text, View } from "react-native";
@@ -28,13 +28,14 @@ export default function TabsLayout() {
           position: "absolute",
         },
         tabBarBackground: () => <TabBarBackground />,
+        animation: "shift",
       }}
-      tabBar={(props) => <BottomTabBar {...props} />}
+      tabBar={(props: BottomTabBarProps) => <BottomTabBar {...props} />}
     >
       <Tabs.Screen
         name="index"
         options={{
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
             <View
               style={{
                 marginTop: 30,
@@ -51,14 +52,14 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="match"
         options={{
-          tabBarButton: (props) => <FabButton {...props} />,
+          tabBarButton: (props: any) => <FabButton {...props} />,
         }}
       />
 
       <Tabs.Screen
         name="perfil"
         options={{
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
             <View
               style={{
                 marginTop: 30,

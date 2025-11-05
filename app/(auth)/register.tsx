@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { CircleArrowLeft } from "lucide-react-native";
 import React, { useState } from "react";
+import { KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { styled } from "styled-components/native";
 import LogoJogaJunto from "../../assets/images/logo-white.svg";
 import { Alert } from "../../components/shared/Alert";
@@ -88,54 +89,65 @@ export default function RegisterScreen() {
   };
 
   return (
-    <Container>
-      <Header>
-        <LogoJogaJunto width={265} />
-      </Header>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <ScrollView 
+        contentContainerStyle={{ flexGrow: 1 }} 
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Container>
+          <Header>
+            <LogoJogaJunto width={265} />
+          </Header>
 
-      <FormContainer>
+          <FormContainer>
 
-        <BackButtonAuth onPress={() => router.back()}>
-          <CircleArrowLeft color="#f5f7fa" size={50} />
-        </BackButtonAuth>
+            <BackButtonAuth onPress={() => router.back()}>
+              <CircleArrowLeft color="#f5f7fa" size={50} />
+            </BackButtonAuth>
 
-        <TitlePage>Cadastre-se</TitlePage>
+            <TitlePage>Cadastre-se</TitlePage>
 
-        <Input
-          placeholder="Nome"
-          value={name}
-          onChangeText={setName}
-        />
-        <Input
-          placeholder="Email"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <Input
-          placeholder="Senha"
-          value={password}
-          onChangeText={setPassword}
-        />
-        <Input
-          placeholder="Confirma Senha"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
+            <Input
+              placeholder="Nome"
+              value={name}
+              onChangeText={setName}
+            />
+            <Input
+              placeholder="Email"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+            />
+            <Input
+              placeholder="Senha"
+              value={password}
+              onChangeText={setPassword}
+            />
+            <Input
+              placeholder="Confirma Senha"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
 
-        <OutlineButton onPress={handleRegister}>
-          <OutlineButtonText>CADASTRAR</OutlineButtonText>
-        </OutlineButton>
-      </FormContainer>
+            <OutlineButton onPress={handleRegister}>
+              <OutlineButtonText>CADASTRAR</OutlineButtonText>
+            </OutlineButton>
+          </FormContainer>
 
-      <Alert
-        visible={alertVisible}
-        type={alertData.type}
-        title={alertData.title}
-        message={alertData.message}
-        onClose={() => setAlertVisible(false)}
-      />
-    </Container>
+          <Alert
+            visible={alertVisible}
+            type={alertData.type}
+            title={alertData.title}
+            message={alertData.message}
+            onClose={() => setAlertVisible(false)}
+          />
+        </Container>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
