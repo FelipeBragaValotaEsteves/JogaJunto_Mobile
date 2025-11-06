@@ -36,7 +36,7 @@ export default function AddPlayerCard({ nome, foto, posicoes, onInvite }: AddPla
         </MiddleSection>
         <RightSection>
           <Button onPress={onInvite}>
-            <ButtonText>Convidar</ButtonText>
+            <ButtonText>CONVIDAR</ButtonText>
           </Button>
         </RightSection>
       </CardContainer>

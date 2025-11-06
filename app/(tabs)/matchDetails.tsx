@@ -54,7 +54,7 @@ export default function MatchDetailsScreen() {
 
             const data = await response.json();
             setMatchDetails(data);
-        } catch (error) {
+        } catch {
             showAlert(
                 'error',
                 'Erro',
@@ -113,7 +113,7 @@ export default function MatchDetailsScreen() {
             });
 
             setGames(formattedGames);
-        } catch (error) {
+        } catch {
             showAlert(
                 'error',
                 'Erro',
@@ -180,7 +180,7 @@ export default function MatchDetailsScreen() {
                             router.back();
                         }
                     );
-                } catch (error) {
+                } catch {
                     showAlert(
                         'error',
                         'Erro',

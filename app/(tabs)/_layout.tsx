@@ -116,6 +116,11 @@ export default function TabsLayout() {
         name="gameAdd"
         options={{ title: "Adicionar Jogo", href: null }}
       />
+
+      <Tabs.Screen
+        name="matchPlayerManual"
+        options={{ title: "Adicionar Jogador Manualmente", href: null }}
+      />
     </Tabs>
   );
 }
@@ -141,17 +146,17 @@ function CustomHeader() {
         <Bell
           color="white"
           size={28}
-          onPress={() => router.push({ 
-            pathname: "/(tabs)/notifications", 
-            params: { from: "/(tabs)" } 
+          onPress={() => router.push({
+            pathname: "/(tabs)/notifications",
+            params: { from: "/(tabs)" }
           })}
         />
         <Mail
           color="white"
           size={28}
-          onPress={() => router.push({ 
-            pathname: "/(tabs)/invites", 
-            params: { from: "/(tabs)" } 
+          onPress={() => router.push({
+            pathname: "/(tabs)/invites",
+            params: { from: "/(tabs)" }
           })}
         />
       </View>
@@ -191,17 +196,17 @@ function CustomHeaderIndex() {
           <Bell
             color="white"
             size={28}
-            onPress={() => router.push({ 
-              pathname: "/(tabs)/notifications", 
-              params: { from: "/(tabs)" } 
+            onPress={() => router.push({
+              pathname: "/(tabs)/notifications",
+              params: { from: "/(tabs)" }
             })}
           />
           <Mail
             color="white"
             size={28}
-            onPress={() => router.push({ 
-              pathname: "/(tabs)/invites", 
-              params: { from: "/(tabs)" } 
+            onPress={() => router.push({
+              pathname: "/(tabs)/invites",
+              params: { from: "/(tabs)" }
             })}
           />
         </View>

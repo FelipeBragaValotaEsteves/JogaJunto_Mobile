@@ -5,7 +5,7 @@ import { Loading } from '@/components/shared/Loading';
 import { KeyboardAwareContainer, MainContainer } from '@/components/shared/MainContainer';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { CircleArrowLeft } from 'lucide-react-native';
+import { CircleArrowLeft, UserPlus } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Text } from 'react-native';
 import { styled } from 'styled-components/native';
@@ -131,7 +131,7 @@ export default function AddPlayerScreen() {
                 throw new Error(errorData.message || `Erro ${response.status}: Falha ao enviar convite`);
             }
 
-            const result = await response.json();
+            await response.json();
 
             showAlert(
                 'success', 
@@ -164,7 +164,18 @@ export default function AddPlayerScreen() {
                         <CircleArrowLeft color="#2B6AE3" size={50} />
                     </BackButtonTab>
                 </TopButtonsContainer>
+                
                 <TitlePageTabs>Adicionar Jogador</TitlePageTabs>
+
+                {showEditButton === 'true' && (
+                    <ManualAddButton onPress={() => router.push({
+                        pathname: '/(tabs)/matchPlayerManual' as any,
+                        params: { showEditButton: showEditButton, matchId: matchId }
+                    })}>
+                        <UserPlus color="#2B6AE3" size={20} />
+                        <ManualAddText>Adicionar Manualmente</ManualAddText>
+                    </ManualAddButton>
+                )}
 
             {loading ? (
                 <Loading />
@@ -235,4 +246,22 @@ const NoResultsContainer = styled.View`
   justify-content: center;
   align-items: center;
   padding: 40px 20px;
+`;
+
+const ManualAddButton = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f7ff;
+  border: 2px solid #2B6AE3;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  gap: 8px;
+`;
+
+const ManualAddText = styled.Text`
+  color: #2B6AE3;
+  font-size: 16px;
+  font-weight: 600;
 `;

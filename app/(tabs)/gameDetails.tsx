@@ -14,7 +14,7 @@ import { Player, useGameDetails } from '@/hooks/useGameDetails';
 import { TopButtonsContainer } from '@/styles/gameDetailsStyles';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CircleArrowLeft, User } from 'lucide-react-native';
+import { CircleArrowLeft, CircleX, Edit, User } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -227,6 +227,105 @@ export default function GameDetailsScreen() {
         }
     }, [gameDetails, editingTeam, fetchAll]);
 
+    const handleEdit = () => {
+        if (!gameDetails) return;
+
+        const time1 = gameDetails.times?.[0];
+        const time2 = gameDetails.times?.[1];
+
+        router.push({
+            pathname: '/(tabs)/gameAdd' as any,
+            params: {
+                partidaId: id,
+                title: title,
+                idGame: idGame,
+                team1Name: time1?.nome || '',
+                team2Name: time2?.nome || '',
+                isEditing: 'true'
+            }
+        });
+    };
+
+    const handleCancelGame = async () => {
+        if (!gameDetails) return;
+
+        showAlert(
+            'warning',
+            'Confirmar Cancelamento',
+            'Tem certeza que deseja cancelar este jogo? Esta ação não pode ser desfeita.',
+            async () => {
+                try {
+                    const headers = await authHeaders();
+                    const response = await fetch(`${BASE_URL}/jogos/${idGame}`, {
+                        method: 'DELETE',
+                        headers,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Erro ao cancelar o jogo");
+                    }
+
+                    showAlert(
+                        'success',
+                        'Jogo Cancelado',
+                        'O jogo foi cancelado com sucesso.',
+                        () => {
+                            router.replace({
+                                pathname: '/(tabs)/matchDetails',
+                                params: { id: id, source: 'createdMatches' },
+                            });
+                        }
+                    );
+                } catch {
+                    showAlert(
+                        'error',
+                        'Erro',
+                        'Não foi possível cancelar o jogo. Tente novamente.'
+                    );
+                }
+            }
+        );
+    };
+
+    const handleRemovePlayer = useCallback(async () => {
+        if (!selectedPlayer) return;
+
+        showAlert(
+            'warning',
+            'Confirmar Remoção',
+            `Tem certeza que deseja remover ${selectedPlayer.nome} do time?`,
+            async () => {
+                try {
+                    const headers = await authHeaders();
+                    const response = await fetch(`${BASE_URL}/time-participantes/${selectedPlayer.id}`, {
+                        method: 'DELETE',
+                        headers,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Erro ao remover jogador");
+                    }
+
+                    showAlert(
+                        'success',
+                        'Jogador Removido',
+                        `${selectedPlayer.nome} foi removido do time com sucesso.`,
+                        async () => {
+                            bottomSheetRef.current?.close();
+                            await fetchAll();
+                        }
+                    );
+                } catch {
+                    showAlert(
+                        'error',
+                        'Erro',
+                        'Não foi possível remover o jogador. Tente novamente.'
+                    );
+                }
+            }
+        );
+    }, [selectedPlayer, fetchAll]);
+
     if (loading) {
         return <Loading />;
     }
@@ -260,6 +359,17 @@ export default function GameDetailsScreen() {
                         }}>
                             <CircleArrowLeft color="#2B6AE3" size={50} />
                         </BackButtonTab>
+                        
+                        {showEditButton === 'true' && (
+                            <ButtonsContainer>
+                                <CancelButton onPress={handleCancelGame}>
+                                    <CircleX color="#E53E3E" size={30} />
+                                </CancelButton>
+                                <EditButton onPress={handleEdit}>
+                                    <Edit color="#2B6AE3" size={30} />
+                                </EditButton>
+                            </ButtonsContainer>
+                        )}
                     </TopButtonsContainer>
 
                     <GameHeader matchDetails={matchDetails} gameDetails={gameDetails} />
@@ -388,9 +498,15 @@ export default function GameDetailsScreen() {
                                     />
                                 </StatEditRow>
 
-                                <Button onPress={handleSaveChanges} style={{ marginTop: 20 }}>
-                                    <ButtonText>SALVAR</ButtonText>
-                                </Button>
+                                <ButtonsActionsContainer>
+                                    <RemovePlayerButton onPress={handleRemovePlayer}>
+                                        <RemovePlayerText>REMOVER</RemovePlayerText>
+                                    </RemovePlayerButton>
+
+                                    <Button onPress={handleSaveChanges}>
+                                        <ButtonText>SALVAR</ButtonText>
+                                    </Button>
+                                </ButtonsActionsContainer>
                             </StatsFormContainer>
                         </PlayerDetailsContainer>
                     ) : editingTeam ? (
@@ -505,4 +621,43 @@ const TeamName = styled.Text`
   font-size: ${typography['txt-1'].fontSize}px;
   font-family: ${typography['txt-1'].fontFamily};
   margin-bottom: 16px;
+`;
+
+const EditButton = styled.TouchableOpacity`
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-left: 10px;
+`;
+
+const CancelButton = styled.TouchableOpacity`
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-left: 10px;
+`;
+
+const ButtonsContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+
+const ButtonsActionsContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+`;
+
+const RemovePlayerButton = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  gap: 8px;
+`;
+
+const RemovePlayerText = styled.Text`
+  color: #E53E3E;
+  font-size: 14px;
+  font-weight: 600;
 `;

@@ -6,7 +6,7 @@ import { KeyboardAwareContainer, MainContainer } from '@/components/shared/MainC
 import { TitlePageTabs } from '@/components/shared/TitlePage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleArrowLeft } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { styled } from 'styled-components/native';
 import { Alert } from '../../components/shared/Alert';
 import BASE_URL from '../../constants/config';
@@ -14,11 +14,21 @@ import { authHeaders } from '../../utils/authHeaders';
 
 export default function GameAddScreen() {
     const router = useRouter();
-    const { partidaId, title } = useLocalSearchParams();
+    const { partidaId, title, idGame, team1Name: initialTeam1, team2Name: initialTeam2, isEditing } = useLocalSearchParams();
 
     const [team1Name, setTeam1Name] = useState('');
     const [team2Name, setTeam2Name] = useState('');
     const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        setTeam1Name('');
+        setTeam2Name('');
+        
+        if (isEditing === 'true' && initialTeam1 && initialTeam2) {
+            setTeam1Name(initialTeam1 as string);
+            setTeam2Name(initialTeam2 as string);
+        }
+    }, [isEditing, initialTeam1, initialTeam2]);
 
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertConfig, setAlertConfig] = useState<{
@@ -58,41 +68,74 @@ export default function GameAddScreen() {
             setSaving(true);
 
             const headers = await authHeaders();
-            const response = await fetch(`${BASE_URL}/jogos`, {
-                method: 'POST',
-                headers: {
-                    ...headers,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    partidaId: partidaId,
-                    time1: team1Name.trim(),
-                    time2: team2Name.trim()
-                }),
-            });
+            
+            if (isEditing === 'true' && idGame) {
+                const response = await fetch(`${BASE_URL}/jogos/${idGame}`, {
+                    method: 'PUT',
+                    headers: {
+                        ...headers,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        time1: team1Name.trim(),
+                        time2: team2Name.trim()
+                    }),
+                });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Erro ao criar o jogo');
-            }
-
-            const data = await response.json();
-
-            showAlert(
-                'success',
-                'Sucesso',
-                'Jogo criado com sucesso!',
-                () => {
-                    router.replace({
-                        pathname: '/(tabs)/gameDetails',
-                        params: { id: partidaId, idGame: data.jogo.id, title: title,  showEditButton: 'true'  },
-                    });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Erro ao editar o jogo');
                 }
-            );
+
+                showAlert(
+                    'success',
+                    'Sucesso',
+                    'Jogo editado com sucesso!',
+                    () => {
+                        router.replace({
+                            pathname: '/(tabs)/gameDetails',
+                            params: { id: partidaId, idGame: idGame, title: title, showEditButton: 'true' },
+                        });
+                    }
+                );
+            } else {
+                const response = await fetch(`${BASE_URL}/jogos`, {
+                    method: 'POST',
+                    headers: {
+                        ...headers,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        partidaId: partidaId,
+                        time1: team1Name.trim(),
+                        time2: team2Name.trim()
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Erro ao criar o jogo');
+                }
+
+                const data = await response.json();
+
+                showAlert(
+                    'success',
+                    'Sucesso',
+                    'Jogo criado com sucesso!',
+                    () => {
+                        router.replace({
+                            pathname: '/(tabs)/gameDetails',
+                            params: { id: partidaId, idGame: data.jogo.id, title: title, showEditButton: 'true' },
+                        });
+                    }
+                );
+            }
 
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-            showAlert('error', 'Erro', `Não foi possível criar o jogo: ${errorMessage}`);
+            const action = isEditing === 'true' ? 'editar' : 'criar';
+            showAlert('error', 'Erro', `Não foi possível ${action} o jogo: ${errorMessage}`);
         } finally {
             setSaving(false);
         }
@@ -103,16 +146,23 @@ export default function GameAddScreen() {
             <MainContainer>
                 <TopButtonsContainer>
                     <BackButtonTab onPress={() => {
-                        router.replace({
-                            pathname: '/(tabs)/matchDetails',
-                            params: { id: partidaId },
-                        });
+                        if (isEditing === 'true' && idGame) {
+                            router.replace({
+                                pathname: '/(tabs)/gameDetails',
+                                params: { id: partidaId, idGame: idGame, title: title, showEditButton: 'true' },
+                            });
+                        } else {
+                            router.replace({
+                                pathname: '/(tabs)/matchDetails',
+                                params: { id: partidaId, source: 'createdMatches' },
+                            });
+                        }
                     }}>
                         <CircleArrowLeft color="#2B6AE3" size={50} />
                     </BackButtonTab>
                 </TopButtonsContainer>
 
-                <TitlePageTabs>Criar Novo Jogo</TitlePageTabs>
+                <TitlePageTabs>{isEditing === 'true' ? 'Editar Jogo' : 'Criar Novo Jogo'}</TitlePageTabs>
 
             <ContentContainer>
                 <Input
@@ -131,7 +181,7 @@ export default function GameAddScreen() {
 
                 <Button onPress={handleSave} disabled={saving}>
                     <ButtonText>
-                        {saving ? 'SALVANDO...' : 'SALVAR'}
+                        {saving ? 'SALVANDO...' : (isEditing === 'true' ? 'SALVAR ALTERAÇÕES' : 'CRIAR JOGO')}
                     </ButtonText>
                 </Button>
             </ContentContainer>
