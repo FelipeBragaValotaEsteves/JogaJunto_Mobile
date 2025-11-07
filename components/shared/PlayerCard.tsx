@@ -108,5 +108,5 @@ const PlayerStatus = styled.Text<{ status: string }>`
   font-size: ${typography['txt-2-bold'].fontSize}px;
   font-family: ${typography['txt-2-bold'].fontFamily};
   color: ${({ status }) =>
-    status === 'aceito' ? '#2ECC71' : status === 'pendente' || status === 'inserido manualmente' ? '#F1C40F' : '#E74C3C'};
+    status === 'aceito' ? '#2ECC71' : status === 'pendente' || status === 'manual' ? '#2ECC71' : '#E74C3C'};
 `;

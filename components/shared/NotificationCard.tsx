@@ -1,9 +1,7 @@
 import { ContentContainer } from "@/components/shared/ContentContainer";
 import typography from "@/constants/typography";
-import { ArrowRight } from "lucide-react-native";
 import React from "react";
 import { styled } from "styled-components/native";
-import { ButtonSpace } from "./Button";
 
 interface NotificationCardProps {
     message: string;
@@ -21,11 +19,11 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
                     <MessageText>{message}</MessageText>
                 </MessageSection>
 
-                <ButtonSection>
+            {/* <ButtonSection>
                     <ButtonSpace onPress={onPress}>
                         <ArrowRight size={20} color="#22c55e" />
                     </ButtonSpace>
-                </ButtonSection>
+                </ButtonSection> */}
             </CardContainer>
         </ContentContainer>
     );

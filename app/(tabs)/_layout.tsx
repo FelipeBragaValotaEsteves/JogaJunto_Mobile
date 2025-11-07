@@ -38,7 +38,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
             <View
               style={{
-                marginTop: 30,
+                marginTop: 50,
                 padding: 20,
                 borderRadius: 50,
               }}
@@ -62,7 +62,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
             <View
               style={{
-                marginTop: 30,
+                marginTop: 50,
                 padding: 20,
                 borderRadius: 1000,
               }}

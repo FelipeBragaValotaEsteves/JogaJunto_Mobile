@@ -50,7 +50,7 @@ export default function MatchPlayerManualScreen() {
             setLoading(true);
 
             const headers = await authHeaders();
-            const response = await fetch(`${BASE_URL}/jogadores-manuais`, {
+            const response = await fetch(`${BASE_URL}/jogadores/externo/adicionar`, {
                 method: 'POST',
                 headers: {
                     ...headers,

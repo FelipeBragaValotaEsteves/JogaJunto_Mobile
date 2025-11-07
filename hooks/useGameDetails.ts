@@ -6,13 +6,14 @@ export interface Player {
   id: number;
   nome: string;
   posicao: string;
-  foto?: string;
+  foto: string;
   gols?: number;
   assistencias?: number;
   cartoesAmarelos?: number;
   cartoesVermelhos?: number;
   defesas?: number;
-  rating?: number; 
+  rating?: number;
+  timeParticipanteId: number;
 }
 
 export interface Team {
@@ -67,6 +68,7 @@ export function useGameDetails(id: string, idGame: string) {
         fetch(`${BASE_URL}/posicao/list`, { headers }),
       ]);
 
+
       if (!matchRes.ok || !gameRes.ok || !posRes.ok) {
         throw new Error('Erro ao buscar dados do jogo.');
       }
@@ -93,11 +95,14 @@ export function useGameDetails(id: string, idGame: string) {
                 id: j.jogadorId ?? j.id ?? 0,
                 nome: j.nome ?? 'Jogador',
                 posicao: j.posicao ?? '',
+                foto: j.foto ?? '',
                 gols: j.eventos?.gol ?? 0,
                 assistencias: j.eventos?.assistencia ?? 0,
                 cartoesAmarelos: j.eventos?.cartaoAmarelo ?? 0,
                 cartoesVermelhos: j.eventos?.cartaoVermelho ?? 0,
                 defesas: j.eventos?.defesa ?? 0,
+                rating: j.rating ?? 0,
+                timeParticipanteId: j.timeParticipanteId ?? 0,
               })) ?? [],
           })) ?? [],
       };

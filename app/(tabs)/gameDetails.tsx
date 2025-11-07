@@ -6,6 +6,7 @@ import { ContentContainer } from '@/components/shared/ContentContainer';
 import { GameHeader } from '@/components/shared/GameHeader';
 import { Loading } from '@/components/shared/Loading';
 import { KeyboardAwareContainer, MainContainer } from '@/components/shared/MainContainer';
+import { NoResults } from '@/components/shared/NoResults';
 import { NumberInput } from '@/components/shared/NumberInput';
 import PlayerCard from '@/components/shared/PlayerCard';
 import { Select } from '@/components/shared/Select';
@@ -23,7 +24,7 @@ import BASE_URL, { BASE_URL_IMAGE } from '../../constants/config';
 import { authHeaders } from '../../utils/authHeaders';
 
 interface AvailablePlayer {
-    id: number;
+    id_jogador: number;
     nome: string;
     foto: string;
     status: string;
@@ -50,7 +51,9 @@ export default function GameDetailsScreen() {
         defesas: 0,
         rating: 0.0,
         posicao: '',
-        posicaoId: 0
+        posicaoId: 0,
+        timeParticipanteId: 0,
+        foto: ''
     });
     const [availablePlayers, setAvailablePlayers] = useState<AvailablePlayer[]>([]);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
@@ -76,13 +79,13 @@ export default function GameDetailsScreen() {
 
         try {
             const headers = await authHeaders();
-            const response = await fetch(`${BASE_URL}/jogadores/partida/${id}`, { headers });
-            console.log(`${BASE_URL}/jogadores/partida/${id}`, headers);
+            console.log(`${BASE_URL}/jogadores/disponiveis/jogo/${idGame}`);
 
-            console.log(response);
+            const response = await fetch(`${BASE_URL}/jogadores/disponiveis/jogo/${idGame}`, { headers });
 
             if (response.ok) {
                 const data = await response.json();
+                console.log(data);
 
                 setAvailablePlayers(data || []);
             }
@@ -94,8 +97,8 @@ export default function GameDetailsScreen() {
     };
 
     const handlePlayerPress = (player: Player) => {
-        console.log(player);
-        
+        console.log('Player selected:', player);
+
         setSelectedPlayer(player);
 
         const currentPosition = positions.find(pos => pos.nome === player.posicao);
@@ -109,6 +112,8 @@ export default function GameDetailsScreen() {
             defesas: player.defesas || 0,
             rating: player.rating || 0,
             posicao: player.posicao || '',
+            timeParticipanteId: player.timeParticipanteId,
+            foto: player.foto || '',
             posicaoId: currentPosition?.id || 0
         });
 
@@ -150,10 +155,21 @@ export default function GameDetailsScreen() {
     const handleSaveChanges = useCallback(async () => {
         if (!selectedPlayer || !gameDetails) return;
 
+        console.log('Salvando estatísticas para timeParticipanteId:', editablePlayer.timeParticipanteId);
+        console.log('Dados enviados:', {
+            gol: editablePlayer.gols,
+            assistencia: editablePlayer.assistencias,
+            cartaoAmarelo: editablePlayer.cartoesAmarelos,
+            cartaoVermelho: editablePlayer.cartoesVermelhos,
+            defesa: editablePlayer.defesas,
+            rating: editablePlayer.rating,
+            posicaoId: editablePlayer.posicaoId
+        });
+
         try {
             const headers = await authHeaders();
 
-            const response = await fetch(`${BASE_URL}/time-participantes/${selectedPlayer.id}`, {
+            const response = await fetch(`${BASE_URL}/time-participantes/${editablePlayer.timeParticipanteId}`, {
                 method: 'PUT',
                 headers: {
                     ...headers,
@@ -165,6 +181,7 @@ export default function GameDetailsScreen() {
                     cartaoAmarelo: editablePlayer.cartoesAmarelos,
                     cartaoVermelho: editablePlayer.cartoesVermelhos,
                     defesa: editablePlayer.defesas,
+                    rating: editablePlayer.rating,
                     posicaoId: editablePlayer.posicaoId
                 })
             });
@@ -194,11 +211,6 @@ export default function GameDetailsScreen() {
 
         try {
             const headers = await authHeaders();
-            console.log(JSON.stringify({
-                jogadorId: player.id,
-                timeId: selectedTeam.id,
-                jogoId: gameDetails.id
-            }));
 
             const response = await fetch(`${BASE_URL}/time-participantes`, {
                 method: 'POST',
@@ -207,7 +219,7 @@ export default function GameDetailsScreen() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    jogadorId: player.id,
+                    jogadorId: player.id_jogador,
                     timeId: selectedTeam.id,
                     jogoId: gameDetails.id
                 })
@@ -297,7 +309,8 @@ export default function GameDetailsScreen() {
             async () => {
                 try {
                     const headers = await authHeaders();
-                    const response = await fetch(`${BASE_URL}/time-participantes/${selectedPlayer.id}`, {
+                    console.log('Removendo jogador com timeParticipanteId:', editablePlayer.timeParticipanteId);
+                    const response = await fetch(`${BASE_URL}/time-participantes/${editablePlayer.timeParticipanteId}`, {
                         method: 'DELETE',
                         headers,
                     });
@@ -359,7 +372,7 @@ export default function GameDetailsScreen() {
                         }}>
                             <CircleArrowLeft color="#2B6AE3" size={50} />
                         </BackButtonTab>
-                        
+
                         {showEditButton === 'true' && (
                             <ButtonsContainer>
                                 <CancelButton onPress={handleCancelGame}>
@@ -396,17 +409,17 @@ export default function GameDetailsScreen() {
                     {selectedPlayer ? (
                         <PlayerDetailsContainer>
                             <PlayerImageNamePositionContainer>
-                                {selectedPlayer.foto ? (
-                                    selectedPlayer.foto.startsWith('http://') || selectedPlayer.foto.startsWith('https://') ? (
+                                {editablePlayer.foto ? (
+                                    editablePlayer.foto.startsWith('http://') || editablePlayer.foto.startsWith('https://') ? (
                                         <PlayerImage
-                                            source={{ uri: selectedPlayer.foto }}
+                                            source={{ uri: editablePlayer.foto }}
                                             onError={(e) => {
                                                 console.log('Erro ao carregar imagem do jogador:', e.nativeEvent.error);
                                             }}
                                         />
                                     ) : (
                                         <PlayerImage
-                                            source={{ uri: `${BASE_URL_IMAGE}${selectedPlayer.foto}` }}
+                                            source={{ uri: `${BASE_URL_IMAGE}${editablePlayer.foto}` }}
                                             onError={(e) => {
                                                 console.log('Erro ao carregar imagem do jogador:', e.nativeEvent.error);
                                             }}
@@ -517,16 +530,19 @@ export default function GameDetailsScreen() {
 
                             {loadingPlayers ? (
                                 <Text>Carregando jogadores disponíveis...</Text>
-                            ) : (
-                                availablePlayers.map((player) => (
+                            ) : availablePlayers.length > 0 ? (
+                                
+                                availablePlayers.map((player) => (  
                                     <PlayerCard
-                                        key={player.id}
+                                        key={player.id_jogador}
                                         nome={player.nome}
                                         foto={player.foto}
                                         posicoes={player.posicoes.filter((pos): pos is string => pos !== null)}
                                         onAdd={() => handleAddPlayerToTeam(player)}
                                     />
                                 ))
+                            ) : (
+                                <NoResults message="Nenhum jogador disponível para adicionar ao time." />
                             )}
                         </View>
                     ) : null}
