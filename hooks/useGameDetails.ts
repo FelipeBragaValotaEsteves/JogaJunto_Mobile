@@ -79,6 +79,8 @@ export function useGameDetails(id: string, idGame: string) {
         posRes.json(),
       ]);
 
+      console.log(JSON.stringify(gameData));
+
       const normalizedGame: GameDetails = {
         id: gameData.jogoId ?? gameData.id ?? 0,
         titulo: gameData.titulo ?? `Jogo ${gameData.jogoId ?? idGame}`,
@@ -101,7 +103,7 @@ export function useGameDetails(id: string, idGame: string) {
                 cartoesAmarelos: j.eventos?.cartaoAmarelo ?? 0,
                 cartoesVermelhos: j.eventos?.cartaoVermelho ?? 0,
                 defesas: j.eventos?.defesa ?? 0,
-                rating: j.rating ?? 0,
+                rating: j.nota ?? 0,
                 timeParticipanteId: j.timeParticipanteId ?? 0,
               })) ?? [],
           })) ?? [],

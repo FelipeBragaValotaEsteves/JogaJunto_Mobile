@@ -79,13 +79,11 @@ export default function GameDetailsScreen() {
 
         try {
             const headers = await authHeaders();
-            console.log(`${BASE_URL}/jogadores/disponiveis/jogo/${idGame}`);
 
             const response = await fetch(`${BASE_URL}/jogadores/disponiveis/jogo/${idGame}`, { headers });
 
             if (response.ok) {
                 const data = await response.json();
-                console.log(data);
 
                 setAvailablePlayers(data || []);
             }
@@ -97,7 +95,6 @@ export default function GameDetailsScreen() {
     };
 
     const handlePlayerPress = (player: Player) => {
-        console.log('Player selected:', player);
 
         setSelectedPlayer(player);
 
@@ -155,17 +152,6 @@ export default function GameDetailsScreen() {
     const handleSaveChanges = useCallback(async () => {
         if (!selectedPlayer || !gameDetails) return;
 
-        console.log('Salvando estatísticas para timeParticipanteId:', editablePlayer.timeParticipanteId);
-        console.log('Dados enviados:', {
-            gol: editablePlayer.gols,
-            assistencia: editablePlayer.assistencias,
-            cartaoAmarelo: editablePlayer.cartoesAmarelos,
-            cartaoVermelho: editablePlayer.cartoesVermelhos,
-            defesa: editablePlayer.defesas,
-            rating: editablePlayer.rating,
-            posicaoId: editablePlayer.posicaoId
-        });
-
         try {
             const headers = await authHeaders();
 
@@ -181,7 +167,7 @@ export default function GameDetailsScreen() {
                     cartaoAmarelo: editablePlayer.cartoesAmarelos,
                     cartaoVermelho: editablePlayer.cartoesVermelhos,
                     defesa: editablePlayer.defesas,
-                    rating: editablePlayer.rating,
+                    nota: editablePlayer.rating,
                     posicaoId: editablePlayer.posicaoId
                 })
             });
@@ -337,7 +323,7 @@ export default function GameDetailsScreen() {
                 }
             }
         );
-    }, [selectedPlayer, fetchAll]);
+    }, [selectedPlayer, editablePlayer.timeParticipanteId, fetchAll]);
 
     if (loading) {
         return <Loading />;
