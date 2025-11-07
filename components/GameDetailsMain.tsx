@@ -1,6 +1,7 @@
 import { TeamSection } from '@/components/shared/TeamSection';
 import typography from '@/constants/typography';
 import { GameDetails, Player } from '@/hooks/useGameDetails';
+import { useState } from 'react';
 import { styled } from 'styled-components/native';
 
 interface GameDetailsMainProps {
@@ -8,6 +9,8 @@ interface GameDetailsMainProps {
   title: string;
   onPlayerPress: (player: Player) => void;
   onAddPlayer: (teamName: string) => void;
+  onTeamNameChange?: (teamId: number, newName: string) => void;
+  canEdit?: boolean;
 }
 
 const GameCard = styled.View`
@@ -29,13 +32,15 @@ const ScoreSection = styled.View`
   width: 100%;
 `;
 
-const TeamName = styled.Text`
+const TeamName = styled.TextInput`
   text-align: left;
   font-size: ${typography['txt-1'].fontSize}px;
   font-family: ${typography['txt-1'].fontFamily};
   color: #2C2C2C;
   word-wrap: break-word;
   width: 33%;
+  padding: 0;
+  margin: 0;
 `;
 
 const Score = styled.Text`
@@ -46,12 +51,14 @@ const Score = styled.Text`
   width: 33%;
 `;
 
-const TeamNameRight = styled.Text`
+const TeamNameRight = styled.TextInput`
   text-align: right;
   font-size: ${typography['txt-1'].fontSize}px;
   font-family: ${typography['txt-1'].fontFamily};
   color: #2C2C2C;
   width: 33%;
+  padding: 0;
+  margin: 0;
 `;
 
 const PlayersSection = styled.View`
@@ -64,25 +71,60 @@ const TeamSectionContainer = styled.View`
   flex: 1;
 `;
 
-export function GameDetailsMain({ gameDetails, title, onPlayerPress, onAddPlayer }: GameDetailsMainProps) {
+export function GameDetailsMain({ gameDetails, title, onPlayerPress, onAddPlayer, onTeamNameChange, canEdit = false }: GameDetailsMainProps) {
   const team1 = gameDetails.times?.[0];
   const team2 = gameDetails.times?.[1];
+
+  const [team1Name, setTeam1Name] = useState(team1?.nome || 'Time 1');
+  const [team2Name, setTeam2Name] = useState(team2?.nome || 'Time 2');
+
+  const handleTeam1NameChange = (newName: string) => {
+    setTeam1Name(newName);
+  };
+
+  const handleTeam2NameChange = (newName: string) => {
+    setTeam2Name(newName);
+  };
+
+  const handleTeam1NameBlur = () => {
+    if (team1 && team1Name !== team1.nome && onTeamNameChange) {
+      onTeamNameChange(team1.id, team1Name);
+    }
+  };
+
+  const handleTeam2NameBlur = () => {
+    if (team2 && team2Name !== team2.nome && onTeamNameChange) {
+      onTeamNameChange(team2.id, team2Name);
+    }
+  };
 
   return (
     <>
       <GameCard>
         <GameTitle>{title}</GameTitle>
         <ScoreSection>
-          <TeamName>{team1?.nome || 'Time 1'}</TeamName>
+          <TeamName
+            value={team1Name}
+            onChangeText={handleTeam1NameChange}
+            onBlur={handleTeam1NameBlur}
+            editable={canEdit}
+            underlineColorAndroid="transparent"
+          />
           <Score>{gameDetails.placar1 || 0} x {gameDetails.placar2 || 0}</Score>
-          <TeamNameRight>{team2?.nome || 'Time 2'}</TeamNameRight>
+          <TeamNameRight
+            value={team2Name}
+            onChangeText={handleTeam2NameChange}
+            onBlur={handleTeam2NameBlur}
+            editable={canEdit}
+            underlineColorAndroid="transparent"
+          />
         </ScoreSection>
       </GameCard>
 
       <PlayersSection>
         <TeamSectionContainer>
           <TeamSection
-            teamName={team1?.nome || 'Time 1'}
+            teamName={team1Name}
             players={team1?.jogadores || []}
             onPlayerPress={onPlayerPress}
             onAddPlayer={onAddPlayer}
@@ -90,7 +132,7 @@ export function GameDetailsMain({ gameDetails, title, onPlayerPress, onAddPlayer
         </TeamSectionContainer>
         <TeamSectionContainer>
           <TeamSection
-            teamName={team2?.nome || 'Time 2'}
+            teamName={team2Name}
             players={team2?.jogadores || []}
             onPlayerPress={onPlayerPress}
             onAddPlayer={onAddPlayer}

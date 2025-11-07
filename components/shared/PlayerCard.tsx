@@ -1,6 +1,6 @@
 import { BASE_URL_IMAGE } from '@/constants/config';
 import typography from '@/constants/typography';
-import { Plus, User } from 'lucide-react-native';
+import { Plus, Trash2, User } from 'lucide-react-native';
 import React from 'react';
 import { styled } from 'styled-components/native';
 import { Button, ButtonText } from './Button';
@@ -13,18 +13,21 @@ interface PlayerCardProps {
   posicoes: string[];
   status?: 'Confirmado' | 'Pendente' | 'Recusado';
   onAdd?: () => void;
+  onRemove?: () => void;
+  showRemove?: boolean;
 }
 
-export default function PlayerCard({ nome, foto, posicoes, status, onAdd }: PlayerCardProps) {
-  const imageUri = foto 
-    ? (foto.startsWith('http://') || foto.startsWith('https://') 
-        ? foto 
-        : `${BASE_URL_IMAGE}${foto}`)
+export default function PlayerCard({ nome, foto, posicoes, status, onAdd, onRemove, showRemove }: PlayerCardProps) {
+  const imageUri = foto
+    ? (foto.startsWith('http://') || foto.startsWith('https://')
+      ? foto
+      : `${BASE_URL_IMAGE}${foto}`)
     : null;
 
   return (
     <ContentContainer style={{ marginBottom: 20 }}>
       <CardContainer>
+
         <LeftSection>
           {imageUri ? (
             <ProfileImage
@@ -44,6 +47,11 @@ export default function PlayerCard({ nome, foto, posicoes, status, onAdd }: Play
           <PlayerPositions>{Array.isArray(posicoes) && posicoes.length > 0 ? posicoes.join(', ') : ''}</PlayerPositions>
         </MiddleSection>
         <RightSection>
+          {showRemove && onRemove && (
+            <RemoveButton onPress={onRemove}>
+              <Trash2 size={20} color="#E53E3E" />
+            </RemoveButton>
+          )}
           {onAdd ? (
             <Button onPress={onAdd}>
               <ButtonText><Plus size={24} color="#FFFFFF" /></ButtonText>
@@ -60,6 +68,12 @@ export default function PlayerCard({ nome, foto, posicoes, status, onAdd }: Play
 const CardContainer = styled.View`
   flex-direction: row;
   align-items: center;
+  position: relative;
+`;
+
+const RemoveButton = styled.TouchableOpacity`
+  border-radius: 20px;
+  padding: 6px;
 `;
 
 const LeftSection = styled.View`
@@ -74,8 +88,9 @@ const MiddleSection = styled.View`
 `;
 
 const RightSection = styled.View`
-  justify-content: center;
+  justify-content: space-between;
   align-items: flex-end;
+  gap: 10px;
 `;
 
 const ProfileImage = styled.Image`

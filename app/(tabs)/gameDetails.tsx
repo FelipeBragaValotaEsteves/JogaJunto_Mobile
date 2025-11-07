@@ -15,7 +15,7 @@ import { Player, useGameDetails } from '@/hooks/useGameDetails';
 import { TopButtonsContainer } from '@/styles/gameDetailsStyles';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CircleArrowLeft, CircleX, Edit, User } from 'lucide-react-native';
+import { CircleArrowLeft, CircleX, User } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -149,6 +149,40 @@ export default function GameDetailsScreen() {
         setAlertVisible(true);
     };
 
+    const handleTeamNameChange = useCallback(async (teamId: number, newName: string) => {
+        if (!newName.trim()) {
+            showAlert('error', 'Erro', 'O nome do time não pode estar vazio.');
+            return;
+        }
+
+        try {
+            const headers = await authHeaders();
+
+            const response = await fetch(`${BASE_URL}/times/${teamId}`, {
+                method: 'PUT',
+                headers: {
+                    ...headers,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    nome: newName.trim()
+                })
+            });
+
+            if (response.ok) {
+                showAlert('success', 'Sucesso', 'Nome do time atualizado com sucesso!');
+                await fetchAll();
+            } else {
+                const errorData = await response.json();
+                showAlert('error', 'Erro', errorData.message || 'Erro ao atualizar nome do time.');
+                await fetchAll(); 
+            }
+        } catch {
+            showAlert('error', 'Erro', 'Erro ao atualizar nome do time. Verifique sua conexão.');
+            await fetchAll(); 
+        }
+    }, [fetchAll]);
+
     const handleSaveChanges = useCallback(async () => {
         if (!selectedPlayer || !gameDetails) return;
 
@@ -224,25 +258,6 @@ export default function GameDetailsScreen() {
             showAlert('error', 'Erro', 'Erro ao adicionar jogador ao time. Verifique sua conexão.');
         }
     }, [gameDetails, editingTeam, fetchAll]);
-
-    const handleEdit = () => {
-        if (!gameDetails) return;
-
-        const time1 = gameDetails.times?.[0];
-        const time2 = gameDetails.times?.[1];
-
-        router.push({
-            pathname: '/(tabs)/gameAdd' as any,
-            params: {
-                partidaId: id,
-                title: title,
-                idGame: idGame,
-                team1Name: time1?.nome || '',
-                team2Name: time2?.nome || '',
-                isEditing: 'true'
-            }
-        });
-    };
 
     const handleCancelGame = async () => {
         if (!gameDetails) return;
@@ -364,9 +379,6 @@ export default function GameDetailsScreen() {
                                 <CancelButton onPress={handleCancelGame}>
                                     <CircleX color="#E53E3E" size={30} />
                                 </CancelButton>
-                                <EditButton onPress={handleEdit}>
-                                    <Edit color="#2B6AE3" size={30} />
-                                </EditButton>
                             </ButtonsContainer>
                         )}
                     </TopButtonsContainer>
@@ -379,6 +391,8 @@ export default function GameDetailsScreen() {
                             title={title as string}
                             onPlayerPress={handlePlayerPress}
                             onAddPlayer={handleAddPlayer}
+                            onTeamNameChange={handleTeamNameChange}
+                            canEdit={showEditButton === 'true'}
                         />
                     </ContentContainer>
                 </MainContainer>

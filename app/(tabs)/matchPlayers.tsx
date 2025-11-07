@@ -1,3 +1,4 @@
+import { Alert } from '@/components/shared/Alert';
 import { BackButtonTab } from '@/components/shared/BackButton';
 import { Loading } from '@/components/shared/Loading';
 import { MainContainer } from '@/components/shared/MainContainer';
@@ -25,82 +26,119 @@ export default function MatchPlayersScreen() {
     const [players, setPlayers] = useState<MatchPlayer[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{
+        type: string;
+        title: string;
+        message: string;
+        onConfirm?: (() => void) | undefined;
+    }>({
+        type: 'success',
+        title: '',
+        message: '',
+        onConfirm: undefined,
+    });
 
-    useFocusEffect(
-        useCallback(() => {
-            let isActive = true;
+    const showAlert = (type: string, title: string, message: string, onConfirm?: () => void) => {
+        setAlertConfig({ type, title, message, onConfirm });
+        setAlertVisible(true);
+    };
 
-            const fetchMatchPlayers = async () => {
-                try {
-                    setLoading(true);
-                    setError(null);
+    const fetchMatchPlayers = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
-                    if (!matchId) {
-                        setError('ID da partida não encontrado');
-                        return;
+            if (!matchId) {
+                setError('ID da partida não encontrado');
+                return;
+            }
+
+            const headers = await authHeaders();
+            const response = await fetch(`${BASE_URL}/jogadores/partida/${matchId}`, {
+                headers,
+                cache: 'no-cache'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erro ${response.status}: Falha ao carregar jogadores`);
+            }
+
+            const data = await response.json();
+
+            const processedData = data.map((player: any) => {
+                const originalFoto = player.foto;
+                let processedFoto = null;
+
+                if (originalFoto &&
+                    typeof originalFoto === 'string' &&
+                    originalFoto !== '[object Object]' &&
+                    originalFoto.trim() !== '') {
+
+                    if (originalFoto.startsWith('http')) {
+                        processedFoto = originalFoto;
+                    } else {
+                        processedFoto = `${BASE_URL_IMAGE}${originalFoto}`;
                     }
+                }
 
+                return {
+                    ...player,
+                    posicoes: player.posicoes?.filter((pos: any) => pos !== null) || [],
+                    foto: processedFoto
+                };
+            });
+
+            setPlayers(processedData);
+        } catch (err: any) {
+            setError(err?.message || 'Erro ao carregar jogadores da partida');
+        } finally {
+            setLoading(false);
+        }
+    }, [matchId]);
+
+    const handleRemovePlayer = useCallback((playerId: number, playerName: string) => {
+        showAlert(
+            'warning',
+            'Confirmar Remoção',
+            `Tem certeza que deseja remover ${playerName} da partida?`,
+            async () => {
+                try {
                     const headers = await authHeaders();
-                    const response = await fetch(`${BASE_URL}/jogadores/partida/${matchId}`, {
+                    const response = await fetch(`${BASE_URL}/jogadores/remover-partida/${matchId}/${playerId}`, {
+                        method: 'DELETE',
                         headers,
-                        cache: 'no-cache'
                     });
 
                     if (!response.ok) {
-                        throw new Error(`Erro ${response.status}: Falha ao carregar jogadores`);
+                        throw new Error("Erro ao remover jogador da partida");
                     }
 
-                    const data = await response.json();
-
-                    const processedData = data.map((player: any) => {
-                        const originalFoto = player.foto;
-                        let processedFoto = null;
-
-                        if (originalFoto &&
-                            typeof originalFoto === 'string' &&
-                            originalFoto !== '[object Object]' &&
-                            originalFoto.trim() !== '') {
-
-                            if (originalFoto.startsWith('http')) {
-
-                                processedFoto = originalFoto;
-                            } else {
-
-                                processedFoto = `${BASE_URL_IMAGE}${originalFoto}`;
-                            }
+                    showAlert(
+                        'success',
+                        'Jogador Removido',
+                        `${playerName} foi removido da partida com sucesso.`,
+                        () => {
+                            fetchMatchPlayers();
                         }
-
-                        return {
-                            ...player,
-                            posicoes: player.posicoes?.filter((pos: any) => pos !== null) || [],
-                            foto: processedFoto
-                        };
-                    });
-
-
-                    if (isActive) {
-                        setPlayers(processedData);
-                    }
-                } catch (err: any) {
-                    if (isActive) {
-                        setError(err?.message || 'Erro ao carregar jogadores da partida');
-                    }
-                } finally {
-                    if (isActive) {
-                        setLoading(false);
-                    }
+                    );
+                } catch {
+                    showAlert(
+                        'error',
+                        'Erro',
+                        'Não foi possível remover o jogador. Tente novamente.'
+                    );
                 }
-            };
+            }
+        );
+    }, [matchId, fetchMatchPlayers]);
 
+    useFocusEffect(
+        useCallback(() => {
             if (matchId) {
                 fetchMatchPlayers();
             }
-
-
-            return () => {
-                isActive = false;
-            };
-        }, [matchId])
+        }, [matchId, fetchMatchPlayers])
     );
 
     return (
@@ -144,9 +182,20 @@ export default function MatchPlayersScreen() {
                         foto={player.foto}
                         posicoes={player.posicoes.filter((pos): pos is string => pos !== null)}
                         status={player.status as any}
+                        showRemove={showEditButton === 'true'}
+                        onRemove={() => handleRemovePlayer(player.id, player.nome)}
                     />
                 ))
             )}
+            
+            <Alert
+                visible={alertVisible}
+                type={alertConfig.type}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                onClose={() => setAlertVisible(false)}
+                onConfirm={alertConfig.onConfirm}
+            />
         </MainContainer>
     );
 }

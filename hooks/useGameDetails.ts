@@ -61,6 +61,7 @@ export function useGameDetails(id: string, idGame: string) {
       setError(null);
 
       const headers = await authHeaders();
+      console.log(JSON.stringify(`${BASE_URL}/jogos/${idGame}`), headers);
 
       const [matchRes, gameRes, posRes] = await Promise.all([
         fetch(`${BASE_URL}/partidas/${id}`, { headers }),
