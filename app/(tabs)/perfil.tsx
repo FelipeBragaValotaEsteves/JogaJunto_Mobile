@@ -14,7 +14,7 @@ import { Alert } from '../../components/shared/Alert';
 import { Button, ButtonText } from '../../components/shared/Button';
 import { Input } from '../../components/shared/Input';
 import { Select } from '../../components/shared/Select';
-import BASE_URL from "../../constants/config";
+import BASE_URL, { BASE_URL_IMAGE } from "../../constants/config";
 import { authHeaders } from '../../utils/authHeaders';
 
 export default function PerfilScreen() {
@@ -56,8 +56,6 @@ export default function PerfilScreen() {
 
     const escolherImagem = async () => {
 
-        // if (isWeb) return;
-
         const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!perm.granted) {
             showAlert('error', 'Permissão necessária', 'Habilite o acesso à galeria.');
@@ -79,6 +77,9 @@ export default function PerfilScreen() {
             (async () => {
                 try {
                     setLoading(true);
+    
+                    setImagem(null);
+                    
                     const headers = await authHeaders();
                     const posRes = await fetch(`${BASE_URL}/posicao/list`, { headers });
                     if (!posRes.ok) throw new Error('Falha ao carregar posições');
@@ -91,7 +92,9 @@ export default function PerfilScreen() {
                     if (!alive) return;
                     setUsuario(me?.nome ?? '');
                     setEmail(me?.email ?? '');
-                    const imageUrl = me?.imgUrl;
+                    const imageUrl = me?.img;
+                    console.log('Imagem do servidor:', imageUrl);
+                    console.log('URL completa:', imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `${BASE_URL}/${imageUrl}`) : 'sem imagem');
                     setImgServidor(imageUrl ?? null);
                     if (Array.isArray(me?.posicoes)) {
                         setPosicoes(me.posicoes.map((p: any) => p.id));
@@ -182,9 +185,10 @@ export default function PerfilScreen() {
                                 ) : imgServidor ? (
                                     <Imagem
                                         source={{
-                                            uri: imgServidor.startsWith('http') ? imgServidor : `${BASE_URL}${imgServidor}`
+                                            uri: imgServidor.startsWith('http') ? imgServidor : `${BASE_URL_IMAGE}${imgServidor}`
                                         }}
                                         onError={(e) => {
+                                            console.log('Erro ao carregar imagem:', e.nativeEvent.error);
                                             setImgServidor(null);
                                         }}
                                     />
@@ -201,9 +205,10 @@ export default function PerfilScreen() {
                                 ) : imgServidor ? (
                                     <Imagem
                                         source={{
-                                            uri: imgServidor.startsWith('http') ? imgServidor : `${BASE_URL}${imgServidor}`
+                                            uri: imgServidor.startsWith('http') ? imgServidor : `${BASE_URL_IMAGE}${imgServidor}`
                                         }}
                                         onError={(e) => {
+                                            console.log('Erro ao carregar imagem:', e.nativeEvent.error);
                                             setImgServidor(null);
                                         }}
                                     />

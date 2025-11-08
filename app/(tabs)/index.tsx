@@ -5,8 +5,8 @@ import { NoResults } from "@/components/shared/NoResults";
 import { TitlePageIndex } from "@/components/shared/TitlePage";
 import BASE_URL from "@/constants/config";
 import typography from "@/constants/typography";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import styled from "styled-components/native";
 import { authHeaders } from '../../utils/authHeaders';
 
@@ -15,22 +15,22 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(false);
   const [matches, setMatches] = useState<{ id: number; data: string; hora_inicio: string; local: string }[]>([]);
 
-  useEffect(() => {
-    const fetchMatches = async () => {
+  useFocusEffect(
+    useCallback(() => {
+      const fetchMatches = async () => {
+        setLoading(true);
+        try {
+          const matches = await getLastMatches();
+          setMatches(matches);
+        } catch {
+        } finally {
+          setLoading(false);
+        }
+      };
 
-      setLoading(true);
-      try {
-        const matches = await getLastMatches();
-
-        setMatches(matches);
-      } catch {
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMatches();
-  }, []);
+      fetchMatches();
+    }, [])
+  );
 
   async function getLastMatches() {
 

@@ -1,6 +1,6 @@
 import BASE_URL from '@/constants/config';
 import { authHeaders } from '@/utils/authHeaders';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 export interface Player {
   id: number;
@@ -121,15 +121,6 @@ export function useGameDetails(id: string, idGame: string) {
       setLoading(false);
     }
   }, [id, idGame]);
-
-  useEffect(() => {
-    if (id && idGame) {
-      fetchAll();
-    } else {
-      setError('IDs inválidos para buscar jogo.');
-      setLoading(false);
-    }
-  }, [fetchAll, id, idGame]);
 
   return { gameDetails, matchDetails, positions, loading, error, fetchAll };
 }

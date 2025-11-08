@@ -201,7 +201,7 @@ export default function MatchPlayersScreen() {
                         foto={player.foto}
                         posicoes={player.posicoes.filter((pos): pos is string => pos !== null)}
                         status={player.status as any}
-                        showRemove={isEditMode}
+                        showRemove={isEditMode && player.status.toLowerCase() !== 'recusado'}
                         onRemove={() => handleRemovePlayer(player)}
                     />
                 ))

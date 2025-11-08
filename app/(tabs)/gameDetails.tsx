@@ -14,7 +14,7 @@ import typography from '@/constants/typography';
 import { Player, useGameDetails } from '@/hooks/useGameDetails';
 import { TopButtonsContainer } from '@/styles/gameDetailsStyles';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleArrowLeft, CircleX, User } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
@@ -63,6 +63,14 @@ export default function GameDetailsScreen() {
 
     const bottomSheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['100%'], []);
+
+    useFocusEffect(
+        useCallback(() => {
+            if (id && idGame) {
+                fetchAll();
+            }
+        }, [id, idGame])
+    );
 
     const handleSheetChanges = useCallback((index: number) => {
         if (index === -1) {

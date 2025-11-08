@@ -23,6 +23,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeho
     return new Date();
   });
 
+  React.useEffect(() => {
+    if (value) {
+      const [year, month, day] = value.split('-').map(Number);
+      setSelectedDate(new Date(year, month - 1, day));
+    }
+  }, [value]);
+
   const handleConfirm = () => {
     if (tempDate) {
       setSelectedDate(tempDate);
@@ -85,6 +92,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeho
             onChange={handleDateChange}
             maximumDate={new Date(2030, 11, 31)}
             minimumDate={new Date(1900, 0, 1)}
+            locale="pt-BR"
           />
           {Platform.OS === 'ios' && (
             <IOSActions>

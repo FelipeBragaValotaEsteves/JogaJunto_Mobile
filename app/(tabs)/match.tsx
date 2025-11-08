@@ -94,10 +94,10 @@ export default function MatchScreen() {
                 const matchId = Array.isArray(id) ? id[0] : id;
                 fetchMatchDetails(matchId).then((data) => {
                     setNome(data.local || '');
-                    setData(data.data ? data.data : '');
+                    setData(data.data ? data.data.split('T')[0] : '');
                     setHoraInicial(data.hora_inicio ? data.hora_inicio.slice(0, 5) : '');
                     setHoraFinal(data.hora_fim ? data.hora_fim.slice(0, 5) : '');
-                    setValor(data.valor || '');
+                    setValor(data.valor ? formatCurrency(String(data.valor * 100)) : '');
                     setRua(data.rua || '');
                     setBairro(data.bairro || '');
                     setNumero(data.numero ? String(data.numero) : '');

@@ -223,7 +223,7 @@ function CustomHeaderIndex() {
           color: "#e2e8f0",
         }}
       >
-        Seja bem-vindo, {userName || "Jogador"}!
+        Seja bem-vindo, {userName?.split(" ")[0] || "Jogador"}!
       </Text>
     </View>
   );
