@@ -93,8 +93,6 @@ export default function PerfilScreen() {
                     setUsuario(me?.nome ?? '');
                     setEmail(me?.email ?? '');
                     const imageUrl = me?.img;
-                    console.log('Imagem do servidor:', imageUrl);
-                    console.log('URL completa:', imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `${BASE_URL}/${imageUrl}`) : 'sem imagem');
                     setImgServidor(imageUrl ?? null);
                     if (Array.isArray(me?.posicoes)) {
                         setPosicoes(me.posicoes.map((p: any) => p.id));
@@ -188,7 +186,6 @@ export default function PerfilScreen() {
                                             uri: imgServidor.startsWith('http') ? imgServidor : `${BASE_URL_IMAGE}${imgServidor}`
                                         }}
                                         onError={(e) => {
-                                            console.log('Erro ao carregar imagem:', e.nativeEvent.error);
                                             setImgServidor(null);
                                         }}
                                     />
@@ -208,7 +205,6 @@ export default function PerfilScreen() {
                                             uri: imgServidor.startsWith('http') ? imgServidor : `${BASE_URL_IMAGE}${imgServidor}`
                                         }}
                                         onError={(e) => {
-                                            console.log('Erro ao carregar imagem:', e.nativeEvent.error);
                                             setImgServidor(null);
                                         }}
                                     />

@@ -33,7 +33,6 @@ export default function PlayerCard({ nome, foto, posicoes, status, onAdd, onRemo
             <ProfileImage
               source={{ uri: imageUri }}
               onError={(e) => {
-                console.log('Erro ao carregar imagem do jogador:', e.nativeEvent.error);
               }}
             />
           ) : (

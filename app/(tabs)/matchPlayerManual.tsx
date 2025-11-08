@@ -82,7 +82,7 @@ export default function MatchPlayerManualScreen() {
             );
 
         } catch (err: any) {
-            console.error('Erro ao adicionar jogador manual:', err);
+
             showAlert(
                 'error',
                 'Erro ao Adicionar Jogador',

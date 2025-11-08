@@ -45,17 +45,13 @@ export const useNotifications = () => {
       finalStatus = status;
     }
     if (finalStatus !== 'granted') {
-      console.log('Falha ao obter token de push notification!');
       return;
     }
 
     try {
       token = (await Notifications.getExpoPushTokenAsync()).data;
-      console.log('Push notification token:', token);
-      
       
     } catch (error) {
-      console.log('Erro ao obter token:', error);
     }
 
     return token;
@@ -66,9 +62,6 @@ export const useNotifications = () => {
     
     const handleNotificationResponse = (response: Notifications.NotificationResponse) => {
       const data = response.notification.request.content.data as unknown as NotificationData;
-      
-      console.log('Notificação recebida com dados:', data);
-      
       
       if (data?.type) {
         switch (data.type) {
@@ -107,8 +100,6 @@ export const useNotifications = () => {
             router.push('/(tabs)/notifications');
             break;
           default:
-            
-            console.log('Tipo de notificação não reconhecido:', data.type);
             break;
         }
       }
@@ -119,7 +110,6 @@ export const useNotifications = () => {
 
     
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      console.log('Notificação recebida!', notification);
     });
 
     

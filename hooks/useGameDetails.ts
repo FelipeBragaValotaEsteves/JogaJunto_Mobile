@@ -115,7 +115,6 @@ export function useGameDetails(id: string, idGame: string) {
     } catch (e) {
       const message =
         e instanceof Error ? e.message : 'Erro desconhecido ao carregar dados';
-      console.error('useGameDetails erro:', message);
       setError(message);
     } finally {
       setLoading(false);

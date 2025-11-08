@@ -33,7 +33,6 @@ export default function CreatedMatchesScreen() {
       const matches = await fetchCreatedMatches(userId);
       setCreatedMatches(matches);
     } catch (error) {
-      console.log("Erro ao carregar partidas criadas:", error);
     }
   }, []);
 
@@ -70,7 +69,6 @@ export default function CreatedMatchesScreen() {
         <NoResults message="Nenhuma partida criada encontrada." />
       ) : (
         createdMatches.map((match, index) => {
-          console.log(match);
           
           const [date] = match.data.split('T');
           const isCanceled = match.status === 'cancelada';

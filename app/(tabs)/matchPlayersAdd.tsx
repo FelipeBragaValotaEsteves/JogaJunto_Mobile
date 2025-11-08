@@ -93,7 +93,7 @@ export default function AddPlayerScreen() {
 
                     setPlayers(processedData || []);
                 } catch (err: any) {
-                    console.error('Erro ao buscar jogadores disponíveis:', err);
+      
                     setError(err?.message || 'Erro ao carregar jogadores disponíveis');
                 } finally {
                     setLoading(false);

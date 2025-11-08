@@ -97,7 +97,6 @@ export default function GameDetailsScreen() {
                 setAvailablePlayers(data || []);
             }
         } catch (_error) {
-            console.log('Erro ao buscar jogadores disponíveis:', _error);
         } finally {
             setLoadingPlayers(false);
         }
@@ -425,14 +424,12 @@ export default function GameDetailsScreen() {
                                         <PlayerImage
                                             source={{ uri: editablePlayer.foto }}
                                             onError={(e) => {
-                                                console.log('Erro ao carregar imagem do jogador:', e.nativeEvent.error);
                                             }}
                                         />
                                     ) : (
                                         <PlayerImage
                                             source={{ uri: `${BASE_URL_IMAGE}${editablePlayer.foto}` }}
                                             onError={(e) => {
-                                                console.log('Erro ao carregar imagem do jogador:', e.nativeEvent.error);
                                             }}
                                         />
                                     )

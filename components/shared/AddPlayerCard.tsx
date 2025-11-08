@@ -21,7 +21,6 @@ export default function AddPlayerCard({ nome, foto, posicoes, onInvite }: AddPla
             <ProfileImage
               source={{ uri: foto }}
               onError={(e) => {
-                console.log('Erro ao carregar imagem do jogador disponível:', e.nativeEvent.error);
               }}
             />
           ) : (

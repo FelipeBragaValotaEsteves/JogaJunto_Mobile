@@ -44,7 +44,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUserToken(token);
       setUserName(userName);
     } catch (error) {
-      console.error("AuthContext: Erro no login:", error);
       throw error;
     }
   };

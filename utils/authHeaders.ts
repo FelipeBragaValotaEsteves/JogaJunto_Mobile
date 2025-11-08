@@ -12,7 +12,6 @@ export async function getUserId() {
     const userId = await AsyncStorage.getItem('userId');
     return userId;
   } catch (error) {
-    console.error('Erro ao recuperar o ID do usuário:', error);
     return null;
   }
 }
