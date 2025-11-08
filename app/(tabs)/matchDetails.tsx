@@ -198,7 +198,7 @@ export default function MatchDetailsScreen() {
             pathname: "/(tabs)/matchPlayers",
             params: {
                 matchId: matchDetails.id,
-                showEditButton: showEditButton ? 'true' : 'false',
+                showEditButton: showEditButton as any,
             },
         });
     };
@@ -272,7 +272,7 @@ export default function MatchDetailsScreen() {
                         router.push({
                             pathname: "/(tabs)/gameDetails",
                             params: {
-                                id: matchDetails.id, idGame: jogo.id, title: 'Jogo ' + (index + 1), showEditButton: showEditButton ? 'true' : 'false'   
+                                id: matchDetails.id, idGame: jogo.id, title: 'Jogo ' + (index + 1), showEditButton: showEditButton as any    
                             },
                         });
                     }}

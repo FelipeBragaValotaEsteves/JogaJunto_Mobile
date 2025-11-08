@@ -122,6 +122,15 @@ const PlayerPositions = styled.Text`
 const PlayerStatus = styled.Text<{ status: string }>`
   font-size: ${typography['txt-2-bold'].fontSize}px;
   font-family: ${typography['txt-2-bold'].fontFamily};
-  color: ${({ status }) =>
-    status === 'aceito' ? '#2ECC71' : status === 'pendente' || status === 'manual' ? '#2ECC71' : '#E74C3C'};
+  color: ${({ status }) => {
+    const lowerStatus = status.toLowerCase();
+    if (lowerStatus === 'aceito' || lowerStatus === 'manual' || lowerStatus === 'confirmado') {
+      return '#2ECC71'; 
+    } else if (lowerStatus === 'pendente') {
+      return '#FFC107'; 
+    } else if (lowerStatus === 'recusado') {
+      return '#E74C3C';
+    }
+    return '#666'; 
+  }};
 `;

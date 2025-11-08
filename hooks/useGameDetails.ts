@@ -6,13 +6,14 @@ export interface Player {
   id: number;
   nome: string;
   posicao: string;
+  posicaoId?: number;
   foto: string;
   gols?: number;
   assistencias?: number;
   cartoesAmarelos?: number;
   cartoesVermelhos?: number;
   defesas?: number;
-  rating?: number;
+  nota?: number;
   timeParticipanteId: number;
 }
 
@@ -61,7 +62,6 @@ export function useGameDetails(id: string, idGame: string) {
       setError(null);
 
       const headers = await authHeaders();
-      console.log(JSON.stringify(`${BASE_URL}/jogos/${idGame}`), headers);
 
       const [matchRes, gameRes, posRes] = await Promise.all([
         fetch(`${BASE_URL}/partidas/${id}`, { headers }),
@@ -80,8 +80,6 @@ export function useGameDetails(id: string, idGame: string) {
         posRes.json(),
       ]);
 
-      console.log(JSON.stringify(gameData));
-
       const normalizedGame: GameDetails = {
         id: gameData.jogoId ?? gameData.id ?? 0,
         titulo: gameData.titulo ?? `Jogo ${gameData.jogoId ?? idGame}`,
@@ -91,20 +89,21 @@ export function useGameDetails(id: string, idGame: string) {
         placar2: gameData.times?.[1]?.totais?.gols ?? 0,
         times:
           gameData.times?.map((t: any) => ({
-            id: t.id ?? t.timeId ?? 0,
+            id: t.timeId ?? t.id ?? 0,
             nome: t.nome,
             jogadores:
               t.jogadores?.map((j: any) => ({
                 id: j.jogadorId ?? j.id ?? 0,
                 nome: j.nome ?? 'Jogador',
-                posicao: j.posicao ?? '',
+                posicao: j.eventos?.posicaoNome ?? j.posicaoNome ?? '',
+                posicaoId: j.eventos?.posicaoId ?? j.posicaoId ?? 0,
                 foto: j.foto ?? '',
                 gols: j.eventos?.gol ?? 0,
                 assistencias: j.eventos?.assistencia ?? 0,
                 cartoesAmarelos: j.eventos?.cartaoAmarelo ?? 0,
                 cartoesVermelhos: j.eventos?.cartaoVermelho ?? 0,
                 defesas: j.eventos?.defesa ?? 0,
-                rating: j.nota ?? 0,
+                nota: parseFloat(j.eventos?.nota ?? j.nota ?? 0),
                 timeParticipanteId: j.timeParticipanteId ?? 0,
               })) ?? [],
           })) ?? [],

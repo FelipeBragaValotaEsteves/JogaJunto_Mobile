@@ -1,5 +1,4 @@
 import { BackButtonTab } from '@/components/shared/BackButton';
-import { Checkbox } from '@/components/shared/Checkbox';
 import { ContentContainer } from '@/components/shared/ContentContainer';
 import { KeyboardAwareContainer, MainContainer } from '@/components/shared/MainContainer';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
@@ -341,12 +340,6 @@ export default function MatchScreen() {
 
                 {currentPhase === 3 && (
                     <>
-                        <Checkbox
-                            value={aceitaJogadoresDeFora}
-                            onValueChange={setAceitaJogadoresDeFora}
-                            label="Aceita jogadores de fora?"
-                        />
-
                         <Input
                             placeholder="Valor"
                             value={valor}

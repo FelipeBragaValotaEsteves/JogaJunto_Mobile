@@ -6,6 +6,7 @@ import { Text, View } from "react-native";
 import LogoJogaJunto from "../../assets/images/logo-white-small.svg";
 import FabButton from "../../components/FabButton";
 import typography from "../../constants/typography";
+import { useAuth } from "../../contexts/AuthContext";
 import { useNotifications } from "../../hooks/useNotifications";
 
 export default function TabsLayout() {
@@ -166,6 +167,7 @@ function CustomHeader() {
 
 function CustomHeaderIndex() {
   const router = useRouter();
+  const { userName } = useAuth();
 
   return (
     <View style={{ position: "relative" }}>
@@ -221,7 +223,7 @@ function CustomHeaderIndex() {
           color: "#e2e8f0",
         }}
       >
-        Seja bem-vindo, jogador!
+        Seja bem-vindo, {userName || "Jogador"}!
       </Text>
     </View>
   );

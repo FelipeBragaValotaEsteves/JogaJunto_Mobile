@@ -5,7 +5,6 @@ import { NoResults } from "@/components/shared/NoResults";
 import { TitlePageIndex } from "@/components/shared/TitlePage";
 import BASE_URL from "@/constants/config";
 import typography from "@/constants/typography";
-import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import styled from "styled-components/native";
@@ -14,14 +13,14 @@ import { authHeaders } from '../../utils/authHeaders';
 export default function HomeScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [matches, setMatches] = useState<{ data: string; hora_inicio: string; local: string }[]>([]);
+  const [matches, setMatches] = useState<{ id: number; data: string; hora_inicio: string; local: string }[]>([]);
 
   useEffect(() => {
     const fetchMatches = async () => {
 
       setLoading(true);
       try {
-        const matches = await getNearbyMatches();
+        const matches = await getLastMatches();
 
         setMatches(matches);
       } catch {
@@ -33,27 +32,11 @@ export default function HomeScreen() {
     fetchMatches();
   }, []);
 
-  async function getNearbyMatches() {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      setMatches([]);
-      return [];
-    }
-
-    const location = await Location.getCurrentPositionAsync({});
-    const { latitude, longitude } = location.coords;
-
-    const geocode = await Location.reverseGeocodeAsync({ latitude, longitude });
-    const city = geocode[0]?.city;
-
-    if (!city) {
-      setMatches([]);
-      return [];
-    }
+  async function getLastMatches() {
 
     const headers = await authHeaders();
 
-    const response = await fetch(`${BASE_URL}/partidas/proximas/${city}`, {
+    const response = await fetch(`${BASE_URL}/partidas/resumo/jogada`, {
       headers,
     });
 
@@ -101,7 +84,7 @@ export default function HomeScreen() {
       </HistoryGrid>
 
       <TitlePageIndex style={{ marginTop: 24, marginBottom: 18 }}>
-        Horários próximos a você
+        Últimos horários jogados
       </TitlePageIndex>
 
       {Array.isArray(matches) && matches.length > 0 ? (
@@ -111,8 +94,11 @@ export default function HomeScreen() {
             date={match.data.split('T')[0]}
             hour={match.hora_inicio.slice(0, 5)}
             location={match.local}
-            buttonLabel="PARTICIPAR"
-            onPress={() => console.log(`Participar no ${match.local}`)}
+            buttonLabel="VISUALIZAR"
+            onPress={() => router.push({
+              pathname: "/(tabs)/matchDetails",
+              params: { id: match.id.toString(), source: "index" }
+            })}
           />
         ))
       ) : (

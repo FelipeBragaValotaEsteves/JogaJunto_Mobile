@@ -1,5 +1,5 @@
 import typography from '@/constants/typography';
-import { DiamondIcon, HandWavingIcon, SneakerMoveIcon, SoccerBallIcon } from 'phosphor-react-native';
+import { HandWavingIcon, SneakerMoveIcon, SoccerBallIcon, SquareIcon } from 'phosphor-react-native';
 import React from 'react';
 import styled from 'styled-components/native';
 import { Button, ButtonText } from './Button';
@@ -103,15 +103,15 @@ const Event: React.FC<{ type: string; player: string; quantity: number }> = ({ t
   const renderIcon = () => {
     switch (type) {
       case 'gol':
-        return <SoccerBallIcon color="#007bff" weight="bold" size={18} />;
+        return <SoccerBallIcon color="#007bff"  size={18} />;
       case 'assistencia':
-        return <SneakerMoveIcon color="#007bff" weight="bold" size={18} />;
+        return <SneakerMoveIcon color="#007bff"  size={18} />;
       case 'cartaoVermelho':
-        return <DiamondIcon color="#ff4d4d" weight="bold" size={18} />;
+        return <SquareIcon color="#ff4d4d"  size={18} />;
       case 'cartaoAmarelo':
-        return <DiamondIcon color="#ffcc00" weight="bold" size={18} />;
+        return <SquareIcon color="#FFC107"  size={18} />;
       case 'defesa':
-        return <HandWavingIcon color="#007bff" weight="bold" size={18} />;
+        return <HandWavingIcon color="#007bff"  size={18} />;
       default:
         return null;
     }

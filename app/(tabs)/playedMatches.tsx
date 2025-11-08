@@ -16,6 +16,7 @@ type Match = {
   data: string; 
   hora_inicio: string;
   local: string;
+  valor?: number | null;
 };
 
 export default function PlayedMatchesScreen() {
@@ -42,16 +43,20 @@ export default function PlayedMatchesScreen() {
   );
 
   async function fetchPlayedMatches(userId: string) {
-    const headers = await authHeaders();
-    const response = await fetch(`${BASE_URL}/partidas/jogada/${userId}`, {
-      headers,
-    });
+    try {
+      const headers = await authHeaders();
+      const response = await fetch(`${BASE_URL}/partidas/jogada/${userId}`, {
+        headers,
+      });
 
-    if (!response.ok) {
-      throw new Error("Erro ao buscar partidas jogadas");
+      if (!response.ok) {
+        throw new Error("Erro ao buscar partidas jogadas");
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      throw error;
     }
-
-    return await response.json();
   }
 
   return (
@@ -68,6 +73,7 @@ export default function PlayedMatchesScreen() {
         <NoResults message="Nenhuma partida jogada encontrada." />
       ) : (
         playedMatches.map((match, index) => {
+
           const [data] = match.data.split('T')[1].split(':');
           return (
             <MatchCard
@@ -77,6 +83,7 @@ export default function PlayedMatchesScreen() {
               location={match.local}
               buttonLabel="VISUALIZAR"
               onPress={() => router.push({ pathname: '/(tabs)/matchDetails', params: { id: match.id, source: 'playedMatches' } })}
+              valor={match.valor}
             />
           );
         })

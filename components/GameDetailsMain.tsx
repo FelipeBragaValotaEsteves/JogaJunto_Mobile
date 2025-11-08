@@ -128,6 +128,7 @@ export function GameDetailsMain({ gameDetails, title, onPlayerPress, onAddPlayer
             players={team1?.jogadores || []}
             onPlayerPress={onPlayerPress}
             onAddPlayer={onAddPlayer}
+            canEdit={canEdit}
           />
         </TeamSectionContainer>
         <TeamSectionContainer>
@@ -136,6 +137,7 @@ export function GameDetailsMain({ gameDetails, title, onPlayerPress, onAddPlayer
             players={team2?.jogadores || []}
             onPlayerPress={onPlayerPress}
             onAddPlayer={onAddPlayer}
+            canEdit={canEdit}
           />
         </TeamSectionContainer>
       </PlayersSection>

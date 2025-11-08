@@ -35,6 +35,7 @@ export default function GameDetailsScreen() {
     const router = useRouter();
 
     const { id, idGame, title, showEditButton } = useLocalSearchParams();
+    const isEditMode = (showEditButton as any) === 'true' || (showEditButton as any) === true;
     const { gameDetails, matchDetails, positions, loading, error, fetchAll } = useGameDetails(
         id as string,
         idGame as string
@@ -95,6 +96,9 @@ export default function GameDetailsScreen() {
     };
 
     const handlePlayerPress = (player: Player) => {
+        if (!isEditMode) {
+            return;
+        }
 
         setSelectedPlayer(player);
 
@@ -107,11 +111,11 @@ export default function GameDetailsScreen() {
             cartoesAmarelos: player.cartoesAmarelos || 0,
             cartoesVermelhos: player.cartoesVermelhos || 0,
             defesas: player.defesas || 0,
-            rating: player.rating || 0,
+            rating: player.nota || 0,
             posicao: player.posicao || '',
             timeParticipanteId: player.timeParticipanteId,
             foto: player.foto || '',
-            posicaoId: currentPosition?.id || 0
+            posicaoId: player.posicaoId || currentPosition?.id || 0
         });
 
         const posItems = positions.map(pos => ({
@@ -310,7 +314,6 @@ export default function GameDetailsScreen() {
             async () => {
                 try {
                     const headers = await authHeaders();
-                    console.log('Removendo jogador com timeParticipanteId:', editablePlayer.timeParticipanteId);
                     const response = await fetch(`${BASE_URL}/time-participantes/${editablePlayer.timeParticipanteId}`, {
                         method: 'DELETE',
                         headers,
@@ -367,14 +370,14 @@ export default function GameDetailsScreen() {
                             if (matchDetails) {
                                 router.replace({
                                     pathname: '/(tabs)/matchDetails',
-                                    params: { id: matchDetails.id, source: showEditButton ? 'createdMatches' : undefined },
+                                    params: { id: matchDetails.id, source: isEditMode ? 'createdMatches' : 'playedMatches' },
                                 });
                             }
                         }}>
                             <CircleArrowLeft color="#2B6AE3" size={50} />
                         </BackButtonTab>
 
-                        {showEditButton === 'true' && (
+                        {isEditMode && (
                             <ButtonsContainer>
                                 <CancelButton onPress={handleCancelGame}>
                                     <CircleX color="#E53E3E" size={30} />
@@ -392,7 +395,7 @@ export default function GameDetailsScreen() {
                             onPlayerPress={handlePlayerPress}
                             onAddPlayer={handleAddPlayer}
                             onTeamNameChange={handleTeamNameChange}
-                            canEdit={showEditButton === 'true'}
+                            canEdit={isEditMode}
                         />
                     </ContentContainer>
                 </MainContainer>
@@ -505,8 +508,8 @@ export default function GameDetailsScreen() {
                                     <StatLabel>Rating</StatLabel>
                                     <NumberInput
                                         value={editablePlayer.rating}
-                                        onDecrease={() => handleStatChange('rating', Math.max(0, Number((editablePlayer.rating - 0.1).toFixed(1))))}
-                                        onIncrease={() => handleStatChange('rating', Math.min(10, Number((editablePlayer.rating + 0.1).toFixed(1))))}
+                                        onDecrease={() => handleStatChange('rating', Math.max(0, Number((editablePlayer.rating - 0.5).toFixed(1))))}
+                                        onIncrease={() => handleStatChange('rating', Math.min(10, Number((editablePlayer.rating + 0.5).toFixed(1))))}
                                         isFloat={true}
                                     />
                                 </StatEditRow>

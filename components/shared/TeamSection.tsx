@@ -15,7 +15,7 @@ import {
   StatsSection,
 } from '@/styles/gameDetailsStyles';
 import { Plus } from 'lucide-react-native';
-import { SneakerMoveIcon, SoccerBallIcon, SquareIcon } from 'phosphor-react-native';
+import { HandWavingIcon, SneakerMoveIcon, SoccerBallIcon, SquareIcon } from 'phosphor-react-native';
 import { TouchableOpacity } from 'react-native';
 
 type TeamSectionProps = {
@@ -23,9 +23,10 @@ type TeamSectionProps = {
   players: Player[];
   onPlayerPress: (player: Player) => void;
   onAddPlayer: (teamName: string) => void;
+  canEdit?: boolean;
 };
 
-export function TeamSection({ teamName, players, onPlayerPress, onAddPlayer }: TeamSectionProps) {
+export function TeamSection({ teamName, players, onPlayerPress, onAddPlayer, canEdit = false }: TeamSectionProps) {
   return (
     <>
       {players.map((player) => {
@@ -33,7 +34,8 @@ export function TeamSection({ teamName, players, onPlayerPress, onAddPlayer }: T
         const assistencias = player.assistencias ?? 0;
         const cartoesAmarelos = player.cartoesAmarelos ?? 0;
         const cartoesVermelhos = player.cartoesVermelhos ?? 0;
-        const rating = player.rating ?? 0;
+        const defesas = player.defesas ?? 0;
+        const rating = player.nota ?? 0;
         
         return (
           <TouchableOpacity key={player.id.toString()} onPress={() => onPlayerPress(player)}>
@@ -90,6 +92,17 @@ export function TeamSection({ teamName, players, onPlayerPress, onAddPlayer }: T
                       )}
                     </StatIcon>
                   )}
+
+                  {defesas > 0 && (
+                    <StatIcon>
+                      <HandWavingIcon color="#007bff" size={18} />
+                      {defesas > 1 && (
+                        <Badge>
+                          <BadgeText>{defesas}</BadgeText>
+                        </Badge>
+                      )}
+                    </StatIcon>
+                  )}
                 </StatsSection>
 
                 <RatingSection>
@@ -101,10 +114,12 @@ export function TeamSection({ teamName, players, onPlayerPress, onAddPlayer }: T
         );
       })}
 
-      <AddPlayerButton onPress={() => onAddPlayer(teamName)}>
-        <Plus color="#2B6AE3" size={20} />
-        <AddPlayerText>Adicionar</AddPlayerText>
-      </AddPlayerButton>
+      {canEdit && (
+        <AddPlayerButton onPress={() => onAddPlayer(teamName)}>
+          <Plus color="#2B6AE3" size={20} />
+          <AddPlayerText>Adicionar</AddPlayerText>
+        </AddPlayerButton>
+      )}
     </>
   );
 }

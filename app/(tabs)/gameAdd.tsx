@@ -94,7 +94,7 @@ export default function GameAddScreen() {
                     () => {
                         router.replace({
                             pathname: '/(tabs)/gameDetails',
-                            params: { id: partidaId, idGame: idGame, title: title, showEditButton: 'true' },
+                            params: { id: partidaId, idGame: idGame, title: title, showEditButton: true as any },
                         });
                     }
                 );
@@ -126,7 +126,7 @@ export default function GameAddScreen() {
                     () => {
                         router.replace({
                             pathname: '/(tabs)/gameDetails',
-                            params: { id: partidaId, idGame: data.jogo.id, title: title, showEditButton: 'true' },
+                            params: { id: partidaId, idGame: data.jogo.id, title: title, showEditButton: true as any },
                         });
                     }
                 );
@@ -149,7 +149,7 @@ export default function GameAddScreen() {
                         if (isEditing === 'true' && idGame) {
                             router.replace({
                                 pathname: '/(tabs)/gameDetails',
-                                params: { id: partidaId, idGame: idGame, title: title, showEditButton: 'true' },
+                                params: { id: partidaId, idGame: idGame, title: title, showEditButton: true as any },
                             });
                         } else {
                             router.replace({

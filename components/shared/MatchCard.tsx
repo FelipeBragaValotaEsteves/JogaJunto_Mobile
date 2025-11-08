@@ -12,6 +12,7 @@ interface MatchCardProps {
   buttonLabel: string;
   onPress?: () => void;
   isCanceled?: boolean;
+  valor?: number | string | null;
 }
 
 function formatDate(dateString: string): string {
@@ -31,30 +32,44 @@ function formatDate(dateString: string): string {
   return `${dayOfWeek}, ${day} de ${month}`;
 }
 
-export const MatchCard: React.FC<MatchCardProps> = ({ date, hour, location, buttonLabel, onPress, isCanceled = false }) => {
+export const MatchCard: React.FC<MatchCardProps> = ({ date, hour, location, buttonLabel, onPress, isCanceled = false, valor }) => {
   return (
     <ContentContainer style={{ marginBottom: 20 }}>
-      <MatchDate style={typography["txt-1"]}>{formatDate(date)}</MatchDate>
+      <DateValueContainer>
+        <MatchDate style={typography["txt-1"]}>{formatDate(date)}</MatchDate>
+        {valor !== null && valor !== undefined && (
+          <ValorText style={typography["txt-2"]}>R$ {Number(valor).toFixed(2)}</ValorText>
+        )}
+      </DateValueContainer>
       <MatchHour style={typography["txt-1"]}>{hour}</MatchHour>
       <LocationButtonContainer>
         <MatchLocation>
           <MapPin size={32} color="#2B6AE3" />
           <MatchLocationText style={typography["txt-2"]}>{location}</MatchLocationText>
         </MatchLocation>
-        {isCanceled ? (
-          <CanceledButton>
-            <CanceledButtonText style={typography["btn-2"]}>{buttonLabel}</CanceledButtonText>
-          </CanceledButton>
-        ) : (
-          <Button onPress={onPress}>
-            <ButtonText style={typography["btn-2"]}>{buttonLabel}</ButtonText>
-          </Button>
-        )}
+        <ButtonContainer>
+       
+          {isCanceled ? (
+            <CanceledButton>
+              <CanceledButtonText style={typography["btn-2"]}>{buttonLabel}</CanceledButtonText>
+            </CanceledButton>
+          ) : (
+            <Button onPress={onPress}>
+              <ButtonText style={typography["btn-2"]}>{buttonLabel}</ButtonText>
+            </Button>
+          )}
+        </ButtonContainer>
       </LocationButtonContainer>
 
     </ContentContainer>
   );
 };
+
+const DateValueContainer = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+`;
 
 const MatchDate = styled.Text`
   font-weight: normal;
@@ -78,6 +93,16 @@ const LocationButtonContainer = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: end;
+`;
+
+const ButtonContainer = styled.View`
+  align-items: flex-end;
+  gap: 4px;
+`;
+
+const ValorText = styled.Text`
+  color: #2B6AE3;
+  font-weight: bold;
 `;
 
 const CanceledButton = styled.View`

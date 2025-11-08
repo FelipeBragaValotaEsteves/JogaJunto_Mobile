@@ -18,11 +18,14 @@ interface MatchPlayer {
     foto: string | null;
     status: string;
     posicoes: (string | null)[];
+    convite_id: number | null;
+    partida_participante_id: number | null;
 }
 
 export default function MatchPlayersScreen() {
     const router = useRouter();
     const { showEditButton, matchId } = useLocalSearchParams();
+    const isEditMode = (showEditButton as any) === 'true' || (showEditButton as any) === true;
     const [players, setPlayers] = useState<MatchPlayer[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -65,7 +68,7 @@ export default function MatchPlayersScreen() {
             }
 
             const data = await response.json();
-
+            
             const processedData = data.map((player: any) => {
                 const originalFoto = player.foto;
                 let processedFoto = null;
@@ -97,18 +100,34 @@ export default function MatchPlayersScreen() {
         }
     }, [matchId]);
 
-    const handleRemovePlayer = useCallback((playerId: number, playerName: string) => {
+    const handleRemovePlayer = useCallback((player: MatchPlayer) => {
         showAlert(
             'warning',
             'Confirmar Remoção',
-            `Tem certeza que deseja remover ${playerName} da partida?`,
+            `Tem certeza que deseja remover ${player.nome} da partida?`,
             async () => {
                 try {
                     const headers = await authHeaders();
-                    const response = await fetch(`${BASE_URL}/jogadores/remover-partida/${matchId}/${playerId}`, {
-                        method: 'DELETE',
-                        headers,
-                    });
+                    let response;
+
+                    if (player.status.toLowerCase() === 'pendente' || player.status.toLowerCase() === 'aceito') {
+                        if (!player.convite_id) {
+                            throw new Error("ID do convite não encontrado");
+                        }
+                        
+                        response = await fetch(`${BASE_URL}/convites/remover/${player.convite_id}`, {
+                            method: 'DELETE',
+                            headers,
+                        });
+                    } else {
+                        if (!player.partida_participante_id) {
+                            throw new Error("ID do participante não encontrado");
+                        }
+                        response = await fetch(`${BASE_URL}/partida-participantes/${player.partida_participante_id}`, {
+                            method: 'DELETE',
+                            headers,
+                        });
+                    }
 
                     if (!response.ok) {
                         throw new Error("Erro ao remover jogador da partida");
@@ -117,7 +136,7 @@ export default function MatchPlayersScreen() {
                     showAlert(
                         'success',
                         'Jogador Removido',
-                        `${playerName} foi removido da partida com sucesso.`,
+                        `${player.nome} foi removido da partida com sucesso.`,
                         () => {
                             fetchMatchPlayers();
                         }
@@ -147,13 +166,13 @@ export default function MatchPlayersScreen() {
                 <BackButtonTab onPress={() => {
                     router.replace({
                         pathname: '/(tabs)/matchDetails',
-                        params: { id: matchId, source: showEditButton ? 'createdMatches' : 'false' }
+                        params: { id: matchId, source: isEditMode ? 'createdMatches' : 'playedMatches' }
                     });
                 }}>
                     <CircleArrowLeft color="#2B6AE3" size={50} />
                 </BackButtonTab>
-                {showEditButton === 'true' && (
-                    <AddPlayerButton onPress={() => router.push({ pathname: '/(tabs)/matchPlayersAdd', params: { showEditButton: showEditButton, matchId: matchId } })}>
+                {isEditMode && (
+                    <AddPlayerButton onPress={() => router.push({ pathname: '/(tabs)/matchPlayersAdd', params: { showEditButton: isEditMode as any, matchId: matchId } })}>
                         <CirclePlus color="#2B6AE3" size={30} />
                     </AddPlayerButton>
                 )}
@@ -182,8 +201,8 @@ export default function MatchPlayersScreen() {
                         foto={player.foto}
                         posicoes={player.posicoes.filter((pos): pos is string => pos !== null)}
                         status={player.status as any}
-                        showRemove={showEditButton === 'true'}
-                        onRemove={() => handleRemovePlayer(player.id, player.nome)}
+                        showRemove={isEditMode}
+                        onRemove={() => handleRemovePlayer(player)}
                     />
                 ))
             )}

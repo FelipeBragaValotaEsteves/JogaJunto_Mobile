@@ -89,10 +89,11 @@ export default function LoginScreen() {
       });
 
       const data = await response.json();
-
+      console.log(data);
+      
       if (response.ok) {
         try {
-          await login(data.token, data.user.id);
+          await login(data.token, data.user.id, data.user.name);
         } catch (loginError) {
           setAlertData({
             type: "error",

@@ -17,6 +17,7 @@ type Match = {
   data: string;
   local: string;
   status: string;
+  valor?: number | null;
 };
 
 export default function CreatedMatchesScreen() {
@@ -69,6 +70,8 @@ export default function CreatedMatchesScreen() {
         <NoResults message="Nenhuma partida criada encontrada." />
       ) : (
         createdMatches.map((match, index) => {
+          console.log(match);
+          
           const [date] = match.data.split('T');
           const isCanceled = match.status === 'cancelada';
 
@@ -81,6 +84,7 @@ export default function CreatedMatchesScreen() {
               buttonLabel={isCanceled ? "CANCELADA" : "VISUALIZAR"}
               onPress={isCanceled ? undefined : () => router.push({ pathname: '/(tabs)/matchDetails', params: { id: match.id, source: 'createdMatches' } })}
               isCanceled={isCanceled}
+              valor={match.valor}
             />
           );
         })
