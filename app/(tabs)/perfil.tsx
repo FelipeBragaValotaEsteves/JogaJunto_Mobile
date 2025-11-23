@@ -108,6 +108,10 @@ export default function PerfilScreen() {
     );
 
     const salvarPerfil = async () => {
+        if (usuario.length > 15) {
+            showAlert('error', 'Erro', 'O nome deve ter no máximo 15 caracteres.');
+            return;
+        }
         try {
             setSaving(true);
             const headers = await authHeaders();
@@ -216,10 +220,12 @@ export default function PerfilScreen() {
                             </ImagemContainer>
                         )}
 
+                        <CharacterCount>{usuario.length}/15</CharacterCount>
                         <Input
                             placeholder="Usuário"
                             value={usuario}
                             onChangeText={setUsuario}
+                            maxLength={15}
                         />
 
                         <Input
@@ -238,9 +244,18 @@ export default function PerfilScreen() {
                                 value={posicoes}
                                 items={items}
                                 setOpen={setOpen}
-                                setValue={setPosicoes as any}
+                                setValue={(callback) => {
+                                    setPosicoes((prev) => {
+                                        const newValue = typeof callback === 'function' ? callback(prev) : callback;
+                                        if (newValue.length <= 2) {
+                                            return newValue;
+                                        }
+                                        showAlert('error', 'Limite atingido', 'Você pode selecionar no máximo 2 posições.');
+                                        return prev;
+                                    });
+                                }}
                                 setItems={setItems}
-                                placeholder="Posições favoritas"
+                                placeholder="Posições favoritas (máx. 2)"
                                 badgeDotColors={["#2B6AE3", "#26a69a", "#ef6c00", "#7e57c2"]}
                                 zIndex={2000}
                             />
@@ -264,6 +279,13 @@ export default function PerfilScreen() {
         </KeyboardAwareContainer>
     );
 }
+
+const CharacterCount = styled.Text`
+  font-size: 12px;
+  color: #666;
+  text-align: right;
+  margin-bottom: 8px;
+`;
 
 const ImagemContainer = styled.TouchableOpacity`
   align-self: center;

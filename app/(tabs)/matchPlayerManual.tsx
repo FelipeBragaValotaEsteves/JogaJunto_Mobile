@@ -110,11 +110,13 @@ export default function MatchPlayerManualScreen() {
                 <TitlePageTabs>Adicionar Manualmente</TitlePageTabs>
 
                 <FormContainer>
+                    <CharacterCount>{nome.length}/15</CharacterCount>
                     <Input
                         placeholder="Nome do jogador"
                         value={nome}
                         onChangeText={setNome}
                         editable={!loading}
+                        maxLength={15}
                     />
 
                     <ButtonContainer>
@@ -153,6 +155,13 @@ const TopButtonsContainer = styled.View`
 const FormContainer = styled.View`
   flex: 1;
   padding-top: 20px;
+`;
+
+const CharacterCount = styled.Text`
+  font-size: 12px;
+  color: #666;
+  text-align: right;
+  margin-bottom: 8px;
 `;
 
 const ButtonContainer = styled.View`

@@ -170,6 +170,7 @@ export default function GameAddScreen() {
                     value={team1Name}
                     onChangeText={setTeam1Name}
                     editable={!saving}
+                    maxLength={10}
                 />
 
                 <Input
@@ -177,6 +178,7 @@ export default function GameAddScreen() {
                     value={team2Name}
                     onChangeText={setTeam2Name}
                     editable={!saving}
+                    maxLength={10}
                 />
 
                 <Button onPress={handleSave} disabled={saving}>

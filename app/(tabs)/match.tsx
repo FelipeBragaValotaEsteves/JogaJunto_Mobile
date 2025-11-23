@@ -260,6 +260,7 @@ export default function MatchScreen() {
                             placeholder="Local"
                             value={nome}
                             onChangeText={setNome}
+                            maxLength={20}
                         />
 
                         <DatePicker
@@ -299,12 +300,14 @@ export default function MatchScreen() {
                             placeholder="Rua (opcional)"
                             value={rua}
                             onChangeText={setRua}
+                            maxLength={50}
                         />
 
                         <Input
                             placeholder="Bairro (opcional)"
                             value={bairro}
                             onChangeText={setBairro}
+                            maxLength={30}
                         />
 
                         <Input
@@ -312,6 +315,7 @@ export default function MatchScreen() {
                             value={numero}
                             onChangeText={setNumero}
                             keyboardType="numeric"
+                            maxLength={10}
                         />
 
                         <Select
@@ -341,9 +345,14 @@ export default function MatchScreen() {
                 {currentPhase === 3 && (
                     <>
                         <Input
-                            placeholder="Valor"
+                            placeholder="Valor (opcional)"
                             value={valor}
-                            onChangeText={(text) => setValor(formatCurrency(text))}
+                            onChangeText={(text) => {
+                                const numericValue = text.replace(/\D/g, "");
+                                if (numericValue.length <= 8) {
+                                    setValor(formatCurrency(text));
+                                }
+                            }}
                             keyboardType="numeric"
                         />
                     </>
