@@ -34,7 +34,7 @@ const ScoreSection = styled.View`
 
 const TeamName = styled.TextInput`
   text-align: left;
-  font-size: ${typography['txt-1'].fontSize}px;
+  font-size: 20px;
   font-family: ${typography['txt-1'].fontFamily};
   color: #2C2C2C;
   word-wrap: break-word;
@@ -53,7 +53,7 @@ const Score = styled.Text`
 
 const TeamNameRight = styled.TextInput`
   text-align: right;
-  font-size: ${typography['txt-1'].fontSize}px;
+  font-size: 20px;
   font-family: ${typography['txt-1'].fontFamily};
   color: #2C2C2C;
   width: 33%;
@@ -109,6 +109,7 @@ export function GameDetailsMain({ gameDetails, title, onPlayerPress, onAddPlayer
             onBlur={handleTeam1NameBlur}
             editable={canEdit}
             underlineColorAndroid="transparent"
+            maxLength={30}
           />
           <Score>{gameDetails.placar1 || 0} x {gameDetails.placar2 || 0}</Score>
           <TeamNameRight
@@ -117,6 +118,7 @@ export function GameDetailsMain({ gameDetails, title, onPlayerPress, onAddPlayer
             onBlur={handleTeam2NameBlur}
             editable={canEdit}
             underlineColorAndroid="transparent"
+            maxLength={30}
           />
         </ScoreSection>
       </GameCard>

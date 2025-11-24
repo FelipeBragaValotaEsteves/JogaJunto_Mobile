@@ -4,9 +4,9 @@ import { ContentContainer } from '@/components/shared/ContentContainer';
 import { Input } from '@/components/shared/Input';
 import { KeyboardAwareContainer, MainContainer } from '@/components/shared/MainContainer';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleArrowLeft } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { styled } from 'styled-components/native';
 import { Alert } from '../../components/shared/Alert';
 import BASE_URL from '../../constants/config';
@@ -20,15 +20,17 @@ export default function GameAddScreen() {
     const [team2Name, setTeam2Name] = useState('');
     const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-        setTeam1Name('');
-        setTeam2Name('');
-        
-        if (isEditing === 'true' && initialTeam1 && initialTeam2) {
-            setTeam1Name(initialTeam1 as string);
-            setTeam2Name(initialTeam2 as string);
-        }
-    }, [isEditing, initialTeam1, initialTeam2]);
+    useFocusEffect(
+        useCallback(() => {
+            if (isEditing === 'true' && initialTeam1 && initialTeam2) {
+                setTeam1Name(initialTeam1 as string);
+                setTeam2Name(initialTeam2 as string);
+            } else {
+                setTeam1Name('');
+                setTeam2Name('');
+            }
+        }, [isEditing, initialTeam1, initialTeam2])
+    );
 
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertConfig, setAlertConfig] = useState<{
@@ -170,7 +172,7 @@ export default function GameAddScreen() {
                     value={team1Name}
                     onChangeText={setTeam1Name}
                     editable={!saving}
-                    maxLength={10}
+                    maxLength={30}
                 />
 
                 <Input
@@ -178,7 +180,7 @@ export default function GameAddScreen() {
                     value={team2Name}
                     onChangeText={setTeam2Name}
                     editable={!saving}
-                    maxLength={10}
+                    maxLength={30}
                 />
 
                 <Button onPress={handleSave} disabled={saving}>

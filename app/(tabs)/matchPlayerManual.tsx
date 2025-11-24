@@ -3,9 +3,9 @@ import { Button, ButtonText } from '@/components/shared/Button';
 import { Input } from '@/components/shared/Input';
 import { KeyboardAwareContainer, MainContainer } from '@/components/shared/MainContainer';
 import { TitlePageTabs } from '@/components/shared/TitlePage';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { CircleArrowLeft } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { styled } from 'styled-components/native';
 import { Alert } from '../../components/shared/Alert';
 import BASE_URL from '../../constants/config';
@@ -16,6 +16,12 @@ export default function MatchPlayerManualScreen() {
 
     const [nome, setNome] = useState('');
     const [loading, setLoading] = useState(false);
+
+    useFocusEffect(
+        useCallback(() => {
+            setNome('');
+        }, [])
+    );
 
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertConfig, setAlertConfig] = useState<{

@@ -88,8 +88,7 @@ export default function MatchScreen() {
 
     useFocusEffect(
         useCallback(() => {
-            resetForm();
-
+            console.log(id)
             if (id) {
                 const matchId = Array.isArray(id) ? id[0] : id;
                 fetchMatchDetails(matchId).then((data) => {
@@ -108,6 +107,8 @@ export default function MatchScreen() {
                 }).catch((error) => {
                     showAlert('error', 'Erro', 'Não foi possível carregar os detalhes da partida.');
                 });
+            } else {
+                resetForm();
             }
         }, [id])
     );
@@ -185,8 +186,38 @@ export default function MatchScreen() {
         try {
             const headers = await authHeaders();
 
+            if (!nome || nome.trim() === '') {
+                showAlert('error', 'Erro', 'O campo Local é obrigatório.');
+                return;
+            }
+
+            if (!data || data.trim() === '') {
+                showAlert('error', 'Erro', 'O campo Data é obrigatório.');
+                return;
+            }
+
+            if (!horaInicial || horaInicial.trim() === '') {
+                showAlert('error', 'Erro', 'O campo Horário Inicial é obrigatório.');
+                return;
+            }
+
+            if (!horaFinal || horaFinal.trim() === '') {
+                showAlert('error', 'Erro', 'O campo Horário Final é obrigatório.');
+                return;
+            }
+
             if (!tipo) {
-                showAlert('error', 'Erro', 'Tipo é obrigatório.');
+                showAlert('error', 'Erro', 'O campo Tipo é obrigatório.');
+                return;
+            }
+
+            if (!estado) {
+                showAlert('error', 'Erro', 'O campo Estado é obrigatório.');
+                return;
+            }
+
+            if (!cidade) {
+                showAlert('error', 'Erro', 'O campo Cidade é obrigatório.');
                 return;
             }
 
@@ -313,7 +344,10 @@ export default function MatchScreen() {
                         <Input
                             placeholder="Número (opcional)"
                             value={numero}
-                            onChangeText={setNumero}
+                            onChangeText={(text) => {
+                                const onlyNumbers = text.replace(/\D/g, '');
+                                setNumero(onlyNumbers);
+                            }}
                             keyboardType="numeric"
                             maxLength={10}
                         />
@@ -349,7 +383,8 @@ export default function MatchScreen() {
                             value={valor}
                             onChangeText={(text) => {
                                 const numericValue = text.replace(/\D/g, "");
-                                if (numericValue.length <= 8) {
+                                const numValue = Number(numericValue) / 100;
+                                if (numValue <= 999) {
                                     setValor(formatCurrency(text));
                                 }
                             }}
@@ -374,7 +409,7 @@ export default function MatchScreen() {
                             salvarPartida();
                         }
                     }}>
-                        <ButtonText>{currentPhase < 3 ? 'PRÓXIMO' : 'SALVAR'}</ButtonText>
+                        <ButtonText>{currentPhase < 3 ? 'PRÓXIMO' : (id ? 'EDITAR' : 'CADASTRAR')}</ButtonText>
                     </Button>
                 </ButtonRow>
             </ContentContainer>

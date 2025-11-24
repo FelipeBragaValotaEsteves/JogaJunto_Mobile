@@ -1,14 +1,19 @@
+import { useRouter } from "expo-router";
 import { Plus } from "lucide-react-native";
 import React from "react";
-import { GestureResponderEvent, Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
-type Props = {
-  onPress?: (e: GestureResponderEvent) => void;
-};
+export default function FabButton() {
+  const router = useRouter();
 
-export default function FabButton({ onPress }: Props) {
   return (
-    <Pressable onPress={onPress} style={styles.container}>
+    <Pressable 
+      onPress={() => router.push({
+        pathname: "/(tabs)/match",
+        params: { id: null }
+      })} 
+      style={styles.container}
+    >
       <View style={styles.button}>
         <Plus color="#fff" size={45} strokeWidth={3} />
       </View>

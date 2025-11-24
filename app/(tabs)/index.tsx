@@ -104,8 +104,8 @@ export default function HomeScreen() {
       ) : (
         <NoResults message={
           matches.length === 0
-            ? "Não foi encontrado nenhum horário próximo a você!"
-            : "Por favor, permita o acesso à sua localização para encontrar horários próximos."
+            ? "Não foi encontrado nenhum horário jogado!"
+            : "Erro ao carregar os horários jogados."
         } />
       )}
     </MainContainer>

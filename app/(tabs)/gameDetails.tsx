@@ -197,6 +197,11 @@ export default function GameDetailsScreen() {
     const handleSaveChanges = useCallback(async () => {
         if (!selectedPlayer || !gameDetails) return;
 
+        if (!editablePlayer.posicaoId || editablePlayer.posicaoId === 0) {
+            showAlert('error', 'Erro', 'O campo Posição é obrigatório.');
+            return;
+        }
+
         try {
             const headers = await authHeaders();
 
