@@ -73,7 +73,9 @@ export default function PlayedMatchesScreen() {
       ) : (
         playedMatches.map((match, index) => {
 
-          const [data] = match.data.split('T')[1].split(':');
+          const [data] = match.data.split('T')[0].split(':');
+
+          console.log(data);
           return (
             <MatchCard
               key={index}

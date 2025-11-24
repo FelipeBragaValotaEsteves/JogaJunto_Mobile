@@ -177,7 +177,7 @@ export default function MatchPlayersScreen() {
                     </AddPlayerButton>
                 )}
             </TopButtonsContainer>
-            <TitlePageTabs>Jogadores da Partida</TitlePageTabs>
+            <TitlePageTabs>Jogadores do Horário</TitlePageTabs>
 
             {loading ? (
                 <Loading />

@@ -4,7 +4,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native
 import { useFonts } from "expo-font";
 import * as Notifications from "expo-notifications";
 import { Slot, useRouter, useSegments } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
@@ -22,6 +22,7 @@ function AuthGate() {
   const { userToken, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const handledNotificationIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -42,6 +43,14 @@ function AuthGate() {
     if (loading) return;
 
     function handleNotification(response: Notifications.NotificationResponse) {
+      const notificationId = response.notification.request.identifier;
+
+      if (handledNotificationIdRef.current === notificationId) {
+        return;
+      }
+
+      handledNotificationIdRef.current = notificationId;
+
       const data: any = response.notification.request.content.data || {};
       const route = data.route as string | undefined;
 
